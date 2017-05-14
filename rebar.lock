@@ -1,0 +1,8 @@
+[{<<"antidote_crdt">>,
+  {git,"https://github.com/SyncFree/antidote_crdt.git",
+       {ref,"9637edea6f7a4ef2386760ca14626f3a056ffecc"}},
+  0},
+ {<<"riak_dt">>,
+  {git,"git://github.com/aletomsic/riak_dt",
+       {ref,"86cfe29db5495eaafdb241f168d27a29db90e4cf"}},
+  1}].

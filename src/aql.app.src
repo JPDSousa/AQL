@@ -1,0 +1,18 @@
+{application, aql,
+ [{description, "An OTP application"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, { aql_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    crypto,
+    antidote_crdt
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {maintainers, []},
+  {licenses, []},
+  {links, []}
+ ]}.

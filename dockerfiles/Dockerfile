@@ -2,7 +2,7 @@ FROM mweber/antidotedb
 
 MAINTAINER Joao Sousa <jpd.sousa@campus.fct.unl.pt>
 
-ENV AQL_REPO "https://JPDSousa@bitbucket.org/JPDSousa/aql.git"
+ENV AQL_REPO "git://github.com/JPDSousa/AQL.git"
 ENV AQL_BRANCH "master"
 ENV AQL_NAME "aql@127.0.0.1"
 

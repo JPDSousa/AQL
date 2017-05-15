@@ -42,7 +42,7 @@ get_table([Table | Tail], Name) ->
 	{ok, TName} = name(Table),
 	case TName of
 		Name ->
-			{Key, Value} = Table,
+			{_Key, Value} = Table,
 			{true, Value};
 		_Else ->
 			get_table(Tail, Name)

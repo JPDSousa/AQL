@@ -9,10 +9,10 @@ ENV AQL_NAME "aql@127.0.0.1"
 #AQL
 RUN cd /usr/src \
   && git clone $AQL_REPO \
-  && cd aql \
+  && cd AQL \
   && git checkout $AQL_BRANCH \
   && ./rebar3 compile
 
-ENTRYPOINT ./rebar3
+ENTRYPOINT /usr/src/AQL/rebar3
 
-CMD --name=$AQL_NAME --setcookie antidote
+CMD shell --name=$AQL_NAME --setcookie antidote

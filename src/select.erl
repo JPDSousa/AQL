@@ -19,7 +19,7 @@ exec(Table, Select) ->
 %% Internal functions
 %% ====================================================================
 
-scan(TableName, [{{atom_value, _Left}, Arop, {string, Str}} | Tail], Acc) ->
+scan(TableName, [{{atom_value, _Left}, Arop, {_AQLType, Str}} | Tail], Acc) ->
 	case Arop of
 		{assignment, "="} ->
 			NewAcc = lists:append(Acc, element:new(Str, TableName)),

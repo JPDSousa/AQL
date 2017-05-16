@@ -24,9 +24,9 @@ set_query
 set_assignments
 set_assignment
 expression
-numeric_expression
-textual_expression
-all_comparators
+assignment_expression
+increment_expression
+decrement_expression
 value
 .
 
@@ -54,8 +54,11 @@ values
 atom_value
 string
 number
-comparator
-assignment
+assign
+increment
+decrement
+equality
+comparators
 conjunctive
 direction
 table_policy
@@ -65,7 +68,6 @@ end_list
 semi_colon
 update
 set
-arop
 .
 
 %%====================================================================
@@ -145,11 +147,7 @@ where_clauses ->
    lists:append('$1', '$3').
 
 where_clause ->
-    atom_value all_comparators atom_value :
-    {'$1', '$2', '$3'}.
-
-where_clause ->
-	atom_value all_comparators value :
+	atom_value equality value :
 	{'$1', '$2', '$3'}.
 
 %%--------------------------------------------------------------------
@@ -222,36 +220,40 @@ set_assignments ->
 	['$1'].
 
 set_assignment ->
-	atom_value assignment expression :
-	{'$1', '$3'}.
-
-expression ->
-	numeric_expression :
+	expression :
 	'$1'.
 
 expression ->
-	textual_expression :
+	assignment_expression :
 	'$1'.
 
-numeric_expression ->
-	numeric_expression arop numeric_expression :
-	lists:flatten(['$1', '$2', '$3']).
-
-numeric_expression ->
-	atom_value arop numeric_expression :
-	lists:flatten(['$1', '$2', '$3']).
-
-numeric_expression ->
-	number :
+expression ->
+	increment_expression :
 	'$1'.
 
-textual_expression ->
-	string :
+expression ->
+	decrement_expression :
 	'$1'.
 
-textual_expression ->
-	atom_value :
-	'$1'.
+assignment_expression ->
+	atom_value assign value :
+	{'$1', '$2', '$3'}.
+
+increment_expression ->
+	atom_value increment :
+	{'$1', '$2', {number, 1}}.
+
+increment_expression ->
+	atom_value increment number :
+	{'$1', '$2', '$3'}.
+
+decrement_expression ->
+	atom_value decrement :
+	{'$1', '$2', {number , 1}}.
+
+decrement_expression ->
+	atom_value decrement number :
+	{'$1', '$2', '$3'}.
 
 %%--------------------------------------------------------------------
 %% delete query
@@ -292,7 +294,7 @@ attribute ->
 	{attribute, [{name, '$1'}, '$2', {constraint, primary_key}]}.
 
 attribute ->
-	attribute_name attribute_type check all_comparators value :
+	attribute_name attribute_type check comparators value :
 	{attribute, [{name, '$1'}, '$2', {constraint, {'$4', '$5'}}]}.
 
 attribute ->
@@ -319,14 +321,6 @@ value ->
 
 value ->
 	string :
-	'$1'.
-
-all_comparators ->
-	comparator :
-	'$1'.
-
-all_comparators ->
-	assignment :
 	'$1'.
 
 %%====================================================================

@@ -42,7 +42,7 @@ specified (AntidoteDB's default cookie is `antidote`).
 
 ## Getting started
 
-AQL is an SQL-variant, design to work with AntidoteDB API.
+AQL is an SQL-variant, designed to work with AntidoteDB API.
 
 ### API
 
@@ -79,7 +79,8 @@ AQL supports a limited set of types:
 
 ### CREATE TABLE
 
-Creates a new table
+Creates a new table. If the table already exists the new table will overwrite it
+ (any concurrent conflicts will be resolved with a *Last Writer Wins* CRP).
 
 ```SQL
 CREATE TABLE Persons (
@@ -91,5 +92,46 @@ CREATE TABLE Persons (
 );
 ```
 
-The primary key constraint must be specified after the collumn which is to be
-set as the primary key (multiple collumns as primary keys are not supported).
+The primary key constraint must be specified after the column which is to be
+set as the primary key (multiple columns as primary keys are not supported).
+Any datatype can be a primary key.
+
+AQL also supports conditions on counters (`counter_int`). Custom conditions are
+ currently not supported for this datatype. This means that all `counter_int`
+ columns will have a `> 0` constraint.
+
+### SELECT
+
+SELECT is the main read operation in AQL (similar to SQL). The operation issues
+a read operation in the database engine (AntidoteDB).
+
+```SQL
+SELECT * FROM Persons WHERE PersonID = 20;
+```
+
+*Note:* This operation only supports reads per primary key (like the one in the
+ example). This is a temporary limitation.
+
+### INSERT
+
+Inserts new values in a table. If a value with the primary key already exists it
+ will be overwritten.
+
+```SQL
+INSERT INTO (PersonID, LastName, FirstName, Address, City) VALUES (10, 'Last1', 'First1', 'Local1', 'City1')
+```
+
+The table columns must always be specified.
+
+### UPDATE
+
+Updates an already-existent row on the specified table.
+
+```SQL
+UPDATE Persons
+SET FirstName = 'First2'
+WHERE PersonID = 1
+```
+
+Update is still very unstable. It is still only directed at bounded counter
+updates, but it will be soon expanded to all data types. *Use with caution*.

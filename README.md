@@ -1,7 +1,7 @@
-aql
+AQL
 =====
 
-An OTP application
+An SQL-like interface for AntidoteDB.
 
 Build
 -----

@@ -79,5 +79,5 @@ get_table_from_query(Props) ->
 		{true, Table} ->
 			{ok, Table};
 		_Else ->
-			{err, io:fwrite("The table does not exist.")}
+			{err, io:fwrite("The table does not exist.~n")}
 	end.

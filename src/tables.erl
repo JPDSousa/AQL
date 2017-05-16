@@ -36,13 +36,14 @@ create_table_update(Name, Table) ->
 
 get_table(Name) ->
 	{ok, Tables} = read_tables(),
+	io:fwrite("~p~n", [Tables]),
 	get_table(Tables, Name).
 
 get_table([Table | Tail], Name) ->
 	{ok, TName} = name(Table),
 	case TName of
 		Name ->
-			{Key, Value} = Table,
+			{_Key, Value} = Table,
 			{true, Value};
 		_Else ->
 			get_table(Tail, Name)
@@ -79,7 +80,7 @@ collumn_metadata([{attribute, KeyData} | Tail], Key) ->
 			collumn_metadata(Tail, Key)
 	end;
 collumn_metadata([], Key) ->
-	{err, io:format("Collumn ~p does not exist", [Key])}.
+	{err, lists:concat(["Collumn ", Key, " does not exist"])}.
 
 primary_key({{_TName, _TType}, TMeta}) ->
 	primary_key(TMeta);

@@ -43,7 +43,7 @@ parse({str, Query}) ->
 	{ok, Tokens, _} = scanner:string(Query),
 	%io:fwrite("~p~n", [Tokens]),
 	{ok, ParseTree} = parser:parse(Tokens),
-	io:fwrite("~p~n", [ParseTree]),
+	%io:fwrite("~p~n", [ParseTree]),
 	exec(ParseTree);
 parse({file, Filename}) ->
 	{ok, File} = file:read_file(Filename),

@@ -30,11 +30,6 @@ update_query
 set_query
 set_assignments
 set_assignment
-%expression
-expression
-assignment_expression
-increment_expression
-decrement_expression
 %utils
 value
 .
@@ -235,39 +230,25 @@ set_assignments ->
 	set_assignment :
 	['$1'].
 
+%assignment expression
 set_assignment ->
-	expression :
-	'$1'.
-
-expression ->
-	assignment_expression :
-	'$1'.
-
-expression ->
-	increment_expression :
-	'$1'.
-
-expression ->
-	decrement_expression :
-	'$1'.
-
-assignment_expression ->
 	atom_value assign value :
 	{'$1', '$2', '$3'}.
 
-increment_expression ->
+%increment expression
+set_assignment ->
 	atom_value increment :
 	{'$1', '$2', {number, 1}}.
 
-increment_expression ->
+set_assignment ->
 	atom_value increment number :
 	{'$1', '$2', '$3'}.
 
-decrement_expression ->
+set_assignment ->
 	atom_value decrement :
 	{'$1', '$2', {number , 1}}.
 
-decrement_expression ->
+set_assignment ->
 	atom_value decrement number :
 	{'$1', '$2', '$3'}.
 

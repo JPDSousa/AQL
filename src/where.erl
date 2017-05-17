@@ -1,22 +1,22 @@
 
 -module(where).
 
--export([scan/2]).
+-export([scan/3]).
 
-scan(TableName, Condition) ->
-  scan(TableName, Condition, []).
+scan(TableName, Keys, Conditions) ->
+  scan(TableName, Keys, Conditions, []).
 
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
 
-scan(TableName, [{{atom_value, _Left}, Arop, {_AQLType, Str}} | Tail], Acc) ->
+scan(TName, Cls, [{{atom_value, _ClName}, Arop, {_AQLType, Str}} | T], Acc) ->
 	case Arop of
 		{assignment, "="} ->
-			NewAcc = lists:append(Acc, element:new(Str, TableName)),
-			scan(TableName, Tail, NewAcc);
+			NewAcc = lists:append(Acc, element:new(Str, TName)),
+			scan(TName, Cls, T, NewAcc);
 		_Else ->
 			{err, "Not supported yet! :)"}
 	end;
-scan(_TName, [], Acc) ->
+scan(_TName, _Cls, [], Acc) ->
 	{ok, Acc}.

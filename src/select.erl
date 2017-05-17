@@ -13,6 +13,8 @@ exec(Table, Select) ->
 	{ok, TName} = tables:name(Table),
 	{ok, _Projection} = query_utils:search_clause(keys, Select),
 	{ok, Condition} = query_utils:search_clause(where, Select),
-	{ok, Keys} = where:scan(TName, Condition),
+	{table, EfTable} = Table,
+	{ok, Cls} = query_utils:search_clause(keys, EfTable),
+	{ok, Keys} = where:scan(TName, Cls, Condition),
 	{ok, Results, _CT} = antidote:read_objects(Keys),
 	{ok, Results}.

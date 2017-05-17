@@ -24,11 +24,7 @@ Rules.
 (from|FROM) : {token, {from, TokenChars}}.
 
 % where clause related tokens
-(order|ORDER) : {token, {order, TokenChars}}.
-(limit|LIMIT) : {token, {limit, TokenChars}}.
 (where|WHERE) : {token, {where, TokenChars}}.
-(asc|ASC) : {token, {direction, TokenChars}}.
-(des|DES) : {token, {direction, TokenChars}}.
 (and|AND) : {token, {conjunctive, TokenChars}}.
 
 % insert query related tokens

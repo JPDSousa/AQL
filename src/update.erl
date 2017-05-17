@@ -7,7 +7,7 @@
 
 exec(Table, Props) ->
   {ok, SetClause} = query_utils:search_clause(set, Props),
-  %TODO: add where clause
+  {ok, _WhereClause} = query_utils:search_clause(where, Props),
   {ok, FieldUpdates} = create_update(Table, [], SetClause),
   Keys = [element:new('Dummy', 'Student')],
   MapUpdates = create_map_updates([], Keys, FieldUpdates),
@@ -20,10 +20,25 @@ create_map_updates(Acc, [Key | Tail], Updates) ->
 create_map_updates(Acc, [], _Updates) ->
   Acc.
 
-create_update(Table, Acc, [{{atom_value, CollumnName}, _Expression} | Tail]) ->
-  {ok, _Collumn} = tables:collumn_metadata(Table, CollumnName),
-  Op = objects:decrement_counter(1),
-  Update = objects:create_field_map_op('YearsLeft', ?CRDT_COUNTER_INT, Op),
+create_update(Table, Acc, [{{atom_value, CollumnName}, Op, OpParam} | Tail]) ->
+  {ok, Collumn} = tables:collumn_metadata(Table, CollumnName),
+  Update = resolve_op(Collumn, Op, OpParam),
   create_update(Table, lists:append(Acc, Update), Tail);
 create_update(_Table, Acc, []) ->
   {ok, Acc}.
+
+resolve_op(Collumn, {assign, _TokenChars}, {_TokenType, Value}) ->
+  {ok, {attribute_type, CollumnType}} = tables:key_type(Collumn),
+  {ok, CollumnName} = tables:key_name(Collumn),
+  case CollumnType of
+    ?AQL_VARCHAR ->
+      Op = objects:assign_lww(Value),
+      Update = objects:create_field_map_op(CollumnName, ?CRDT_VARCHAR, Op),
+      {ok, Update};
+    _Else ->
+      resolve_fail(CollumnName, CollumnType)
+  end.
+
+resolve_fail(CName, CType) ->
+  Msg = string:concat(["Cannot assign to column ", CName, " of type ", CType]),
+  {err, Msg}.

@@ -21,7 +21,7 @@ exec(Table, Select) ->
 
 scan(TableName, [{{atom_value, _Left}, Arop, {_AQLType, Str}} | Tail], Acc) ->
 	case Arop of
-		{assignment, "="} ->
+		{equality, "="} ->
 			NewAcc = lists:append(Acc, element:new(Str, TableName)),
 			scan(TableName, Tail, NewAcc);
 		_Else ->

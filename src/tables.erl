@@ -36,7 +36,6 @@ create_table_update(Name, Table) ->
 
 get_table(Name) ->
 	{ok, Tables} = read_tables(),
-	io:fwrite("~p~n", [Tables]),
 	get_table(Tables, Name).
 
 get_table([Table | Tail], Name) ->

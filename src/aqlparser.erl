@@ -27,9 +27,9 @@
 -type select_query() :: {select, select_query_props()}.
 -type queryResult() :: term().
 
--type insert_query_props() :: term().
--type update_query_props() :: term().
--type select_query_props() :: term().
+-type insert_query_props() :: term().%incomplete
+-type update_query_props() :: term().%incomplete
+-type select_query_props() :: term().%incomplete
 
 %% Application callbacks
 -export([parse/1]).

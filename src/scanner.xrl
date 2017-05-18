@@ -4,9 +4,7 @@
 Definitions.
 
 WhiteSpace = ([\000-\s]|%.*)
-Assignment = =
-Comparator = (<>|>|>=|<|<=)
-AritmeticOperator = (\+|-)
+Equality = =
 CharValues = [A-Za-z]
 WildCard = \*
 IntegerValues = [0-9]
@@ -26,11 +24,7 @@ Rules.
 (from|FROM) : {token, {from, TokenChars}}.
 
 % where clause related tokens
-(order|ORDER) : {token, {order, TokenChars}}.
-(limit|LIMIT) : {token, {limit, TokenChars}}.
 (where|WHERE) : {token, {where, TokenChars}}.
-(asc|ASC) : {token, {direction, TokenChars}}.
-(des|DES) : {token, {direction, TokenChars}}.
 (and|AND) : {token, {conjunctive, TokenChars}}.
 
 % insert query related tokens
@@ -45,6 +39,15 @@ Rules.
 % update query related tokens
 (update|UPDATE) : {token, {update, TokenChars}}.
 (set|SET) : {token, {set, TokenChars}}.
+
+% set operations
+(assign|ASSIGN) : {token, {assign, TokenChars}}.
+(increment|INCREMENT) : {token, {increment, TokenChars}}.
+(decrement|DECREMENT) : {token, {decrement, TokenChars}}.
+
+% comparators
+(smaller|SMALLER) : {token, {comparators, smaller}}.
+(greater|GREATER) : {token, {comparators, greater}}.
 
 % constraints
 (primary|PRIMARY) : {token, {primary, TokenChars}}.
@@ -76,9 +79,7 @@ Rules.
 {IntegerValues}+ : {N, _} = string:to_integer(TokenChars),
 				{token, {number, N}}.
 
-{Assignment} : {token, {assignment, TokenChars}}.
-{Comparator} : {token, {comparator, TokenChars}}.
-{AritmeticOperator} : {token, {arop, TokenChars}}.
+{Equality} : {token, {equality, TokenChars}}.
 {WildCard} : {token, {wildcard, TokenChars}}.
 {WhiteSpace}+ : skip_token.
 

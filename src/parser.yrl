@@ -3,30 +3,34 @@
 %%====================================================================
 Nonterminals
 query
+%select
 select_query
 select_fields
+%where
 where_clauses
 where_clause
+%insert
 insert_query
 insert_keys_clause
 insert_keys
 insert_values_clause
 insert_values
+%delete
 delete_query
+%create
 create_query
 table_metadata
 create_keys
 attribute
 attribute_name
+%drop
 drop_query
+%update
 update_query
-set_query
+set_clause
 set_assignments
 set_assignment
-expression
-numeric_expression
-textual_expression
-all_comparators
+%utils
 value
 .
 
@@ -34,38 +38,47 @@ value
 %% Terminals
 %%====================================================================
 Terminals
+%select
 select
 wildcard
 from
-order
-limit
+%where
 where
+%insert
 insert
 into
+values
+%delete
 delete
+%drop
 drop
+%create
 create
 table
+table_policy
 primary
 key
 check
 attribute_type
-values
+%update
+update
+set
+%types
 atom_value
 string
 number
-comparator
-assignment
+%expression
+assign
+increment
+decrement
+equality
+comparators
 conjunctive
-direction
-table_policy
+%list
 sep
 start_list
 end_list
 semi_colon
-update
-set
-arop
 .
 
 %%====================================================================
@@ -145,11 +158,7 @@ where_clauses ->
    lists:append('$1', '$3').
 
 where_clause ->
-    atom_value all_comparators atom_value :
-    {'$1', '$2', '$3'}.
-
-where_clause ->
-	atom_value all_comparators value :
+	atom_value equality value :
 	{'$1', '$2', '$3'}.
 
 %%--------------------------------------------------------------------
@@ -202,56 +211,50 @@ insert_values ->
 %%--------------------------------------------------------------------
 
 update_query ->
-	update atom_value set_query :
+	update atom_value set_clause :
 	{update, [{table, '$2'}, '$3']}.
 
 update_query ->
-	update atom_value set_query where_clauses :
-	{update, [{table, '$2'}, '$3', '$4']}.
+	update atom_value set_clause where where_clauses :
+	{update, [{table, '$2'}, '$3', '$5']}.
 
-set_query ->
+set_clause ->
 	set set_assignments :
 	{set, '$2'}.
 
 set_assignments ->
-	set_assignments sep set_assignments :
+	set_assignments sep set_assignment :
 	lists:flatten('$1', '$3').
+
+set_assignments ->
+	set_assignment sep set_assignment :
+	['$1', '$3'].
 
 set_assignments ->
 	set_assignment :
 	['$1'].
 
+%assignment expression
 set_assignment ->
-	atom_value assignment expression :
-	{'$1', '$3'}.
+	atom_value assign value :
+	{'$1', '$2', '$3'}.
 
-expression ->
-	numeric_expression :
-	'$1'.
+%increment expression
+set_assignment ->
+	atom_value increment :
+	{'$1', '$2', {number, 1}}.
 
-expression ->
-	textual_expression :
-	'$1'.
+set_assignment ->
+	atom_value increment number :
+	{'$1', '$2', '$3'}.
 
-numeric_expression ->
-	numeric_expression arop numeric_expression :
-	lists:flatten(['$1', '$2', '$3']).
+set_assignment ->
+	atom_value decrement :
+	{'$1', '$2', {number , 1}}.
 
-numeric_expression ->
-	atom_value arop numeric_expression :
-	lists:flatten(['$1', '$2', '$3']).
-
-numeric_expression ->
-	number :
-	'$1'.
-
-textual_expression ->
-	string :
-	'$1'.
-
-textual_expression ->
-	atom_value :
-	'$1'.
+set_assignment ->
+	atom_value decrement number :
+	{'$1', '$2', '$3'}.
 
 %%--------------------------------------------------------------------
 %% delete query
@@ -292,7 +295,7 @@ attribute ->
 	{attribute, [{name, '$1'}, '$2', {constraint, primary_key}]}.
 
 attribute ->
-	attribute_name attribute_type check all_comparators value :
+	attribute_name attribute_type check comparators value :
 	{attribute, [{name, '$1'}, '$2', {constraint, {'$4', '$5'}}]}.
 
 attribute ->
@@ -319,14 +322,6 @@ value ->
 
 value ->
 	string :
-	'$1'.
-
-all_comparators ->
-	comparator :
-	'$1'.
-
-all_comparators ->
-	assignment :
 	'$1'.
 
 %%====================================================================

@@ -223,11 +223,11 @@ set_clause ->
 	{set, '$2'}.
 
 set_assignments ->
-	set_assignments sep set_assignment :
+	set_assignments conjunctive set_assignment :
 	lists:flatten('$1', '$3').
 
 set_assignments ->
-	set_assignment sep set_assignment :
+	set_assignment conjunctive set_assignment :
 	['$1', '$3'].
 
 set_assignments ->

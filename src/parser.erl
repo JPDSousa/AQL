@@ -497,14 +497,14 @@ yeccpars2_16(S, atom_value, Ss, Stack, T, Ts, Tzr) ->
 yeccpars2_16(_, _, _, _, T, _, _) ->
  yeccerror(T).
 
-yeccpars2_17(S, sep, Ss, Stack, T, Ts, Tzr) ->
+yeccpars2_17(S, conjunctive, Ss, Stack, T, Ts, Tzr) ->
  yeccpars1(S, 30, Ss, Stack, T, Ts, Tzr);
 yeccpars2_17(_S, Cat, Ss, Stack, T, Ts, Tzr) ->
  [_|Nss] = Ss,
  NewStack = yeccpars2_17_(Stack),
  yeccgoto_set_clause(hd(Nss), Cat, Nss, NewStack, T, Ts, Tzr).
 
-yeccpars2_18(S, sep, Ss, Stack, T, Ts, Tzr) ->
+yeccpars2_18(S, conjunctive, Ss, Stack, T, Ts, Tzr) ->
  yeccpars1(S, 28, Ss, Stack, T, Ts, Tzr);
 yeccpars2_18(_S, Cat, Ss, Stack, T, Ts, Tzr) ->
  NewStack = yeccpars2_18_(Stack),

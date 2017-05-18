@@ -216,7 +216,7 @@ update_query ->
 
 update_query ->
 	update atom_value set_clause where where_clauses :
-	{update, [{table, '$2'}, '$3', '$5']}.
+	{update, [{table, '$2'}, '$3', {where, '$5'}]}.
 
 set_clause ->
 	set set_assignments :

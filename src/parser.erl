@@ -1210,7 +1210,7 @@ yeccpars2_31_(__Stack0) ->
 yeccpars2_33_(__Stack0) ->
  [__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
-   { update , [ { table , __2 } , __3 , __5 ] }
+   { update , [ { table , __2 } , __3 , { where , __5 } ] }
   end | __Stack].
 
 -compile({inline,yeccpars2_34_/1}).

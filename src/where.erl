@@ -12,8 +12,8 @@ scan(TableName, Keys, Conditions) ->
 
 scan(TName, Cls, [{{atom_value, _ClName}, Arop, {_AQLType, Str}} | T], Acc) ->
 	case Arop of
-		{assignment, "="} ->
-			NewAcc = lists:append(Acc, element:new(Str, TName)),
+		{equality, "="} ->
+			NewAcc = lists:flatten(Acc, [element:new(Str, TName)]),
 			scan(TName, Cls, T, NewAcc);
 		_Else ->
 			{err, "Not supported yet! :)"}

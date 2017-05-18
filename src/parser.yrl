@@ -27,7 +27,7 @@ attribute_name
 drop_query
 %update
 update_query
-set_query
+set_clause
 set_assignments
 set_assignment
 %utils
@@ -211,20 +211,24 @@ insert_values ->
 %%--------------------------------------------------------------------
 
 update_query ->
-	update atom_value set_query :
+	update atom_value set_clause :
 	{update, [{table, '$2'}, '$3']}.
 
 update_query ->
-	update atom_value set_query where_clauses :
-	{update, [{table, '$2'}, '$3', '$4']}.
+	update atom_value set_clause where where_clauses :
+	{update, [{table, '$2'}, '$3', '$5']}.
 
-set_query ->
+set_clause ->
 	set set_assignments :
 	{set, '$2'}.
 
 set_assignments ->
-	set_assignments sep set_assignments :
+	set_assignments sep set_assignment :
 	lists:flatten('$1', '$3').
+
+set_assignments ->
+	set_assignment sep set_assignment :
+	['$1', '$3'].
 
 set_assignments ->
 	set_assignment :

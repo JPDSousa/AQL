@@ -1,3 +1,7 @@
+% -----------------------------------------------------------------------------
+% --------------------------------- Lexer ------------------------------------
+% -----------------------------------------------------------------------------
+
 % select
 -define (SELECT_TOKEN, select).
 -define(SELECT_CLAUSE(TokenChars), {?SELECT_TOKEN, TokenChars}).
@@ -63,9 +67,9 @@
 -define(DECREMENT_OP(TokenChars), {?DECREMENT_TOKEN, TokenChars}).
 
 %terms
--define(PARSER_ATOM, atom_value).
--define(PARSER_STRING, string).
--define(PARSER_NUMBER, number).
+-define(PARSER_ATOM(Atom), {atom_value, Atom}).
+-define(PARSER_STRING(String), {string, String}).
+-define(PARSER_NUMBER(Number), {number, Number}).
 
 % extras
 -define(PARSER_EQUALITY, {equality, ignore}).
@@ -75,3 +79,19 @@
 -define(PARSER_ELIST, {end_list, ignore}).
 -define(PARSER_SEP, {sep, ignore}).
 -define(PARSER_SCOLON, {semi_colon, ignore}).
+
+% -----------------------------------------------------------------------------
+% --------------------------------- Parser ------------------------------------
+% -----------------------------------------------------------------------------
+
+% table
+-define(PROP_TABLE_NAME, table_name).
+-define(PROP_COLUMNS, columns).
+
+% insert
+-define(PROP_VALUES, values).
+
+% create
+-define(PROP_ATTR_NAME, name).
+-define(PROP_ATTR_CONSTRAINT, constriaint).
+-define(NO_CONSTRAINT, none).

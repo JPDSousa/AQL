@@ -9,3 +9,5 @@
 
 -define(AQL_COUNTER_INT, counter_int).
 -define(CRDT_COUNTER_INT, antidote_crdt_bcounter).
+
+-define(CRP_LWW, lww).

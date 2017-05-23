@@ -38,7 +38,7 @@ exec([Query | Tail]) ->
 exec([]) ->
 	ok;
 exec({?CREATE_TOKEN, Table}) ->
-	{ok, _CT} = tables:write_table(Table);
+	{ok, _CT} = table:write_table(Table);
 exec({?INSERT_TOKEN, Insert}) ->
 	{ok, Table} = get_table_from_query(Insert),
 	ok = insert:exec(Table, Insert);

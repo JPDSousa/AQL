@@ -6,7 +6,7 @@
 search_clause(Name, [{ClauseName, Clause} | Tail]) ->
   case ClauseName of
     Name ->
-      {ok, Clause};
+      Clause;
     _Else ->
       search_clause(Name, Tail)
     end;

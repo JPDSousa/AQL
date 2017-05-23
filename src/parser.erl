@@ -823,7 +823,7 @@ yeccpars2_82(_S, Cat, Ss, Stack, T, Ts, Tzr) ->
  yeccgoto_attribute(hd(Nss), Cat, Nss, NewStack, T, Ts, Tzr).
 
 -dialyzer({nowarn_function, yeccpars2_83/7}).
-yeccpars2_83(S, comparators, Ss, Stack, T, Ts, Tzr) ->
+yeccpars2_83(S, comparator, Ss, Stack, T, Ts, Tzr) ->
  yeccpars1(S, 86, Ss, Stack, T, Ts, Tzr);
 yeccpars2_83(_, _, _, _, T, _, _) ->
  yeccerror(T).

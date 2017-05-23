@@ -35,13 +35,13 @@ unwrap_pair(Table) ->
 	end.
 
 write_table(Table) when ?is_table(Table) ->
-	{ok, Name} = tables:name(Table),
+	Name = name(Table),
 	TableUpdate = create_table_update(Name, Table),
 	antidote:update_objects(TableUpdate).
 
 create_table_update(Name, Table) when ?is_tname(Name) and ?is_table(Table) ->
 	Op = {assign, Table},
-	objects:create_single_map_update(?BOUND_OBJECT, Name, ?CRDT_TYPE, Op).
+	crdt:create_single_map_update(?BOUND_OBJECT, Name, ?CRDT_TYPE, Op).
 
 get_table(Name) when ?is_tname(Name) ->
 	{ok, Tables} = read_tables(),
@@ -63,16 +63,15 @@ get_table([], _) ->
 %% Table Props functions
 %% ====================================================================
 
-name([Table | Tail]) when ?is_table(Table) ->
-	{ok, TableName} = query_utils:search_clause(?PROP_TABLE_NAME, Table),
+name(Table) when ?is_table(Table) ->
+	TableName = query_utils:search_clause(?PROP_TABLE_NAME, Table),
   case TableName of
-    ?PARSER_ATOM(Name) ->
-      {ok, Name};
+    {err, ErrMsg} ->
+      {err, ErrMsg};
     _Else ->
-			name(Tail)
-  end;
-name([]) ->
-	{err, "Cannot resolve table name"}.
+			?PARSER_ATOM(Name) = TableName,
+			Name
+  end.
 
 get_column(Columns, ColumnName) when ?is_columns(Columns) and ?is_cname(ColumnName) ->
 	Res = maps:get(ColumnName, Columns),

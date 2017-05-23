@@ -64,7 +64,7 @@ assign
 increment
 decrement
 equality
-comparators
+comparator
 conjunctive
 %list
 sep
@@ -272,7 +272,7 @@ attribute ->
 	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?PRIMARY_TOKEN)]}.
 
 attribute ->
-	attribute_name attribute_type check comparators value :
+	attribute_name attribute_type check comparator value :
 	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT({'$4', '$5'})]}.
 
 attribute ->

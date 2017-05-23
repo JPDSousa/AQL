@@ -1,7 +1,7 @@
 %% @author joao
 %% @doc @todo Add description to objects.
 
--module(objects).
+-module(crdt).
 
 -export([create_add_all/2,
 		 		create_remove_all/2]).

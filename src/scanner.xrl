@@ -65,13 +65,13 @@ Rules.
 
 
 {CharValues}+ : A = list_to_atom(TokenChars),
-				{token, {?PARSER_ATOM, A}}.
+				{token, ?PARSER_ATOM(A)}.
 
 {String} : S = strip_value(TokenChars),
-			{token, {?PARSER_STRING, S}}.
+			{token, ?PARSER_STRING(S)}.
 
 {IntegerValues}+ : {N, _} = string:to_integer(TokenChars),
-				{token, {?PARSER_NUMBER, N}}.
+				{token, ?PARSER_NUMBER(N)}.
 
 {Equality} : {token, ?PARSER_EQUALITY}.
 {WildCard} : {token, ?PARSER_WILDCARD}.

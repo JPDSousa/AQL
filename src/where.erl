@@ -1,6 +1,9 @@
 
 -module(where).
 
+-include("parser.hrl").
+-include("aql.hrl").
+
 -export([scan/3]).
 
 scan(TableName, Keys, Conditions) ->
@@ -10,10 +13,11 @@ scan(TableName, Keys, Conditions) ->
 %% Internal functions
 %% ====================================================================
 
-scan(TName, Cls, [{{atom_value, _ClName}, Arop, {_AQLType, Str}} | T], Acc) ->
+scan(Table, Cls, [{?PARSER_ATOM(_ClValue), Arop, {_AQLType, Str}} | T], Acc) when ?is_table(Table)->
 	case Arop of
-		{equality, "="} ->
-			NewAcc = lists:flatten(Acc, [element:new(Str, TName)]),
+		?PARSER_EQUALITY ->
+      TName = table:name(Table),
+			NewAcc = lists:flatten(Acc, [element:new(Str, Table)]),
 			scan(TName, Cls, T, NewAcc);
 		_Else ->
 			{err, "Not supported yet! :)"}

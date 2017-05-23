@@ -92,6 +92,7 @@
 -define(PROP_VALUES, values).
 
 % create
--define(PROP_ATTR_NAME, name).
--define(PROP_ATTR_CONSTRAINT, constriaint).
+-define(PROP_ATTR, attribute).
+-define(PROP_ATTR_NAME(Name), {name, Name}).
+-define(PROP_ATTR_CONSTRAINT(Constraint), {constriaint, Constraint}).
 -define(NO_CONSTRAINT, none).

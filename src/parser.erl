@@ -1272,7 +1272,7 @@ yeccpars2_81_(__Stack0) ->
 yeccpars2_82_(__Stack0) ->
  [__2,__1 | __Stack] = __Stack0,
  [begin
-   { attribute , [ { ? PROP_ATTR_NAME , __1 } , __2 , { ? PROP_ATTR_CONSTRAINT , ? NO_CONSTRAINT } ] }
+   { ? PROP_ATTR , [ ? PROP_ATTR_NAME ( __1 ) , __2 , ? PROP_ATTR_CONSTRAINT ( ? NO_CONSTRAINT ) ] }
   end | __Stack].
 
 -file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1278).
@@ -1281,7 +1281,7 @@ yeccpars2_82_(__Stack0) ->
 yeccpars2_85_(__Stack0) ->
  [__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
-   { attribute , [ { ? PROP_ATTR_NAME , __1 } , __2 , { ? PROP_ATTR_CONSTRAINT , ? PRIMARY_TOKEN } ] }
+   { ? PROP_ATTR , [ ? PROP_ATTR_NAME ( __1 ) , __2 , ? PROP_ATTR_CONSTRAINT ( ? PRIMARY_TOKEN ) ] }
   end | __Stack].
 
 -file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1287).
@@ -1290,7 +1290,7 @@ yeccpars2_85_(__Stack0) ->
 yeccpars2_87_(__Stack0) ->
  [__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
-   { attribute , [ { ? PROP_ATTR_NAME , __1 } , __2 , { ? PROP_ATTR_CONSTRAINT , { __4 , __5 } } ] }
+   { ? PROP_ATTR , [ ? PROP_ATTR_NAME ( __1 ) , __2 , ? PROP_ATTR_CONSTRAINT ( { __4 , __5 } ) ] }
   end | __Stack].
 
 -file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1296).

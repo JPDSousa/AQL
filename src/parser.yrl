@@ -269,15 +269,15 @@ create_keys ->
 
 attribute ->
 	attribute_name attribute_type primary key :
-	{attribute, [{?PROP_ATTR_NAME, '$1'}, '$2', {?PROP_ATTR_CONSTRAINT, ?PRIMARY_TOKEN}]}.
+	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?PRIMARY_TOKEN)]}.
 
 attribute ->
 	attribute_name attribute_type check comparators value :
-	{attribute, [{?PROP_ATTR_NAME, '$1'}, '$2', {?PROP_ATTR_CONSTRAINT, {'$4', '$5'}}]}.
+	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT({'$4', '$5'})]}.
 
 attribute ->
 	attribute_name attribute_type :
-	{attribute, [{?PROP_ATTR_NAME, '$1'}, '$2', {?PROP_ATTR_CONSTRAINT, ?NO_CONSTRAINT}]}.
+	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?NO_CONSTRAINT)]}.
 
 attribute_name ->
 	atom_value :

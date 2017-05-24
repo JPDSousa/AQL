@@ -6,7 +6,8 @@
 
 -export([name/1,
 				constraint/1,
-				type/1]).
+				type/1,
+				is_primarykey/1]).
 
 name([?PROP_ATTR_NAME(?PARSER_ATOM(Name)) | _]) ->
   Name;
@@ -34,6 +35,16 @@ type([]) ->
   {err, "Could not resolve column type"};
 type(Column) ->
 	type(unwrap(Column)).
+
+is_primarykey(Col) when ?is_column(Col) ->
+	case constraint(Col) of
+		?PRIMARY_TOKEN ->
+			true;
+		_Else ->
+			false
+	end;
+is_primarykey(Col) ->
+	is_primarykey(unwrap(Col)).
 
 unwrap(Column) ->
 	case Column of

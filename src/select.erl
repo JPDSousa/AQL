@@ -12,11 +12,8 @@
 -export([exec/2]).
 
 exec(Table, Select) ->
-	{ok, TName} = tables:name(Table),
 	{ok, _Projection} = query_utils:search_clause(?PROP_COLUMNS, Select),
 	{ok, Condition} = query_utils:search_clause(?WHERE_TOKEN, Select),
-	{table, EfTable} = Table,
-	{ok, Cls} = query_utils:search_clause(?PROP_COLUMNS, EfTable),
-	{ok, Keys} = where:scan(TName, Cls, Condition),
+	Keys = where:scan(Table, Condition),
 	{ok, Results, _CT} = antidote:read_objects(Keys),
 	{ok, Results}.

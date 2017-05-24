@@ -80,8 +80,8 @@ get_column(Columns, ColumnName) when ?is_columns(Columns) and ?is_cname(ColumnNa
 		_Else ->
 			{ok, Res}
 	end;
-get_column(Table, Column) when ?is_table(Table) and ?is_column(Column) ->
-	{ok, Columns} = get_columns(Table),
+get_column(Table, Column) when ?is_table(Table) and ?is_cname(Column) ->
+	Columns = get_columns(Table),
 	get_column(Columns, Column).
 
 get_columns(Table) when ?is_table(Table)->

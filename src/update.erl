@@ -7,13 +7,11 @@
 -export([exec/2]).
 
 exec(Table, Props) ->
-  {ok, TName} = tables:name(Table),
-  {table, EfTable} = Table,
-  {ok, Cls} = query_utils:search_clause(?PROP_COLUMNS, EfTable),
-  {ok, SetClause} = query_utils:search_clause(?SET_TOKEN, Props),
-  {ok, WhereClause} = query_utils:search_clause(?WHERE_TOKEN, Props),
-  {ok, FieldUpdates} = create_update(Table, [], SetClause),
-  {ok, Keys} = where:scan(TName, Cls, WhereClause),
+  TName = table:name(Table),
+  SetClause = query_utils:search_clause(?SET_TOKEN, Props),
+  WhereClause = query_utils:search_clause(?WHERE_TOKEN, Props),
+  FieldUpdates = create_update(Table, [], SetClause),
+  Keys = where:scan(TName, WhereClause),
   MapUpdates = create_map_updates([], Keys, FieldUpdates),
   {ok, _CT} = antidote:update_objects(MapUpdates),
   ok.
@@ -25,11 +23,11 @@ create_map_updates(Acc, [], _Updates) ->
   Acc.
 
 create_update(Table, Acc, [{?PARSER_ATOM(CollumnName), Op, OpParam} | Tail]) ->
-  {ok, Collumn} = tables:get_column(Table, CollumnName),
+  {ok, Collumn} = table:get_column(Table, CollumnName),
   {ok, Update} = resolve_op(Collumn, Op, OpParam),
   create_update(Table, lists:append(Acc, Update), Tail);
 create_update(_Table, Acc, []) ->
-  {ok, Acc}.
+  Acc.
 
 resolve_op(Collumn, {assign, _TokenChars}, {_TokenType, Value}) ->
   CollumnType = column:type(Collumn),

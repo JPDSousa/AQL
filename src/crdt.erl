@@ -86,5 +86,9 @@ bcounter_op(Op, Value) ->
 create_op(BoundObject, Operation, OpParam) ->
 	{BoundObject, Operation, OpParam}.
 
+create_bound_object(Key, Crdt, Bucket) when is_integer(Key) and ?is_crdt(Crdt) and ?is_dbbucket(Bucket) ->
+	create_bound_object(integer_to_list(Key), Crdt, Bucket);
+create_bound_object(Key, Crdt, Bucket) when is_list(Key) and ?is_crdt(Crdt) and ?is_dbbucket(Bucket) ->
+	create_bound_object(list_to_atom(Key), Crdt, Bucket);
 create_bound_object(Key, CrdtType, Bucket) when ?is_dbkey(Key) and ?is_crdt(CrdtType) and ?is_dbbucket(Bucket) ->
 	{Key, CrdtType, Bucket}.

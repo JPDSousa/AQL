@@ -29,7 +29,7 @@ create_update(Table, Acc, [{?PARSER_ATOM(CollumnName), Op, OpParam} | Tail]) ->
 create_update(_Table, Acc, []) ->
   Acc.
 
-resolve_op(Collumn, {assign, _TokenChars}, {_TokenType, Value}) ->
+resolve_op(Collumn, ?ASSIGN_OP(_TChars), {_TokenType, Value}) ->
   CollumnType = column:type(Collumn),
   CollumnName = column:name(Collumn),
   case CollumnType of

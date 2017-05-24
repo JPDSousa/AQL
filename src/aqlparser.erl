@@ -40,21 +40,21 @@ exec([]) ->
 exec({?CREATE_TOKEN, Table}) ->
 	{ok, _CT} = table:write_table(Table);
 exec({?INSERT_TOKEN, Insert}) ->
-	{ok, Table} = get_table_from_query(Insert),
+	Table = get_table_from_query(Insert),
 	ok = insert:exec(Table, Insert);
 exec({?UPDATE_TOKEN, Update}) ->
-	{ok, Table} = get_table_from_query(Update),
+	Table = get_table_from_query(Update),
 	ok = update:exec(Table, Update);
 exec({?SELECT_TOKEN, Select}) ->
-	{ok, Table} = get_table_from_query(Select),
+	Table = get_table_from_query(Select),
 	Result = select:exec(Table, Select),
 	io:fwrite("~p~n", [Result]).
 
 get_table_from_query(Props) ->
-	{ok, TableName} = query_utils:table_name(Props),
-	case tables:get_table(TableName) of
-		{true, Table} ->
-			{ok, Table};
-		_Else ->
-			{err, "The table does not exist.~n"}
+	TableName = table:name(Props),
+	case table:get_table(TableName) of
+		{false, none} ->
+			{err, "The table does not exist.~n"};
+		Table ->
+			Table
 	end.

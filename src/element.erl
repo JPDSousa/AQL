@@ -6,11 +6,12 @@
 -define(EL_COLS, columns).
 -define(EL_PK, primary_key).
 -define(EL_DATA, data).
+-define(EL_ANON, none).
 
 -include("aql.hrl").
 -include("parser.hrl").
 
--export([new/2,
+-export([new/1, new/2,
         put/3,
         put_op/3,
         create_db_op/1,
@@ -21,18 +22,21 @@
 %% API functions
 %% ====================================================================
 
+new(Table) when ?is_table(Table) ->
+  new(?EL_ANON, Table).
+
 new(Key, Table) when ?is_dbkey(Key) and ?is_table(Table) ->
   Bucket = table:name(Table),
   BoundObject = crdt:create_bound_object(Key, ?CRDT_TYPE, Bucket),
   Columns = table:get_columns(Table),
-  PrimaryKey = table:primary_key(Columns),
+  PrimaryKey = table:primary_key(Table),
   Map0 = #{?EL_KEY => BoundObject, ?EL_COLS => Columns, ?EL_PK => PrimaryKey},
   Map0#{?EL_DATA => #{}}.
 
 put_op({Key, CRDT_TYPE}, Op, Element) when ?is_element(Element) ->
   append({Key, CRDT_TYPE}, Op, Element).
 
-put([Key, OKeys], [Value, OValues], Element) when ?is_element(Element) and length(OKeys) =:= length(OValues) ->
+put([Key | OKeys], [Value | OValues], Element) when ?is_element(Element) ->
   %check if Keys and Values have the same size
   Res = put(Key, Value, Element),
   case Res of
@@ -43,7 +47,7 @@ put([Key, OKeys], [Value, OValues], Element) when ?is_element(Element) and lengt
   end;
 put([], [], Element) ->
   {ok, Element};
-put(ColName, Value, Element) when ?is_cname(ColName) and ?is_element(Element) ->
+put(?PARSER_ATOM(ColName), Value, Element) when ?is_cname(ColName) and ?is_element(Element) ->
   Col = maps:get(ColName, attributes(Element)),
   case Col of
     {badkey, _Key} ->
@@ -54,9 +58,29 @@ put(ColName, Value, Element) when ?is_cname(ColName) and ?is_element(Element) ->
       {ok, NewElement}
   end.
 
+get(ColName, Element) when ?is_cname(ColName) and ?is_element(Element)->
+  Data = maps:get(?EL_DATA, Element),
+  maps:get(ColName, Data).
+
 create_db_op(Element) when ?is_element(Element) ->
   DataMap = maps:get(?EL_DATA, Element),
-  maps:to_list(DataMap).
+  Ops = maps:to_list(DataMap),
+  Key = key(Element),
+  crdt:create_map_update(Key, Ops).
+
+key(Element) when ?is_element(Element) ->
+  {Key, Type, Bucket} = maps:get(?EL_KEY, Element),
+  case Key of
+    ?EL_ANON ->
+      PkCol = primary_key(Element),
+      PkName = column:name(PkCol),
+      %check if value is valid
+      PkKey = get(PkName),
+      crdt:create_bound_object(PkKey, Type, Bucket);
+    _Else ->
+      crdt:create_bound_object(Key, Type, Bucket)
+  end.
+
 
 append(Key, WrappedValue, ?AQL_INTEGER, Element) ->
   case WrappedValue of

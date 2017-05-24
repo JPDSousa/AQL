@@ -48,11 +48,10 @@ get_table(Name) when ?is_tname(Name) ->
 	get_table(Tables, Name).
 
 get_table([Table | Tail], Name) when ?is_table(Table) and ?is_tname(Name) ->
-	{ok, TName} = name(Table),
+	TName = name(Table),
 	case TName of
 		Name ->
-			{_Column, Value} = Table,
-			{true, Value};
+			Table;
 		_Else ->
 			get_table(Tail, Name)
 	end;
@@ -87,7 +86,12 @@ get_column(Table, Column) when ?is_table(Table) and ?is_column(Column) ->
 
 get_columns(Table) when ?is_table(Table)->
 	CList = query_utils:search_clause(?PROP_COLUMNS, Table),
-	map_to_list(CList, fun column:name/1).
+	case CList of
+		{err, _ErrMsg} ->
+			CList;
+		_Else ->
+			map_to_list(CList, fun column:name/1)
+	end.
 
 map_to_list(List, KeyMapper) ->
 	map_to_list(List, KeyMapper, #{}).
@@ -99,14 +103,11 @@ map_to_list([Value | T], KeyMapper, Acc) ->
 map_to_list([], _KeyMapper, Acc) ->
 	Acc.
 
-primary_key(Table) when ?is_table(Table) ->
-	{ok, Columns} = get_columns(Table),
-	primary_key(Columns);
 primary_key(Columns) when ?is_columns(Columns) ->
 	Values = maps:values(Columns),
 	primary_key(Values);
 primary_key([{?PROP_ATTR, ColumnData} | Tail]) when ?is_column(ColumnData) ->
-	{ok, Constraint} = column:constraint(ColumnData),
+	Constraint = column:constraint(ColumnData),
 	case Constraint of
 		?PRIMARY_TOKEN ->
 			ColumnData;
@@ -114,7 +115,15 @@ primary_key([{?PROP_ATTR, ColumnData} | Tail]) when ?is_column(ColumnData) ->
 			primary_key(Tail)
 	end;
 primary_key([]) ->
-	{err, "Could not find primary key"}.
+	{err, "Could not find primary key"};
+primary_key(Table) when ?is_table(Table) ->
+	Columns = get_columns(Table),
+	case Columns of
+		{err, _ErrMsg} ->
+			Columns;
+		_Else ->
+			primary_key(Columns)
+	end.
 
 %% ====================================================================
 %% Internal functions

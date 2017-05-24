@@ -11,4 +11,4 @@ search_clause(Name, [{ClauseName, Clause} | Tail]) ->
       search_clause(Name, Tail)
     end;
 search_clause(Name, []) ->
-  {err, io:format("Could not resolve ~p clause", Name)}.
+  {err, lists:concat(["Could not resolve ", Name, " clause"])}.

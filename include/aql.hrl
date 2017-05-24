@@ -24,6 +24,7 @@
 -define(is_element(Element), is_map(Element)).
 
 -define(is_dbkey(Key), is_atom(Key)).
+-define(is_crdt(CRDT), is_atom(CRDT)).
 -define(is_dbbucket(Bucket), is_atom(Bucket)).
 
 

@@ -15,10 +15,10 @@
 -export([exec/2]).
 
 exec(Table, Props) ->
-	{ok, Keys} = query_utils:search_clause(?PROP_COLUMNS, Props),
-	{ok, Values} = query_utils:search_clause(?PROP_VALUES, Props),
+	Keys = query_utils:search_clause(?PROP_COLUMNS, Props),
+	Values = query_utils:search_clause(?PROP_VALUES, Props),
 	AnnElement = element:new(Table),
-	Element = element:insert(Keys, Values, AnnElement),
+	{ok, Element} = element:put(Keys, Values, AnnElement),
 	AntidoteOp = element:create_db_op(Element),
 	Res = antidote:update_objects(AntidoteOp),
 	case Res of

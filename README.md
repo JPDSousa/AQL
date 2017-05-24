@@ -129,9 +129,14 @@ Updates an already-existent row on the specified table.
 
 ```SQL
 UPDATE Persons
-SET FirstName = 'First2'
+SET FirstName ASSIGN 'First2'
 WHERE PersonID = 1
 ```
 
-Update is still very unstable. It is still only directed at bounded counter
-updates, but it will be soon expanded to all data types. *Use with caution*.
+Updates all rows in table `Persons` where `PersonID` has value 1. The update
+sets column `FirstName` to value `'First2'`. The operation keyword (e.g.
+`ASSIGN`) depends on the AQL datatype:
+* *VARCHAR*
+  * `ASSIGN` - sets the column(s) of type `VARCHAR` to the value specified.
+
+Just like in a SELECT operation, the where clause can only filter primary keys.

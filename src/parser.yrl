@@ -15,16 +15,12 @@ insert_keys_clause
 insert_keys
 insert_values_clause
 insert_values
-%delete
-delete_query
 %create
 create_query
 table_metadata
 create_keys
 attribute
 attribute_name
-%drop
-drop_query
 %update
 update_query
 set_clause
@@ -48,10 +44,6 @@ where
 insert
 into
 values
-%delete
-delete
-%drop
-drop
 %create
 create
 table
@@ -72,7 +64,7 @@ assign
 increment
 decrement
 equality
-comparators
+comparator
 conjunctive
 %list
 sep
@@ -107,10 +99,6 @@ query ->
     ['$1'].
 
 query ->
-    delete_query :
-    ['$1'].
-
-query ->
 	update_query :
 	['$1'].
 
@@ -118,20 +106,16 @@ query ->
 	create_query :
 	['$1'].
 
-query ->
-	drop_query :
-	['$1'].
-
 %%--------------------------------------------------------------------
 %% select query
 %%--------------------------------------------------------------------
 select_query ->
     select select_fields from atom_value :
-    {select, [{table, '$4'}, {keys, '$2'}]}.
+    {select, [{?PROP_TABLE_NAME, '$4'}, {?PROP_COLUMNS, '$2'}]}.
 
 select_query ->
     select select_fields from atom_value where where_clauses:
-    {select, [{table, '$4'}, {keys, '$2'}, {where, '$6'}]}.
+    {select, [{?PROP_TABLE_NAME, '$4'}, {?PROP_COLUMNS, '$2'}, {?WHERE_TOKEN, '$6'}]}.
 
 select_fields ->
     wildcard :
@@ -167,12 +151,12 @@ where_clause ->
 insert_query ->
     insert into atom_value insert_keys_clause
     values insert_values_clause :
-    {insert, [{table, '$3'}, {keys, '$4'}, {values, '$6'}]}.
+    {?INSERT_TOKEN, [{?PROP_TABLE_NAME, '$3'}, {?PROP_COLUMNS, '$4'}, {?PROP_VALUES, '$6'}]}.
 
 insert_query ->
     insert into atom_value
     values insert_values_clause :
-    {insert, [{table, '$3'}, {values, '$5'}]}.
+    {?INSERT_TOKEN, [{?PROP_TABLE_NAME, '$3'}, {?PROP_VALUES, '$5'}]}.
 
 insert_keys_clause ->
     start_list insert_keys end_list :
@@ -212,15 +196,15 @@ insert_values ->
 
 update_query ->
 	update atom_value set_clause :
-	{update, [{table, '$2'}, '$3']}.
+	{?UPDATE_TOKEN, [{?PROP_TABLE_NAME, '$2'}, '$3']}.
 
 update_query ->
 	update atom_value set_clause where where_clauses :
-	{update, [{table, '$2'}, '$3', {where, '$5'}]}.
+	{?UPDATE_TOKEN, [{?PROP_TABLE_NAME, '$2'}, '$3', {?WHERE_TOKEN, '$5'}]}.
 
 set_clause ->
 	set set_assignments :
-	{set, '$2'}.
+	{?SET_TOKEN, '$2'}.
 
 set_assignments ->
 	set_assignments conjunctive set_assignment :
@@ -242,7 +226,7 @@ set_assignment ->
 %increment expression
 set_assignment ->
 	atom_value increment :
-	{'$1', '$2', {number, 1}}.
+	{'$1', '$2', ?PARSER_NUMBER(1)}.
 
 set_assignment ->
 	atom_value increment number :
@@ -250,33 +234,26 @@ set_assignment ->
 
 set_assignment ->
 	atom_value decrement :
-	{'$1', '$2', {number , 1}}.
+	{'$1', '$2', ?PARSER_NUMBER(1)}.
 
 set_assignment ->
 	atom_value decrement number :
 	{'$1', '$2', '$3'}.
 
 %%--------------------------------------------------------------------
-%% delete query
-%%--------------------------------------------------------------------
-delete_query ->
-    delete from atom_value where where_clauses:
-    {delete, [{table, '$3'}, {record_time, '$5'}]}.
-
-%%--------------------------------------------------------------------
 %% create query
 %%--------------------------------------------------------------------
 create_query ->
 	create table table_metadata :
-	{create, {table, '$3'}}.
+	{?CREATE_TOKEN, '$3'}.
 
 create_query ->
 	create table_policy table table_metadata :
-	{create, {table, lists:flatten(['$2'], '$4')}}.
+	{create, lists:flatten(['$2'], '$4')}.
 
 table_metadata ->
 	atom_value start_list create_keys end_list :
-	[{name, '$1'}, {keys, '$3'}].
+	[{?PROP_TABLE_NAME, '$1'}, {?PROP_COLUMNS, '$3'}].
 
 create_keys ->
 	create_keys sep attribute :
@@ -292,26 +269,19 @@ create_keys ->
 
 attribute ->
 	attribute_name attribute_type primary key :
-	{attribute, [{name, '$1'}, '$2', {constraint, primary_key}]}.
+	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?PRIMARY_TOKEN)]}.
 
 attribute ->
-	attribute_name attribute_type check comparators value :
-	{attribute, [{name, '$1'}, '$2', {constraint, {'$4', '$5'}}]}.
+	attribute_name attribute_type check comparator value :
+	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT({'$4', '$5'})]}.
 
 attribute ->
 	attribute_name attribute_type :
-	{attribute, [{name, '$1'}, '$2', {constraint, none}]}.
+	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?NO_CONSTRAINT)]}.
 
 attribute_name ->
 	atom_value :
 	'$1'.
-
-%%--------------------------------------------------------------------
-%% drop query
-%%--------------------------------------------------------------------
-drop_query ->
-	drop table atom_value :
-	{drop, [{table, '$3'}]}.
 
 %%--------------------------------------------------------------------
 %% utils
@@ -328,3 +298,5 @@ value ->
 %% Erlang Code
 %%====================================================================
 Erlang code.
+
+-include("parser.hrl").

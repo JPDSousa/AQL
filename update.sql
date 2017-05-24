@@ -1,2 +1,3 @@
-UPDATE Student
-SET YearsLeft = YearsLeft-1;
+UPDATE Universities
+SET Institution ASSIGN '2'
+WHERE WorldRank = 1;

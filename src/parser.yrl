@@ -223,7 +223,7 @@ set_assignment ->
 	atom_value assign value :
 	{'$1', '$2', '$3'}.
 
-%increment expression
+%increment/decrement expression
 set_assignment ->
 	atom_value increment :
 	{'$1', '$2', ?PARSER_NUMBER(1)}.

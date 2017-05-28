@@ -22,23 +22,35 @@ create_map_updates(Acc, [Key | Tail], Updates) ->
 create_map_updates(Acc, [], _Updates) ->
   Acc.
 
-create_update(Table, Acc, [{?PARSER_ATOM(CollumnName), Op, OpParam} | Tail]) ->
-  {ok, Collumn} = table:get_column(Table, CollumnName),
-  {ok, Update} = resolve_op(Collumn, Op, OpParam),
+create_update(Table, Acc, [{?PARSER_ATOM(ColumnName), Op, OpParam} | Tail]) ->
+  {ok, Column} = table:get_column(Table, ColumnName),
+  {ok, Update} = resolve_op(Column, Op, OpParam),
   create_update(Table, lists:append(Acc, Update), Tail);
 create_update(_Table, Acc, []) ->
   Acc.
 
-resolve_op(Collumn, ?ASSIGN_OP(_TChars), {_TokenType, Value}) ->
-  CollumnType = column:type(Collumn),
-  CollumnName = column:name(Collumn),
-  case CollumnType of
-    ?AQL_VARCHAR ->
-      Op = crdt:assign_lww(Value),
-      Update = crdt:create_field_map_op(CollumnName, ?CRDT_VARCHAR, Op),
+% varchar -> assign
+resolve_op(Column, ?ASSIGN_OP(_TChars), ?PARSER_STRING(Value)) ->
+  Op = fun crdt:assign_lww/1,
+  resolve_op(Column, ?AQL_VARCHAR, ?CRDT_VARCHAR, Op, Value);
+% integer -> assign
+resolve_op(Column, ?ASSIGN_OP(_TChars), ?PARSER_NUMBER(Value)) ->
+  Op = fun crdt:set_integer/1,
+  resolve_op(Column, ?AQL_INTEGER, ?CRDT_INTEGER, Op, Value);
+% counter -> increment
+resolve_op(Column, ?INCREMENT_OP(_TChars), {_TokenType, Value}) ->
+  Op = fun crdt:increment_counter/1,
+  resolve_op(Column, ?AQL_COUNTER_INT, ?CRDT_COUNTER_INT, Op, Value).
+
+resolve_op(Column, AqlType, CrdtType, Op, Value) ->
+  CName = column:name(Column),
+  CType = column:type(Column),
+  case CType of
+    AqlType ->
+      Update = crdt:create_field_map_op(CName, CrdtType, Op(Value)),
       {ok, Update};
     _Else ->
-      resolve_fail(CollumnName, CollumnType)
+      resolve_fail(CName, CType)
   end.
 
 resolve_fail(CName, CType) ->

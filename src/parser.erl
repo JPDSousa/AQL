@@ -1098,7 +1098,7 @@ yeccpars2_25_(__Stack0) ->
 yeccpars2_27_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
-   lists : flatten ( __1 , __3 )
+   lists : flatten ( __1 , [ __3 ] )
   end | __Stack].
 
 -file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1104).

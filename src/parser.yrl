@@ -208,7 +208,7 @@ set_clause ->
 
 set_assignments ->
 	set_assignments conjunctive set_assignment :
-	lists:flatten('$1', '$3').
+	lists:flatten('$1', ['$3']).
 
 set_assignments ->
 	set_assignment conjunctive set_assignment :

@@ -12,6 +12,10 @@
 -include("aql.hrl").
 -include("parser.hrl").
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([new/1, new/2, key/2,
         put/3,
         update/3,
@@ -35,8 +39,14 @@ new(Key, Table) when ?is_dbkey(Key) and ?is_table(Table) ->
   BoundObject = key(Key, Bucket),
   Columns = table:get_columns(Table),
   PrimaryKey = table:primary_key(Table),
-  Map0 = #{?EL_KEY => BoundObject, ?EL_COLS => Columns, ?EL_PK => PrimaryKey},
-  Map0#{?EL_DATA => #{}}.
+  El0 = dict:new(),
+  El1 = dict:store(?EL_KEY, BoundObject, El0),
+  El2 = dict:store(?EL_COLS, Columns, El1),
+  El3 = dict:store(?EL_PK, PrimaryKey, El2),
+  dict:store(?EL_DATA, load_defaults(Columns), El3).
+
+load_defaults(_Columns) ->
+  dict:new().
 
 update(Key, [Op | Ops], Element) when tuple_size(Key) =:= 2 and ?is_element(Element) ->
   Element1 = update(Key, Op, Element),
@@ -138,3 +148,31 @@ primary_key(Element) when ?is_element(Element)->
 
 throwInvalidType(Type, CollumnName) ->
 	{err, lists:concat(["Invalid type ", Type, " for collumn: ", CollumnName])}.
+
+%%====================================================================
+%% Eunit tests
+%%====================================================================
+
+-ifdef(TEST).
+
+key_test() ->
+  Key = key,
+  TName = test,
+  Expected = crdt:create_bound_object(Key, ?CRDT_TYPE, TName),
+  ?assertEqual(Expected, key(Key, TName)).
+
+new_test() ->
+  Key = key,
+  {ok, Tokens, _} = scanner:string("CREATE LWW TABLE Universities (WorldRank INT PRIMARY KEY , Institution VARCHAR , NationalRank VARCHAR);"),
+	{ok, [{?CREATE_TOKEN, Table}]} = parser:parse(Tokens),
+  BoundObject = key(Key, table:name(Table)),
+  Columns = table:get_columns(Table),
+  Pk = table:primary_key(Table),
+  Data = load_defaults(Columns),
+  Element = new(Key, Table),
+  ?assertEqual(4, dict:size(Element)),
+  ?assertEqual(BoundObject, dict:fetch(?EL_KEY, Element)),
+  ?assertEqual(Columns, dict:fetch(?EL_COLS, Element)),
+  ?assertEqual(Pk, dict:fetch(?EL_PK, Element)),
+  ?assertEqual(Data, dict:fetch(?EL_DATA, Element)).
+-endif.

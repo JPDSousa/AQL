@@ -57,6 +57,9 @@ Rules.
 (key|KEY) : {token, ?KEY_KEY(TokenChars)}.
 (check|CHECK) : {token, ?CHECK_KEY(TokenChars)}.
 
+% default
+(default|DEFAULT) : {token, ?DEFAULT_KEY(TokenChars)}.
+
 % attribute types
 (varchar|VARCHAR) : {token, ?ATTR_KEY(?AQL_VARCHAR)}.
 (boolean|BOOLEAN) : {token, ?ATTR_KEY(?AQL_BOOLEAN)}.

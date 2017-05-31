@@ -45,6 +45,9 @@
 -define(GREATER_KEY, {?COMPARATOR_TOKEN, ?GREATER_TOKEN}).
 -define(SMALLER_TOKEN, smaller).
 -define(SMALLER_KEY, {?COMPARATOR_TOKEN, ?SMALLER_TOKEN}).
+%% default value
+-define(DEFAULT_TOKEN, default).
+-define(DEFAULT_KEY(TokenChars), {DEFAULT_TOKEN, TokenChars}).
 %% attributes
 -define(ATTR_TYPE_TOKEN, attribute_type).
 -define(ATTR_KEY(AttrType), {?ATTR_TYPE_TOKEN, AttrType}).

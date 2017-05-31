@@ -59,12 +59,13 @@
 -define(SET_TOKEN, set).
 -define(SET_CLAUSE(TokenChars), {?SET_TOKEN, TokenChars}).
 %%% set ops
+-define(SET_OP_T(Token, TChars), {Token, TChars}).
 -define(ASSIGN_TOKEN, assign).
--define(ASSIGN_OP(TokenChars), {?ASSIGN_TOKEN, TokenChars}).
+-define(ASSIGN_OP(TokenChars), ?SET_OP_T(?ASSIGN_TOKEN, TokenChars)).
 -define(INCREMENT_TOKEN, increment).
--define(INCREMENT_OP(TokenChars), {?INCREMENT_TOKEN, TokenChars}).
+-define(INCREMENT_OP(TokenChars), ?SET_OP_T(?INCREMENT_TOKEN, TokenChars)).
 -define(DECREMENT_TOKEN, decrement).
--define(DECREMENT_OP(TokenChars), {?DECREMENT_TOKEN, TokenChars}).
+-define(DECREMENT_OP(TokenChars), ?SET_OP_T(?DECREMENT_TOKEN, TokenChars)).
 
 %terms
 -define(PARSER_TYPE(Type, Value), {Type, Value}).

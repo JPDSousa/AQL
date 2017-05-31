@@ -208,7 +208,7 @@ set_clause ->
 
 set_assignments ->
 	set_assignments conjunctive set_assignment :
-	lists:flatten('$1', '$3').
+	lists:flatten('$1', ['$3']).
 
 set_assignments ->
 	set_assignment conjunctive set_assignment :
@@ -223,7 +223,7 @@ set_assignment ->
 	atom_value assign value :
 	{'$1', '$2', '$3'}.
 
-%increment expression
+%increment/decrement expression
 set_assignment ->
 	atom_value increment :
 	{'$1', '$2', ?PARSER_NUMBER(1)}.

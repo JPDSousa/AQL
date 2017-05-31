@@ -50,6 +50,12 @@ parse({file, Filename}) ->
 	Content = unicode:characters_to_list(File),
 	parse({str, Content}).
 
+start_shell() ->
+	io:fwrite("Welcome to the AQL Shell.~n"),
+	Line = io:get_line("AQL>"),
+	Result = aqlparser:parse({str, Line}),
+	start_shell().
+
 %%====================================================================
 %% Internal functions
 %%====================================================================

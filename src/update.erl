@@ -4,7 +4,15 @@
 -include("aql.hrl").
 -include("parser.hrl").
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([exec/2]).
+
+%%====================================================================
+%% API
+%%====================================================================
 
 exec(Table, Props) ->
   TName = table:name(Table),
@@ -15,6 +23,10 @@ exec(Table, Props) ->
   MapUpdates = create_map_updates([], Keys, FieldUpdates),
   {ok, _CT} = antidote:update_objects(MapUpdates),
   ok.
+
+%%====================================================================
+%% Internal functions
+%%====================================================================
 
 create_map_updates(Acc, [Key | Tail], Updates) ->
   MapUpdate = crdt:create_map_update(Key, Updates),
@@ -60,3 +72,53 @@ resolve_op(Column, AqlType, CrdtType, Op, Value) ->
 resolve_fail(CName, CType) ->
   Msg = string:concat(["Cannot assign to column ", CName, " of type ", CType]),
   {err, Msg}.
+
+
+%%====================================================================
+%% Eunit tests
+%%====================================================================
+
+-ifdef(TEST).
+create_column_aux(CName, CType) ->
+CAttrName = ?PROP_ATTR_NAME(?PARSER_ATOM(CName)),
+CAttrType = ?ATTR_KEY(CType),
+CAttrConstraint = ?PROP_ATTR_CONSTRAINT(?NO_CONSTRAINT),
+{?PROP_ATTR, [CAttrName, CAttrType, CAttrConstraint]}.
+
+resolve_op_varchar_test() ->
+  CName = col1,
+  CType = ?AQL_VARCHAR,
+  Column = create_column_aux(CName, CType),
+  Value = "Value",
+  Expected = {ok, crdt:create_field_map_op(CName, ?CRDT_VARCHAR, crdt:assign_lww(Value))},
+  Actual = resolve_op(Column, ?ASSIGN_OP("SomeChars"), ?PARSER_STRING(Value)),
+  ?assertEqual(Expected, Actual).
+
+resolve_op_integer_test() ->
+  CName = col1,
+  CType = ?AQL_INTEGER,
+  Column = create_column_aux(CName, CType),
+  Value = 2,
+  Expected = {ok, crdt:create_field_map_op(CName, ?CRDT_INTEGER, crdt:set_integer(Value))},
+  Actual = resolve_op(Column, ?ASSIGN_OP("SomeChars"), ?PARSER_NUMBER(Value)),
+  ?assertEqual(Expected, Actual).
+
+resolve_op_counter_increment_test() ->
+  CName = col1,
+  CType = ?AQL_COUNTER_INT,
+  Column = create_column_aux(CName, CType),
+  Value = 2,
+  Expected = {ok, crdt:create_field_map_op(CName, ?CRDT_COUNTER_INT, crdt:increment_counter(Value))},
+  Actual = resolve_op(Column, ?INCREMENT_OP("SomeChars"), ?PARSER_NUMBER(Value)),
+  ?assertEqual(Expected, Actual).
+
+resolve_op_counter_decrement_test() ->
+  CName = col1,
+  CType = ?AQL_COUNTER_INT,
+  Column = create_column_aux(CName, CType),
+  Value = 2,
+  Expected = {ok, crdt:create_field_map_op(CName, ?CRDT_COUNTER_INT, crdt:decrement_counter(Value))},
+  Actual = resolve_op(Column, ?DECREMENT_OP("SomeChars"), ?PARSER_NUMBER(Value)),
+  ?assertEqual(Expected, Actual).
+
+-endif.

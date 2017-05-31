@@ -138,5 +138,10 @@ sets column `FirstName` to value `'First2'`. The operation keyword (e.g.
 `ASSIGN`) depends on the AQL datatype:
 * *VARCHAR*
   * `ASSIGN` - sets the column(s) of type `VARCHAR` to the value specified.
+* *INTEGER*
+  * `ASSIGN` - sets the column(s) of type `INTEGER` or `INT` to the value specified.
+* *COUNTER_INT*
+  * `INCREMENT` - increments the column(s) of type `COUNTER_INT` by the value specified.
+  * `DECREMENT` - decrements the column(s) of type `COUNTER_INT` by the value specified.
 
 Just like in a SELECT operation, the where clause can only filter primary keys.

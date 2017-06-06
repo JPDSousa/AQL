@@ -50,6 +50,7 @@ table
 table_policy
 primary
 key
+default
 check
 attribute_type
 %update
@@ -270,6 +271,10 @@ create_keys ->
 attribute ->
 	attribute_name attribute_type primary key :
 	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?PRIMARY_TOKEN)]}.
+
+attribute ->
+	attribute_name attribute_type default value :
+	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?DEFAULT_KEY('$4'))]}.
 
 attribute ->
 	attribute_name attribute_type check comparator value :

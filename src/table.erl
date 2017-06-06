@@ -72,7 +72,7 @@ name(Table) when ?is_table(Table) ->
 			Name
   end.
 
-get_column(Columns, ColumnName) when ?is_columns(Columns) and ?is_cname(ColumnName) ->
+get_column(Columns, ColumnName) when ?is_cname(ColumnName) ->
 	Res = maps:get(ColumnName, Columns),
 	case Res of
 		{badkey, _ColumnName} ->
@@ -90,22 +90,19 @@ get_columns(Table) when ?is_table(Table)->
 		{err, _ErrMsg} ->
 			CList;
 		_Else ->
-			map_to_list(CList, fun column:name/1)
+			list_to_dict(CList, fun column:name/1)
 	end.
 
-map_to_list(List, KeyMapper) ->
-	map_to_list(List, KeyMapper, #{}).
+list_to_dict(List, KeyMapper) ->
+	list_to_dict(List, KeyMapper, dict:new()).
 
-map_to_list([Value | T], KeyMapper, Acc) ->
+list_to_dict([Value | T], KeyMapper, Acc) ->
 	Key = KeyMapper(Value),
-	NewMap = maps:put(Key, Value, Acc),
-	map_to_list(T, KeyMapper, NewMap);
-map_to_list([], _KeyMapper, Acc) ->
+	NewMap = dict:store(Key, Value, Acc),
+	list_to_dict(T, KeyMapper, NewMap);
+list_to_dict([], _KeyMapper, Acc) ->
 	Acc.
 
-primary_key(Columns) when ?is_columns(Columns) ->
-	Values = maps:values(Columns),
-	primary_key(Values);
 primary_key([{?PROP_ATTR, ColumnData} | Tail]) when ?is_column(ColumnData) ->
 	Constraint = column:constraint(ColumnData),
 	case Constraint of
@@ -123,7 +120,11 @@ primary_key(Table) when ?is_table(Table) ->
 			Columns;
 		_Else ->
 			primary_key(Columns)
-	end.
+	end;
+primary_key(Columns) ->
+	ColList = dict:to_list(Columns),
+	Values = lists:map(fun ({_Key, Value}) -> Value end, ColList),
+	primary_key(Values).
 
 %% ====================================================================
 %% Internal functions

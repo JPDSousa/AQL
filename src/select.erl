@@ -22,19 +22,23 @@ exec(Table, Select) ->
 	{ok, ProjRes}.
 
 project(Projection, Columns, [Result | Results], Acc) ->
-	ProjRes = project_row(Projection, Columns, dict:to_list(Result), dict:new()),
+	ProjRes = project_row(Projection, Columns, Result, []),
 	NewAcc = lists:flatten([ProjRes], Acc),
 	project(Projection, Columns, Results, NewAcc);
 project(_Projection, _Columns, [], Acc) ->
 	Acc.
 
+project_row(?PARSER_WILDCARD, _Columns, Result, _Acc) ->
+	Map = fun ({{Cname, _CType}, Value}) -> {Cname, Value} end,
+	lists:map(Map, Result);
 project_row([?PARSER_ATOM(Atom) | Tail], Columns, Result, Acc) ->
-	Column = dict:get(Atom, Columns),
+	io:fwrite("~p~n", [Columns]),
+	Column = dict:fetch(Atom, Columns),
 	NewColumns = dict:erase(Atom, Columns),
 	CType = column:type(Column),
-	Field = dict:get({Atom, CType}, Result),
-	NewResult = dict:erase({Atom, CType}, Result),
-	NewAcc = dict:store(Atom, Field, Acc),
+	Field = proplist:get_value({Atom, CType}, Result, undefined),
+	NewResult = proplist:delete({Atom, CType}, Result),
+	NewAcc = Acc ++ [{Atom, Field}],
 	project_row(Tail, NewColumns, NewResult, NewAcc);
 project_row([], _Columns, _Result, Acc) ->
 	Acc.

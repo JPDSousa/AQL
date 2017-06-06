@@ -2,10 +2,9 @@
 -module(element).
 
 -define(CRDT_TYPE, antidote_crdt_gmap).
--define(EL_KEY, key).
--define(EL_COLS, columns).
--define(EL_PK, primary_key).
--define(EL_DATA, data).
+-define(EL_KEY, '#key').
+-define(EL_COLS, '#cols').
+-define(EL_PK, '#pk').
 -define(EL_ANON, none).
 -define(DATA_ENTRY(Key, Crdt), {Key, Crdt}).
 
@@ -18,7 +17,6 @@
 
 -export([new/1, new/2, key/2,
         put/3,
-        update/3,
         get/3,
         create_db_op/1,
         primary_key/1,
@@ -43,26 +41,21 @@ new(Key, Table) when ?is_dbkey(Key) and ?is_table(Table) ->
   El1 = dict:store(?EL_KEY, BoundObject, El0),
   El2 = dict:store(?EL_COLS, Columns, El1),
   El3 = dict:store(?EL_PK, PrimaryKey, El2),
-  dict:store(?EL_DATA, load_defaults(Columns), El3).
+  load_defaults(dict:to_list(Columns), El3).
 
-load_defaults(_Columns) ->
-  dict:new().
-
-update(Key, [Op | Ops], Element) when tuple_size(Key) =:= 2 and ?is_element(Element) ->
-  Element1 = update(Key, Op, Element),
-  update(Key, Ops, Element1);
-update(Key, [], Element) when tuple_size(Key) =:= 2 and ?is_element(Element) ->
-  Element;
-update({Key, Type}, Op, Element) when ?is_element(Element) ->
-  Cols = attributes(Element),
-  case maps:find(Key, Cols) of
-    {ok, _Value} ->
-      append({Key, Type}, Op, Element);
+load_defaults([{CName, Column}|Columns], Element) ->
+  Constraint = column:constraint(Column),
+  case Constraint of
+    {?DEFAULT_TOKEN, Value} ->
+      NewEl = append(CName, Value, column:type(Column), Element),
+      load_defaults(Columns, NewEl);
     _Else ->
-      {err, badkey}
-  end.
+      load_defaults(Columns, Element)
+  end;
+load_defaults([], Element) ->
+  Element.
 
-put([Key | OKeys], [Value | OValues], Element) when ?is_element(Element) ->
+put([Key | OKeys], [Value | OValues], Element) ->
   %check if Keys and Values have the same size
   Res = put(Key, Value, Element),
   case Res of
@@ -73,8 +66,8 @@ put([Key | OKeys], [Value | OValues], Element) when ?is_element(Element) ->
   end;
 put([], [], Element) ->
   {ok, Element};
-put(?PARSER_ATOM(ColName), Value, Element) when ?is_cname(ColName) and ?is_element(Element) ->
-  Col = maps:get(ColName, attributes(Element)),
+put(?PARSER_ATOM(ColName), Value, Element) when ?is_cname(ColName) ->
+  Col = dict:fetch(ColName, attributes(Element)),
   case Col of
     {badkey, _Key} ->
       {err, lists:concat(["Column ", ColName, " does not exist."])};
@@ -93,57 +86,47 @@ set_if_primary(Col, Value, Element) ->
       Element
   end.
 
-get(ColName, Crdt, Element) when ?is_cname(ColName) and ?is_element(Element)->
-  Data = maps:get(?EL_DATA, Element),
-  maps:get(?DATA_ENTRY(ColName, Crdt), Data).
+get(ColName, Crdt, Element) when ?is_cname(ColName) ->
+  dict:fetch(?DATA_ENTRY(ColName, Crdt), Element).
 
-create_db_op(Element) when ?is_element(Element) ->
-  DataMap = maps:get(?EL_DATA, Element),
+create_db_op(Element) ->
+  DataMap = dict:filter(fun is_data_field/2, Element),
   Ops = maps:to_list(DataMap),
   Key = key(Element),
   crdt:create_map_update(Key, Ops).
 
-key(Element) when ?is_element(Element) ->
+is_data_field(?EL_KEY, _V) -> false;
+is_data_field(?EL_PK, _V) -> false;
+is_data_field(?EL_COLS, _V) -> false;
+is_data_field(_Key, _V) -> false.
+
+key(Element) ->
   maps:get(?EL_KEY, Element).
 
-set_key(?PARSER_TYPE(_Type, Value), Element) when ?is_element(Element) ->
-  {_Key, Type, Bucket} = maps:get(?EL_KEY, Element),
-  Element#{?EL_KEY => crdt:create_bound_object(Value, Type, Bucket)}.
+set_key(?PARSER_TYPE(_Type, Value), Element) ->
+  {_Key, Type, Bucket} = dict:fetch(?EL_KEY, Element),
+  dict:store(?EL_KEY, crdt:create_bound_object(Value, Type, Bucket), Element).
 
 append(Key, WrappedValue, ?AQL_INTEGER, Element) ->
-  case WrappedValue of
-    ?PARSER_NUMBER(Value) ->
-      Op = crdt:set_integer(Value),
-      append(?DATA_ENTRY(Key, ?CRDT_INTEGER), Op, Element);
-    {Type, _Value} ->
-      throwInvalidType(Type, Key)
-  end;
+  append(Key, WrappedValue, ?CRDT_INTEGER, ?PARSER_NUMBER_TOKEN, fun crdt:set_integer/1, Element);
 append(Key, WrappedValue, ?AQL_VARCHAR, Element) ->
-  case WrappedValue of
-    ?PARSER_STRING(Value) ->
-      Op = crdt:assign_lww(Value),
-      append(?DATA_ENTRY(Key, ?CRDT_VARCHAR), Op, Element);
-    {Type, _Value} ->
-      throwInvalidType(Type, Key)
-  end;
+  append(Key, WrappedValue, ?CRDT_VARCHAR, ?PARSER_STRING_TOKEN, fun crdt:assign_lww/1, Element);
 append(Key, WrappedValue, ?AQL_COUNTER_INT, Element) ->
+  append(Key, WrappedValue, ?CRDT_COUNTER_INT, ?PARSER_NUMBER_TOKEN, fun crdt:increment_counter/1, Element).
+
+append(Key, WrappedValue, Crdt, PTToken, Op, Element) ->
   case WrappedValue of
-    ?PARSER_NUMBER(Value) ->
-      Op = crdt:increment_counter(Value),
-      append(?DATA_ENTRY(Key, ?CRDT_COUNTER_INT), Op, Element);
+    ?PARSER_TYPE(PTToken, Value) ->
+      OpVal = Op(Value),
+      dict:store(?DATA_ENTRY(Key, Crdt), OpVal, Element);
     {Type, _Value} ->
       throwInvalidType(Type, Key)
   end.
 
-append(Key, Value, Element) when ?is_element(Element)->
-  Data0 = maps:get(?EL_DATA, Element),
-  Data1 = Data0#{Key => Value},
-  Element#{?EL_DATA => Data1}.
-
-attributes(Element) when ?is_element(Element) ->
+attributes(Element) ->
   maps:get(?EL_COLS, Element).
 
-primary_key(Element) when ?is_element(Element)->
+primary_key(Element) ->
   maps:get(?EL_PK, Element).
 
 throwInvalidType(Type, CollumnName) ->
@@ -155,6 +138,11 @@ throwInvalidType(Type, CollumnName) ->
 
 -ifdef(TEST).
 
+create_table_aux() ->
+  {ok, Tokens, _} = scanner:string("CREATE LWW TABLE Universities (WorldRank INT PRIMARY KEY , Institution VARCHAR , NationalRank INTEGER DEFAULT 1);"),
+	{ok, [{?CREATE_TOKEN, Table}]} = parser:parse(Tokens),
+  Table.
+
 key_test() ->
   Key = key,
   TName = test,
@@ -163,16 +151,35 @@ key_test() ->
 
 new_test() ->
   Key = key,
-  {ok, Tokens, _} = scanner:string("CREATE LWW TABLE Universities (WorldRank INT PRIMARY KEY , Institution VARCHAR , NationalRank VARCHAR);"),
-	{ok, [{?CREATE_TOKEN, Table}]} = parser:parse(Tokens),
+  Table = create_table_aux(),
   BoundObject = key(Key, table:name(Table)),
   Columns = table:get_columns(Table),
   Pk = table:primary_key(Table),
-  Data = load_defaults(Columns),
+  Data = dict:to_list(load_defaults(dict:to_list(Columns), dict:new())),
   Element = new(Key, Table),
   ?assertEqual(4, dict:size(Element)),
   ?assertEqual(BoundObject, dict:fetch(?EL_KEY, Element)),
   ?assertEqual(Columns, dict:fetch(?EL_COLS, Element)),
   ?assertEqual(Pk, dict:fetch(?EL_PK, Element)),
-  ?assertEqual(Data, dict:fetch(?EL_DATA, Element)).
+  AssertPred = fun ({K, V}) -> ?assertEqual(V, dict:fetch(K, Element)) end,
+  lists:foreach(AssertPred, Data).
+
+new_1_test() ->
+  Table = create_table_aux(),
+  ?assertEqual(new(?EL_ANON, Table), new(Table)).
+
+append_raw_test() ->
+  Key = key,
+  Table = create_table_aux(),
+  % assert not fail
+  append(key, ?PARSER_STRING("Value"), ?CRDT_VARCHAR, ?PARSER_STRING_TOKEN, fun crdt:assign_lww/1, new(Key, Table)),
+  ?assertEqual(true, true).
+
+create_db_op_test() ->
+  Key = key,
+  Table = create_table_aux(),
+  El = new(Key, Table),
+  io:fwrite("~p~n", [dict:to_list(El)]),
+  ?assertEqual(crdt:set_integer(1), get('NationalRank', ?CRDT_INTEGER, El)).
+
 -endif.

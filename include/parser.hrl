@@ -71,10 +71,13 @@
 -define(DECREMENT_OP(TokenChars), ?SET_OP_T(?DECREMENT_TOKEN, TokenChars)).
 
 %terms
+-define(PARSER_ATOM_TOKEN, atom_value).
+-define(PARSER_STRING_TOKEN, string).
+-define(PARSER_NUMBER_TOKEN, number).
 -define(PARSER_TYPE(Type, Value), {Type, Value}).
--define(PARSER_ATOM(Atom), ?PARSER_TYPE(atom_value, Atom)).
--define(PARSER_STRING(String), ?PARSER_TYPE(string, String)).
--define(PARSER_NUMBER(Number), ?PARSER_TYPE(number, Number)).
+-define(PARSER_ATOM(Atom), ?PARSER_TYPE(?PARSER_ATOM_TOKEN, Atom)).
+-define(PARSER_STRING(String), ?PARSER_TYPE(?PARSER_STRING_TOKEN, String)).
+-define(PARSER_NUMBER(Number), ?PARSER_TYPE(?PARSER_NUMBER_TOKEN, Number)).
 
 % extras
 -define(PARSER_EQUALITY, {equality, ignore}).

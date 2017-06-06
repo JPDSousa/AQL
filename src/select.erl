@@ -18,27 +18,26 @@ exec(Table, Select) ->
 	Condition = query_utils:search_clause(?WHERE_TOKEN, Select),
 	Keys = where:scan(TName, Condition),
 	{ok, Results, _CT} = antidote:read_objects(Keys),
-	ProjRes = project(Projection, table:get_columns(Table), Results, []),
+	ProjRes = project(Projection, Results, []),
 	{ok, ProjRes}.
 
-project(Projection, Columns, [Result | Results], Acc) ->
-	ProjRes = project_row(Projection, Columns, Result, []),
+project(Projection, [Result | Results], Acc) ->
+	FormattedResult = lists:map(fun remove_type_map/1, Result),
+	ProjRes = project_row(Projection, FormattedResult, []),
 	NewAcc = lists:flatten([ProjRes], Acc),
-	project(Projection, Columns, Results, NewAcc);
-project(_Projection, _Columns, [], Acc) ->
+	project(Projection, Results, NewAcc);
+project(_Projection, [], Acc) ->
 	Acc.
 
-project_row(?PARSER_WILDCARD, _Columns, Result, _Acc) ->
-	Map = fun ({{Cname, _CType}, Value}) -> {Cname, Value} end,
-	lists:map(Map, Result);
-project_row([?PARSER_ATOM(Atom) | Tail], Columns, Result, Acc) ->
-	io:fwrite("~p~n", [Columns]),
-	Column = dict:fetch(Atom, Columns),
-	NewColumns = dict:erase(Atom, Columns),
-	CType = column:type(Column),
-	Field = proplist:get_value({Atom, CType}, Result, undefined),
-	NewResult = proplist:delete({Atom, CType}, Result),
+project_row(?PARSER_WILDCARD, Result, _Acc) ->
+	Result;
+project_row([?PARSER_ATOM(Atom) | Tail], Result, Acc) ->
+	Field = proplists:get_value(Atom, Result, undefined),
+	NewResult = proplists:delete(Atom, Result),
 	NewAcc = Acc ++ [{Atom, Field}],
-	project_row(Tail, NewColumns, NewResult, NewAcc);
-project_row([], _Columns, _Result, Acc) ->
+	project_row(Tail, NewResult, NewAcc);
+project_row([], _Result, Acc) ->
 	Acc.
+
+remove_type_map({{CName, _CType}, Value}) ->
+	{CName, Value}.

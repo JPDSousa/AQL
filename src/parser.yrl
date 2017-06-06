@@ -129,7 +129,7 @@ projection ->
 
 select_fields ->
   select_fields sep atom_value :
-	lists:flatten('$1', '$3').
+	lists:flatten('$1', ['$3']).
 
 select_fields ->
 	atom_value :

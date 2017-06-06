@@ -25,20 +25,17 @@ clone this repository and open a terminal in the project folder.
 
 First of all, you must have one (or more) running instances of AntidoteDB.
 
-Run `$ rebar3 compile` to download all the required dependencies.
+Run `$ make compile` to download all the required dependencies.
 
 ```
-    $ rebar3 compile
+    $ make compile
 ```
 
 Then, to start the shell in development mode run the following command:
+
 ```
-    $ rebar3 shell --name=NODE_NAME --setcookie ANTIDOTE_COOKIE
+    $ make shell
 ```
-Where NODE_NAME is the full node name (the host must be the same of one of the
-AntidoteDB nodes), and the cookie is the
-[erlang cookie](http://erlang.org/doc/reference_manual/distributed.html)
-specified (AntidoteDB's default cookie is `antidote`).
 
 ## Getting started
 
@@ -83,12 +80,11 @@ Creates a new table. If the table already exists the new table will overwrite it
  (any concurrent conflicts will be resolved with a *Last Writer Wins* CRP).
 
 ```SQL
-CREATE TABLE Persons (
-    PersonID int PRIMARY KEY,
-    LastName varchar,
-    FirstName varchar,
-    Address varchar,
-    City varchar
+CREATE TABLE Student (
+	id INT PRIMARY KEY,
+	Name VARCHAR,
+	Age INT DEFAULT 18,
+	YearsLeft COUNTER_INT CHECK GREATER 0,
 );
 ```
 
@@ -96,9 +92,12 @@ The primary key constraint must be specified after the column which is to be
 set as the primary key (multiple columns as primary keys are not supported).
 Any datatype can be a primary key.
 
-AQL also supports conditions on counters (`counter_int`). Custom conditions are
- currently not supported for this datatype. This means that all `counter_int`
- columns will have a `> 0` constraint.
+AQL also supports constraints on counters (`counter_int`). Custom conditions are
+currently not supported for this datatype. This means that all `counter_int`
+columns will have a `> 0` constraint.
+
+You can also define a default value for a record (not allowed in primary keys).
+Default values are used when no value is specified for a record.
 
 ### SELECT
 

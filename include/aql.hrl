@@ -17,11 +17,8 @@
 -define(is_table(Table), is_list(Table)).
 -define(is_tname(Name), is_atom(Name)).
 
--define(is_columns(Columns), is_map(Columns)).
 -define(is_column(Column), is_list(Column)).
 -define(is_cname(Name), is_atom(Name)).
-
--define(is_element(Element), is_map(Element)).
 
 -define(is_dbkey(Key), is_atom(Key)).
 -define(is_crdt(CRDT), is_atom(CRDT)).

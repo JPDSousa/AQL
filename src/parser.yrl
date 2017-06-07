@@ -5,6 +5,7 @@ Nonterminals
 query
 %select
 select_query
+projection
 select_fields
 %where
 where_clauses
@@ -111,24 +112,28 @@ query ->
 %% select query
 %%--------------------------------------------------------------------
 select_query ->
-    select select_fields from atom_value :
+    select projection from atom_value :
     {select, [{?PROP_TABLE_NAME, '$4'}, {?PROP_COLUMNS, '$2'}]}.
 
 select_query ->
-    select select_fields from atom_value where where_clauses:
+    select projection from atom_value where where_clauses:
     {select, [{?PROP_TABLE_NAME, '$4'}, {?PROP_COLUMNS, '$2'}, {?WHERE_TOKEN, '$6'}]}.
 
-select_fields ->
+projection ->
     wildcard :
     '$1'.
 
-select_fields ->
-    select_fields sep atom_value :
-	lists:flatten('$1', '$3').
+projection ->
+	select_fields:
+	'$1'.
 
 select_fields ->
-	atom_value sep atom_value :
-	['$1', '$3'].
+  select_fields sep atom_value :
+	lists:flatten('$1', ['$3']).
+
+select_fields ->
+	atom_value :
+	['$1'].
 
 %%--------------------------------------------------------------------
 %% where clause

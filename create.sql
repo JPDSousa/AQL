@@ -4,7 +4,8 @@ CREATE LWW TABLE Universities (
 	NationalRank VARCHAR
 );
 CREATE TABLE Student (
-	Name VARCHAR PRIMARY KEY,
+	id INT PRIMARY KEY,
+	Name VARCHAR,
 	Age INT,
-	YearsLeft COUNTER_INT CHECK > 0
-)
+	YearsLeft COUNTER_INT CHECK GREATER 0
+);

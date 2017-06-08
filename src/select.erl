@@ -4,29 +4,40 @@
 
 -module(select).
 
+-include("parser.hrl").
+
 %% ====================================================================
 %% API functions
 %% ====================================================================
 -export([exec/2]).
 
 exec(Table, Select) ->
-	{ok, TName} = tables:name(Table),
-	{ok, _Projection} = query_utils:search_clause(keys, Select),
-	{ok, Condition} = query_utils:search_clause(where, Select),
-	scan(TName, Condition, []).
+	TName = table:name(Table),
+	Projection = query_utils:search_clause(?PROP_COLUMNS, Select),
+	% validate projection fields
+	Condition = query_utils:search_clause(?WHERE_TOKEN, Select),
+	Keys = where:scan(TName, Condition),
+	{ok, Results, _CT} = antidote:read_objects(Keys),
+	ProjRes = project(Projection, Results, []),
+	{ok, ProjRes}.
 
-%% ====================================================================
-%% Internal functions
-%% ====================================================================
+project(Projection, [Result | Results], Acc) ->
+	FormattedResult = lists:map(fun remove_type_map/1, Result),
+	ProjRes = project_row(Projection, FormattedResult, []),
+	NewAcc = lists:flatten([ProjRes], Acc),
+	project(Projection, Results, NewAcc);
+project(_Projection, [], Acc) ->
+	Acc.
 
-scan(TableName, [{{atom_value, _Left}, Arop, {string, Str}} | Tail], Acc) ->
-	case Arop of
-		{assignment, "="} ->
-			NewAcc = lists:append(Acc, element:new(Str, TableName)),
-			scan(TableName, Tail, NewAcc);
-		_Else ->
-			{err, "Not supported yet! :)"}
-	end;
-scan(_TName, [], Acc) ->
-	{ok, Results, _CT} = antidote:read_objects(Acc),
-	{ok, Results}.
+project_row(?PARSER_WILDCARD, Result, _Acc) ->
+	Result;
+project_row([?PARSER_ATOM(Atom) | Tail], Result, Acc) ->
+	Field = proplists:get_value(Atom, Result, undefined),
+	NewResult = proplists:delete(Atom, Result),
+	NewAcc = Acc ++ [{Atom, Field}],
+	project_row(Tail, NewResult, NewAcc);
+project_row([], _Result, Acc) ->
+	Acc.
+
+remove_type_map({{CName, _CType}, Value}) ->
+	{CName, Value}.

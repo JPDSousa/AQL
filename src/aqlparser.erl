@@ -9,7 +9,7 @@
 -include("parser.hrl").
 
 %% Application callbacks
--export([parse/1]).
+-export([parse/1, start_shell/0]).
 
 %%====================================================================
 %% API
@@ -17,11 +17,21 @@
 
 -spec parse(input()) -> ok | queryResult().
 parse({str, Query}) ->
-	{ok, Tokens, _} = scanner:string(Query),
-	%io:fwrite("~p~n", [Tokens]),
-	{ok, ParseTree} = parser:parse(Tokens),
-	%io:fwrite("~p~n", [ParseTree]),
-	exec(ParseTree);
+	TokensRes = scanner:string(Query),
+	case TokensRes of
+		{ok, Tokens, _} ->
+			%io:fwrite("~p~n", [Tokens]),
+			ParseRes = parser:parse(Tokens),
+			case ParseRes of
+				{ok, ParseTree} ->
+					%io:fwrite("~p~n", [ParseTree]),
+					exec(ParseTree);
+				_Else ->
+					TokensRes
+			end;
+		_Else ->
+			TokensRes
+	end;
 parse({file, Filename}) ->
 	{ok, File} = file:read_file(Filename),
 	Content = unicode:characters_to_list(File),
@@ -29,8 +39,10 @@ parse({file, Filename}) ->
 
 start_shell() ->
 	io:fwrite("Welcome to the AQL Shell.~n"),
-	Line = io:get_line("AQL>"),
-	Result = aqlparser:parse({str, Line}),
+	{ok, [Line]} = io:fread("AQL>", "~s"),
+	io:fwrite("~p~n", [Line]),
+	%Res = parse({str, Line}),
+	%io:fwrite("~p~n~p~n", [Line, Res]),
 	start_shell().
 
 %%====================================================================

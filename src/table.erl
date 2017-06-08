@@ -13,7 +13,7 @@
 				write_table/1,
 				get_table/1, get_table/2]).
 
--export([get_column/2, get_columns/1,
+-export([get_column/2, get_columns/1, get_col_names/1,
 				primary_key/1,
 				name/1]).
 
@@ -91,6 +91,15 @@ get_columns(Table) when ?is_table(Table)->
 			CList;
 		_Else ->
 			list_to_dict(CList, fun column:name/1)
+	end.
+
+get_col_names(Table) when ?is_table(Table) ->
+	CList = query_utils:search_clause(?PROP_COLUMNS, Table),
+	case CList of
+		{err, _ErrMsg} ->
+			CList;
+		_Else ->
+			lists:map(fun column:name/1, CList)
 	end.
 
 list_to_dict(List, KeyMapper) ->

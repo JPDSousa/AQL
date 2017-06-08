@@ -59,23 +59,23 @@ put([Key | OKeys], [Value | OValues], Element) ->
   %check if Keys and Values have the same size
   Res = put(Key, Value, Element),
   case Res of
-    {ok, NewElement} ->
-      put(OKeys, OValues, NewElement);
     {err, _Msg} ->
-      Res
+      Res;
+    _Else ->
+      put(OKeys, OValues, Res)
   end;
 put([], [], Element) ->
   {ok, Element};
 put(?PARSER_ATOM(ColName), Value, Element) when ?is_cname(ColName) ->
-  Col = dict:fetch(ColName, attributes(Element)),
-  case Col of
-    {badkey, _Key} ->
-      {err, lists:concat(["Column ", ColName, " does not exist."])};
-    _Else ->
+  Cols = attributes(Element),
+  ResCol = dict:find(ColName, Cols),
+  case ResCol of
+    {ok, Col} ->
       ColType = column:type(Col),
       Element1 = set_if_primary(Col, Value, Element),
-      Element2 = append(ColName, Value, ColType, Element1),
-      {ok, Element2}
+      append(ColName, Value, ColType, Element1);
+    _Else ->
+      {err, lists:concat(["Column ", ColName, " does not exist."])}
   end.
 
 set_if_primary(Col, Value, Element) ->
@@ -91,17 +91,17 @@ get(ColName, Crdt, Element) when ?is_cname(ColName) ->
 
 create_db_op(Element) ->
   DataMap = dict:filter(fun is_data_field/2, Element),
-  Ops = maps:to_list(DataMap),
+  Ops = dict:to_list(DataMap),
   Key = key(Element),
   crdt:create_map_update(Key, Ops).
 
 is_data_field(?EL_KEY, _V) -> false;
 is_data_field(?EL_PK, _V) -> false;
 is_data_field(?EL_COLS, _V) -> false;
-is_data_field(_Key, _V) -> false.
+is_data_field(_Key, _V) -> true.
 
 key(Element) ->
-  maps:get(?EL_KEY, Element).
+  dict:fetch(?EL_KEY, Element).
 
 set_key(?PARSER_TYPE(_Type, Value), Element) ->
   {_Key, Type, Bucket} = dict:fetch(?EL_KEY, Element),
@@ -124,10 +124,10 @@ append(Key, WrappedValue, Crdt, PTToken, Op, Element) ->
   end.
 
 attributes(Element) ->
-  maps:get(?EL_COLS, Element).
+  dict:fetch(?EL_COLS, Element).
 
 primary_key(Element) ->
-  maps:get(?EL_PK, Element).
+  dict:fetch(?EL_PK, Element).
 
 throwInvalidType(Type, CollumnName) ->
 	{err, lists:concat(["Invalid type ", Type, " for collumn: ", CollumnName])}.
@@ -142,6 +142,18 @@ create_table_aux() ->
   {ok, Tokens, _} = scanner:string("CREATE LWW TABLE Universities (WorldRank INT PRIMARY KEY , Institution VARCHAR , NationalRank INTEGER DEFAULT 1);"),
 	{ok, [{?CREATE_TOKEN, Table}]} = parser:parse(Tokens),
   Table.
+
+primary_key_test() ->
+  Table = create_table_aux(),
+  Pk = table:primary_key(Table),
+  Element = new(key, Table),
+  ?assertEqual(Pk, primary_key(Element)).
+
+attributes_test() ->
+  Table = create_table_aux(),
+  Columns = table:get_columns(Table),
+  Element = new(key, Table),
+  ?assertEqual(Columns, attributes(Element)).
 
 key_test() ->
   Key = key,

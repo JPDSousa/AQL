@@ -162,7 +162,7 @@ insert_query ->
 insert_query ->
     insert into atom_value
     values insert_values_clause :
-    {?INSERT_TOKEN, [{?PROP_TABLE_NAME, '$3'}, {?PROP_VALUES, '$5'}]}.
+    {?INSERT_TOKEN, [{?PROP_TABLE_NAME, '$3'}, {?PROP_COLUMNS, ?PARSER_WILDCARD}, {?PROP_VALUES, '$5'}]}.
 
 insert_keys_clause ->
     start_list insert_keys end_list :

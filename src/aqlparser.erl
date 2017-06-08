@@ -39,11 +39,13 @@ parse({file, Filename}) ->
 
 start_shell() ->
 	io:fwrite("Welcome to the AQL Shell.~n"),
-	{ok, [Line]} = io:fread("AQL>", "~s"),
-	io:fwrite("~p~n", [Line]),
-	%Res = parse({str, Line}),
-	%io:fwrite("~p~n~p~n", [Line, Res]),
-	start_shell().
+	read_and_exec().
+
+read_and_exec() ->
+	Line = io:get_line("AQL>"),
+	Res = parse({str, Line}),
+	io:fwrite(">> ~p~n", [Res]),
+	read_and_exec().
 
 %%====================================================================
 %% Internal functions
@@ -65,8 +67,8 @@ exec({?UPDATE_TOKEN, Update}) ->
 	ok = update:exec(Table, Update);
 exec({?SELECT_TOKEN, Select}) ->
 	Table = get_table_from_query(Select),
-	Result = select:exec(Table, Select),
-	io:fwrite("~p~n", [Result]).
+	Res = select:exec(Table, Select),
+	io:fwrite("~p~n", [Res]).
 
 get_table_from_query(Props) ->
 	TableName = table:name(Props),

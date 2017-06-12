@@ -1,0 +1,10 @@
+sudo: false
+language: erlang
+notifications:
+  email: false
+otp_release:
+  - 18.0
+before_script:
+  - make compile
+script:
+  - make test

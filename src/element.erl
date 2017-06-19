@@ -1,12 +1,14 @@
 
 -module(element).
 
+-define(DATA_ENTRY(Key, Crdt), {Key, Crdt}).
 -define(CRDT_TYPE, antidote_crdt_gmap).
 -define(EL_KEY, '#key').
 -define(EL_COLS, '#cols').
 -define(EL_PK, '#pk').
+-define(EL_ST, ?DATA_ENTRY('#st', antidote_crdt_mvreg)).
+-define(EL_REFS, ?DATA_ENTRY('#refs', antidote_crdt_gset)).
 -define(EL_ANON, none).
--define(DATA_ENTRY(Key, Crdt), {Key, Crdt}).
 
 -include("aql.hrl").
 -include("parser.hrl").
@@ -41,7 +43,8 @@ new(Key, Table) when ?is_dbkey(Key) and ?is_table(Table) ->
   El1 = dict:store(?EL_KEY, BoundObject, El0),
   El2 = dict:store(?EL_COLS, Columns, El1),
   El3 = dict:store(?EL_PK, PrimaryKey, El2),
-  load_defaults(dict:to_list(Columns), El3).
+  El4 = dict:store(?EL_ST, ipa:new(), El3),
+  load_defaults(dict:to_list(Columns), El4).
 
 load_defaults([{CName, Column}|Columns], Element) ->
   Constraint = column:constraint(Column),
@@ -91,7 +94,7 @@ get(ColName, Crdt, Element) when ?is_cname(ColName) ->
 
 create_db_op(Element) ->
   DataMap = dict:filter(fun is_data_field/2, Element),
-  Ops = maps:to_list(DataMap),
+  Ops = dict:to_list(DataMap),
   Key = key(Element),
   crdt:create_map_update(Key, Ops).
 
@@ -157,7 +160,7 @@ new_test() ->
   Pk = table:primary_key(Table),
   Data = dict:to_list(load_defaults(dict:to_list(Columns), dict:new())),
   Element = new(Key, Table),
-  ?assertEqual(4, dict:size(Element)),
+  ?assertEqual(5, dict:size(Element)),
   ?assertEqual(BoundObject, dict:fetch(?EL_KEY, Element)),
   ?assertEqual(Columns, dict:fetch(?EL_COLS, Element)),
   ?assertEqual(Pk, dict:fetch(?EL_PK, Element)),

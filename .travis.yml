@@ -5,6 +5,13 @@ notifications:
 otp_release:
   - 18.0
 before_script:
+  - git clone https://github.com/SyncFree/antidote.git
+  - cd antidote
+  - git checkout master
+  - make rel
+  - cd ..
   - make compile
+  - /antidote/bin/env start &
+  - sleep 10
 script:
   - make test

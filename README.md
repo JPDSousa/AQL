@@ -35,6 +35,11 @@ Run `$ make compile` to download all the required dependencies.
 Then, to start the shell in development mode run the following command:
 
 ```
+    $ make dev
+```
+
+You can also start the shell in deployment mode:
+```
     $ make shell
 ```
 

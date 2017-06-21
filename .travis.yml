@@ -8,6 +8,7 @@ notifications:
 otp_release:
   - 18.0
 install:
+  - pip install --upgrade pip
   - pip install codecov
 script:
   - make test

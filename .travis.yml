@@ -12,4 +12,5 @@ install:
 script:
   - make test
 after_success:
-  codecov
+  - bin/covertool -cover _build/test/cover/eunit.coverdata -appname aql -output cobertura.xml
+  - codecov

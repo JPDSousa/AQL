@@ -17,7 +17,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([new/1, new/2, key/2,
+-export([new/1, new/2, create_key/2,
         put/3,
         get/3,
         create_db_op/1,
@@ -28,15 +28,18 @@
 %% API functions
 %% ====================================================================
 
-key(Key, TName) ->
+create_key(Key, TName) ->
   crdt:create_bound_object(Key, ?CRDT_TYPE, TName).
+
+primary_key_column(Element) ->
+  dict:fetch(?EL_KEY, Element).
 
 new(Table) when ?is_table(Table) ->
   new(?EL_ANON, Table).
 
 new(Key, Table) when ?is_dbkey(Key) and ?is_table(Table) ->
   Bucket = table:name(Table),
-  BoundObject = key(Key, Bucket),
+  BoundObject = create_key(Key, Bucket),
   Columns = table:get_columns(Table),
   PrimaryKey = table:primary_key(Table),
   El0 = dict:new(),
@@ -70,15 +73,15 @@ put([Key | OKeys], [Value | OValues], Element) ->
 put([], [], Element) ->
   {ok, Element};
 put(?PARSER_ATOM(ColName), Value, Element) when ?is_cname(ColName) ->
-  Col = dict:fetch(ColName, attributes(Element)),
-  case Col of
-    {badkey, _Key} ->
-      {err, lists:concat(["Column ", ColName, " does not exist."])};
-    _Else ->
+  Res = dict:find(ColName, attributes(Element)),
+  case Res of
+    {ok, Col} ->
       ColType = column:type(Col),
       Element1 = set_if_primary(Col, Value, Element),
       Element2 = append(ColName, Value, ColType, Element1),
-      {ok, Element2}
+      {ok, Element2};
+    _Else ->
+      throwNoSuchColumn(ColName)
   end.
 
 set_if_primary(Col, Value, Element) ->
@@ -90,21 +93,24 @@ set_if_primary(Col, Value, Element) ->
   end.
 
 get(ColName, Crdt, Element) when ?is_cname(ColName) ->
-  dict:fetch(?DATA_ENTRY(ColName, Crdt), Element).
+  Res = dict:find(?DATA_ENTRY(ColName, Crdt), Element),
+  case Res of
+    {ok, Value} ->
+      Value;
+    _Else ->
+      throwNoSuchColumn(ColName)
+  end.
 
 create_db_op(Element) ->
   DataMap = dict:filter(fun is_data_field/2, Element),
   Ops = dict:to_list(DataMap),
-  Key = key(Element),
+  Key = primary_key_column(Element),
   crdt:create_map_update(Key, Ops).
 
 is_data_field(?EL_KEY, _V) -> false;
 is_data_field(?EL_PK, _V) -> false;
 is_data_field(?EL_COLS, _V) -> false;
-is_data_field(_Key, _V) -> false.
-
-key(Element) ->
-  maps:get(?EL_KEY, Element).
+is_data_field(_Key, _V) -> true.
 
 set_key(?PARSER_TYPE(_Type, Value), Element) ->
   {_Key, Type, Bucket} = dict:fetch(?EL_KEY, Element),
@@ -127,13 +133,16 @@ append(Key, WrappedValue, Crdt, PTToken, Op, Element) ->
   end.
 
 attributes(Element) ->
-  maps:get(?EL_COLS, Element).
+  dict:fetch(?EL_COLS, Element).
 
 primary_key(Element) ->
-  maps:get(?EL_PK, Element).
+  dict:fetch(?EL_PK, Element).
 
 throwInvalidType(Type, CollumnName) ->
-	{err, lists:concat(["Invalid type ", Type, " for collumn: ", CollumnName])}.
+	throw(lists:concat(["Invalid type ", Type, " for collumn: ", CollumnName])).
+
+throwNoSuchColumn(ColName) ->
+  throw(lists:concat(["Column ", ColName, " does not exist."])).
 
 %%====================================================================
 %% Eunit tests
@@ -150,12 +159,12 @@ key_test() ->
   Key = key,
   TName = test,
   Expected = crdt:create_bound_object(Key, ?CRDT_TYPE, TName),
-  ?assertEqual(Expected, key(Key, TName)).
+  ?assertEqual(Expected, create_key(Key, TName)).
 
 new_test() ->
   Key = key,
   Table = create_table_aux(),
-  BoundObject = key(Key, table:name(Table)),
+  BoundObject = create_key(Key, table:name(Table)),
   Columns = table:get_columns(Table),
   Pk = table:primary_key(Table),
   Data = dict:to_list(load_defaults(dict:to_list(Columns), dict:new())),
@@ -172,17 +181,23 @@ new_1_test() ->
   ?assertEqual(new(?EL_ANON, Table), new(Table)).
 
 append_raw_test() ->
-  Key = key,
   Table = create_table_aux(),
+  Value = ?PARSER_STRING("Value"),
+  Op = fun crdt:assign_lww/1,
+  Element = new(key, Table),
   % assert not fail
-  append(key, ?PARSER_STRING("Value"), ?CRDT_VARCHAR, ?PARSER_STRING_TOKEN, fun crdt:assign_lww/1, new(Key, Table)),
-  ?assertEqual(true, true).
+  append(key, Value, ?CRDT_VARCHAR, ?PARSER_STRING_TOKEN, Op, Element).
 
-create_db_op_test() ->
+put_test() ->
+  Table = create_table_aux(),
+  El = new('1', Table),
+  {ok, El1} = put([?PARSER_ATOM('NationalRank')], [?PARSER_NUMBER(3)], El),
+  ?assertEqual(crdt:set_integer(3), get('NationalRank', ?CRDT_INTEGER, El1)).
+
+get_default_test() ->
   Key = key,
   Table = create_table_aux(),
   El = new(Key, Table),
-  io:fwrite("~p~n", [dict:to_list(El)]),
   ?assertEqual(crdt:set_integer(1), get('NationalRank', ?CRDT_INTEGER, El)).
 
 -endif.

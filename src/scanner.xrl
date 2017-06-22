@@ -54,7 +54,9 @@ Rules.
 
 % constraints
 (primary|PRIMARY) : {token, ?PRIMARY_KEY(TokenChars)}.
+(foreign|FOREIGN) : {token, ?FOREIGN_KEY(TokenChars)}.
 (key|KEY) : {token, ?KEY_KEY(TokenChars)}.
+(references|REFERENCES) : {token, ?REFERENCES_KEY(TokenChars)}.
 (check|CHECK) : {token, ?CHECK_KEY(TokenChars)}.
 
 % default

@@ -91,19 +91,39 @@ CREATE TABLE Student (
 	Name VARCHAR,
 	Age INT DEFAULT 18,
 	YearsLeft COUNTER_INT CHECK GREATER 0,
+	Passport_id INTEGER FOREIGN KEY REFERENCES Passport(id)
 );
 ```
+
+#### Primary keys
 
 The primary key constraint must be specified after the column which is to be
 set as the primary key (multiple columns as primary keys are not supported).
 Any datatype can be a primary key.
 
+Primary keys only guarantee uniqueness. Although, if two rows with the same 
+primary key are inserted (either concurrently or not), both insertions will be
+merged, and all columns columns will also be merged according to its datatypes.
+
+#### Check Constraints
+
 AQL also supports constraints on counters (`counter_int`). Custom conditions are
 currently not supported for this datatype. This means that all `counter_int`
 columns will have a `> 0` constraint.
 
+#### Default Values
+
 You can also define a default value for a record (not allowed in primary keys).
 Default values are used when no value is specified for a record.
+
+#### Foreign Keys
+
+Foreign keys allow users to create custom relations between elements of different
+tables. To create a foreign key relation simply add to the column that will be 
+the foreign key: `FOREIGN KEY REFERENCES _parentTable_(_parentColumn_)`, where 
+`_parentTable_` is the parent table name (e.g. `Passport`) and `_parentColumn_` is
+the parent column name (e.g. `id`). All foreign keys must point to columns with a 
+unique constraint, which is only guaranteed in primary keys.
 
 ### SELECT
 

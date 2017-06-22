@@ -21,6 +21,7 @@ create_query
 table_metadata
 create_keys
 attribute
+attribute_constraint
 attribute_name
 %update
 update_query
@@ -50,7 +51,9 @@ create
 table
 table_policy
 primary
+foreign
 key
+references
 default
 check
 attribute_type
@@ -129,7 +132,7 @@ projection ->
 
 select_fields ->
   select_fields sep atom_value :
-	lists:flatten('$1', ['$3']).
+	lists:append('$1', ['$3']).
 
 select_fields ->
 	atom_value :
@@ -140,12 +143,12 @@ select_fields ->
 %%--------------------------------------------------------------------
 
 where_clauses ->
-   where_clause :
-   ['$1'].
-
-where_clauses ->
    where_clauses conjunctive where_clause :
-   lists:append('$1', '$3').
+   lists:append('$1', ['$3']).
+
+ where_clauses ->
+	 where_clause :
+	 ['$1'].
 
 where_clause ->
 	atom_value equality value :
@@ -170,27 +173,19 @@ insert_keys_clause ->
 
 insert_keys ->
 	insert_keys sep atom_value :
-	lists:flatten(['$1', '$3']).
-
-insert_keys ->
-	atom_value sep atom_value :
-	['$1', '$3'].
+	lists:append('$1', ['$3']).
 
 insert_keys ->
 	atom_value :
 	['$1'].
 
 insert_values_clause ->
-    start_list insert_values end_list :
-    '$2'.
+  start_list insert_values end_list :
+  '$2'.
 
 insert_values ->
 	insert_values sep value :
-	lists:flatten(['$1', '$3']).
-
-insert_values ->
-	value sep value :
-	['$1', '$3'].
+	lists:append('$1', ['$3']).
 
 insert_values ->
 	value :
@@ -214,11 +209,7 @@ set_clause ->
 
 set_assignments ->
 	set_assignments conjunctive set_assignment :
-	lists:flatten('$1', ['$3']).
-
-set_assignments ->
-	set_assignment conjunctive set_assignment :
-	['$1', '$3'].
+	lists:append('$1', ['$3']).
 
 set_assignments ->
 	set_assignment :
@@ -255,7 +246,7 @@ create_query ->
 
 create_query ->
 	create table_policy table table_metadata :
-	{create, lists:flatten(['$2'], '$4')}.
+	{create, lists:append(['$2'], '$4')}.
 
 table_metadata ->
 	atom_value start_list create_keys end_list :
@@ -263,31 +254,35 @@ table_metadata ->
 
 create_keys ->
 	create_keys sep attribute :
-	lists:flatten(['$1', '$3']).
-
-create_keys ->
-	attribute sep attribute :
-	['$1', '$3'].
+	lists:append('$1', ['$3']).
 
 create_keys ->
 	attribute :
-	'$1'.
+	['$1'].
 
 attribute ->
-	attribute_name attribute_type primary key :
-	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?PRIMARY_TOKEN)]}.
-
-attribute ->
-	attribute_name attribute_type default value :
-	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?DEFAULT_KEY('$4'))]}.
-
-attribute ->
-	attribute_name attribute_type check comparator value :
-	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT({'$4', '$5'})]}.
+	attribute_name attribute_type attribute_constraint :
+	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT('$3')]}.
 
 attribute ->
 	attribute_name attribute_type :
 	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?NO_CONSTRAINT)]}.
+
+attribute_constraint ->
+	primary key :
+	?PRIMARY_TOKEN.
+
+attribute_constraint ->
+	foreign key references atom_value start_list atom_value end_list :
+	?FOREIGN_KEY({'$4', '$6'}).
+
+attribute_constraint ->
+	default value :
+	?DEFAULT_KEY('$2').
+
+attribute_constraint ->
+	check comparator value :
+	{'$2', '$3'}.
 
 attribute_name ->
 	atom_value :
@@ -310,3 +305,73 @@ value ->
 Erlang code.
 
 -include("parser.hrl").
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
+%%====================================================================
+%% Eunit tests
+%%====================================================================
+-ifdef(TEST).
+
+test_parser(String) ->
+	{ok, Tokens, _} = scanner:string(String),
+	{ok, _ParserTree} = parse(Tokens).
+
+create_table_simple_test() ->
+	test_parser("CREATE TABLE Test (a VARCHAR, b INTEGER)"),
+	test_parser("CREATE TABLE Test (a VARCHAR)"),
+	test_parser("CREATE TABLE TestA (a VARCHAR);CREATE TABLE TestB (b INTEGER)").
+
+create_table_pk_test() ->
+	test_parser("CREATE TABLE Test (a VARCHAR PRIMARY KEY, b INTEGER)").
+
+create_table_def_test() ->
+	test_parser("CREATE TABLE Test (a VARCHAR, b INTEGER DEFAULT 5)").
+
+create_table_check_test() ->
+	test_parser("CREATE TABLE Test(a INTEGER, b COUNTER_INT CHECK GREATER 0)").
+
+create_table_fk_test() ->
+	test_parser("CREATE TABLE Test (a VARCHAR, b INTEGER FOREIGN KEY REFERENCES TestB(b))").
+
+update_simple_test() ->
+	test_parser("UPDATE Test SET name ASSIGN 'aaa'"),
+	test_parser("UPDATE Test SET name ASSIGN 'a';UPDATE Test SET name ASSIGN 'b'").
+
+update_multiple_test() ->
+	test_parser("UPDATE Test SET name ASSIGN 'aaa' AND age INCREMENT 3"),
+	test_parser("UPDATE Test SET name ASSIGN 'aaa' AND age INCREMENT 3 AND loc ASSIGN 'en' WHERE loc = 'pt'").
+
+update_assign_test() ->
+	test_parser("UPDATE Test SET name ASSIGN 'aaa' WHERE name = 'a'"),
+	test_parser("UPDATE Test SET age ASSIGN 50 WHERE name = 'aa'").
+
+update_increment_test() ->
+	test_parser("UPDATE Test SET countCars INCREMENT WHERE model = 'b'"),
+	test_parser("UPDATE Test SET countCars INCREMENT 2 WHERE model = 'b'").
+
+update_decrement_test() ->
+	test_parser("UPDATE Test SET countCars DECREMENT WHERE model = 'b'"),
+	test_parser("UPDATE Test SET countCars DECREMENT 2 WHERE model = 'b'").
+
+insert_simple_test() ->
+	test_parser("INSERT INTO Test VALUES ('a', 5, 'b')"),
+	test_parser("INSERT INTO Test (a, b, c) VALUES ('a', 5, 'b')"),
+	test_parser("INSERT INTO Test VALUES ('a')"),
+	test_parser("INSERT INTO Test (a) VALUES (5)").
+
+select_simple_test() ->
+	test_parser("SELECT * FROM Test"),
+	test_parser("SELECT a, b FROM Test WHERE c = 5").
+
+select_projection_test() ->
+	test_parser("SELECT a FROM Test"),
+	test_parser("SELECT a, b FROM Test").
+
+select_where_test() ->
+	test_parser("SELECT a FROM Test WHERE b =2"),
+	test_parser("SELECT a FROM Test WHERE b = 2 AND c =3 AND d= 4").
+
+-endif.

@@ -5,8 +5,8 @@
 
 -include("aql.hrl").
 
--export([create_add_all/2,
-		 		create_remove_all/2]).
+-export([add_all/1,
+		 		remove_all/1]).
 
 -export([create_field_map_op/3,
 				create_map_update/2,
@@ -26,15 +26,15 @@
 %% Crdt_Set functions
 %% ====================================================================
 
-create_add_all(BoundObject, Entries) when is_list(Entries) ->
-	create_op(BoundObject, add_all, Entries);
-create_add_all(BoundObject, Entry) ->
-	create_add_all(BoundObject, [Entry]).
+add_all(Entries) when is_list(Entries) ->
+	{add_all, Entries};
+add_all(Entry) ->
+	{add, Entry}.
 
-create_remove_all(BoundObject, Entries) when is_list(Entries) ->
-	create_op(BoundObject, remove_all, Entries);
-create_remove_all(BoundObject, Entry) ->
- 	create_remove_all(BoundObject, [Entry]).
+remove_all(Entries) when is_list(Entries) ->
+	{remove_all, Entries};
+remove_all(Entry) ->
+ 	{remove, Entry}.
 
 %% ====================================================================
 %% Crdt_map functions

@@ -274,7 +274,7 @@ attribute_constraint ->
 
 attribute_constraint ->
 	foreign key references atom_value start_list atom_value end_list :
-	?FOREIGN_KEY({'$3', '$5'}).
+	?FOREIGN_KEY({'$4', '$6'}).
 
 attribute_constraint ->
 	default value :

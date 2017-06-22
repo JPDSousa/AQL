@@ -16,7 +16,7 @@ scan(TName, Conditions) ->
 scan(TName, [{?PARSER_ATOM(_ClValue), Arop, {_AQLType, Str}} | T], Acc) ->
 	case Arop of
 		?PARSER_EQUALITY ->
-			NewAcc = lists:flatten(Acc, [element:key(Str, TName)]),
+			NewAcc = lists:flatten(Acc, [element:create_key(Str, TName)]),
 			scan(TName, T, NewAcc);
 		_Else ->
 			{err, "Not supported yet! :)"}

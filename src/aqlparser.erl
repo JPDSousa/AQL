@@ -27,7 +27,7 @@ parse({str, Query}) ->
 					%io:fwrite("~p~n", [ParseTree]),
 					exec(ParseTree);
 				_Else ->
-					TokensRes
+					ParseRes
 			end;
 		_Else ->
 			TokensRes

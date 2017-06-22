@@ -1,4 +1,5 @@
 # AQL
+[![Build Status](https://travis-ci.org/JPDSousa/AQL.svg?branch=master)](https://travis-ci.org/JPDSousa/AQL)
 
 An SQL-like interface for [AntidoteDB](https://github.com/SyncFree/antidote).
 
@@ -33,6 +34,11 @@ Run `$ make compile` to download all the required dependencies.
 
 Then, to start the shell in development mode run the following command:
 
+```
+    $ make dev
+```
+
+You can also start the shell in deployment mode:
 ```
     $ make shell
 ```

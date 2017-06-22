@@ -15,7 +15,7 @@
 -export([exec/2]).
 
 exec(Table, Props) ->
-	Keys = query_utils:search_clause(?PROP_COLUMNS, Props),
+	Keys = get_keys(Table, Props),
 	Values = query_utils:search_clause(?PROP_VALUES, Props),
 	AnnElement = element:new(Table),
 	{ok, Element} = element:put(Keys, Values, AnnElement),
@@ -44,3 +44,13 @@ update_ref(ParentKey, ChildKey, TxId) ->
 	RefOp = crdt:add_all(ChildKey),
 	Update = crdt:create_single_map_update(ParentKey, RefKey, RefType, RefOp),
 	antidote:update_objects(Update, TxId).
+
+get_keys(Table, Props) ->
+	Clause = query_utils:search_clause(?PROP_COLUMNS, Props),
+	case Clause of
+		?PARSER_WILDCARD ->
+			Keys = table:get_col_names(Table),
+			lists:map(fun (V) -> ?PARSER_ATOM(V) end, Keys);
+		_Else ->
+			Clause
+	end.

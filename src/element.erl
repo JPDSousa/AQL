@@ -50,7 +50,7 @@ new(Key, Table) when ?is_dbkey(Key) and ?is_table(Table) ->
   El1 = dict:store(?EL_KEY, BoundObject, El0),
   El2 = dict:store(?EL_COLS, Columns, El1),
   El3 = dict:store(?EL_PK, PrimaryKey, El2),
-  El4 = dict:store(?EL_ST, ipa:new(), El3),
+  El4 = dict:store(?EL_ST, crdt:assign_lww(ipa:new()), El3),
   El5 = dict:store(?EL_FK, [], El4),
   load_defaults(dict:to_list(Columns), El5).
 
@@ -188,7 +188,7 @@ new_test() ->
   ?assertEqual(BoundObject, dict:fetch(?EL_KEY, Element)),
   ?assertEqual(Columns, dict:fetch(?EL_COLS, Element)),
   ?assertEqual(Pk, dict:fetch(?EL_PK, Element)),
-  ?assertEqual(ipa:new(), dict:fetch(?EL_ST, Element)),
+  ?assertEqual(crdt:assign_lww(ipa:new()), dict:fetch(?EL_ST, Element)),
   ?assertEqual([], dict:fetch(?EL_FK, Element)),
   AssertPred = fun ({K, V}) -> ?assertEqual(V, dict:fetch(K, Element)) end,
   lists:foreach(AssertPred, Data).

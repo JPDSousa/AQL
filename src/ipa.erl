@@ -1,14 +1,6 @@
 
 -module(ipa).
 
--define(CREATE(Token, Visible), {Token, Visible}).
-
--define(INSERT, ?CREATE(i, true)).
--define(TOUCH, ?CREATE(t, true)).
--define(TOUCH_CASCADE, ?CREATE(tc, true)).
--define(DELETE, ?CREATE(d, false)).
--define(DELETE_CASCADE, ?CREATE(dc, false)).
-
 -define(ADD_WINS, add).
 -define(REMOVE_WINS, remove).
 
@@ -20,28 +12,18 @@
 -endif.
 
 -export([new/0,
-          is_visible/1, value/1,
-          status/2,
-          from_value/1]).
+          is_visible/1,
+          status/2]).
 
 new() ->
-  ?INSERT.
+  i.
 
-from_value(i) -> ?INSERT;
-from_value(t) -> ?TOUCH;
-from_value(tc) -> ?TOUCH_CASCADE;
-from_value(d) -> ?DELETE;
-from_value(dc) -> ?DELETE_CASCADE.
-
-is_visible(?CREATE(_T, Visible)) ->
-  Visible;
-is_visible(_Invalid) ->
-  err.
-
-value(?CREATE(Token, _V)) ->
-  Token;
-value(_Invalid) ->
-  err.
+is_visible(i) -> true;
+is_visible(t) -> true;
+is_visible(tc) -> true;
+is_visible(d) -> false;
+is_visible(dc) -> false;
+is_visible(_Invalid) -> err.
 
 status(Mode, [H | T]) ->
   Heu = heu(Mode),
@@ -58,10 +40,8 @@ heu(?REMOVE_WINS) -> ?H_RW;
 heu(_Invalid) -> err.
 
 merge(Heu, X, Y) ->
-  TokenX = value(X),
-  TokenY = value(Y),
-  ScoreX = proplists:get_value(TokenX, Heu),
-  ScoreY = proplists:get_value(TokenY, Heu),
+  ScoreX = proplists:get_value(X, Heu),
+  ScoreY = proplists:get_value(Y, Heu),
   if
     ScoreX >= ScoreY ->
       X;
@@ -75,28 +55,23 @@ merge(Heu, X, Y) ->
 
 -ifdef(TEST).
 new_test() ->
-  ?assertEqual(?INSERT, new()).
+  ?assertEqual(i, new()).
 
 is_visible_ok_test() ->
-  ?assertEqual(is_visible(?CREATE(a, true)), true).
+  ?assertEqual(is_visible(i), true),
+  ?assertEqual(is_visible(d), false).
 
 is_visible_err_test() ->
   ?assertEqual(is_visible(random_value), err).
 
-value_ok_test() ->
-  ?assertEqual(value(?CREATE(a, b)), a).
-
-value_err_test() ->
-  ?assertEqual(value(random_value), err).
-
 status_test() ->
-  List1 = [?DELETE],
-  List2 = [?INSERT, ?DELETE, ?TOUCH_CASCADE],
-  List3 = [?DELETE, ?DELETE, ?DELETE_CASCADE],
-  List4 = [?INSERT, ?DELETE, ?DELETE],
-  ?assertEqual(status(?ADD_WINS, List1), ?DELETE),
-  ?assertEqual(status(?ADD_WINS, List2), ?INSERT),
-  ?assertEqual(status(?ADD_WINS, List3), ?DELETE),
-  ?assertEqual(status(?ADD_WINS, List4), ?INSERT).
+  List1 = [d],
+  List2 = [i, d, tc],
+  List3 = [d, d, dc],
+  List4 = [i, d, d],
+  ?assertEqual(status(?ADD_WINS, List1), d),
+  ?assertEqual(status(?ADD_WINS, List2), i),
+  ?assertEqual(status(?ADD_WINS, List3), d),
+  ?assertEqual(status(?ADD_WINS, List4), i).
 
 -endif.

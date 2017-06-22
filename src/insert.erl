@@ -40,7 +40,7 @@ exec(Table, Props) ->
 %% ====================================================================
 
 update_ref(ParentKey, ChildKey, TxId) ->
-	{RefKey, RefType} = element:ref_keys(),
+	{RefKey, RefType} = element:refs_key(),
 	RefOp = crdt:add_all(ChildKey),
 	Update = crdt:create_single_map_update(ParentKey, RefKey, RefType, RefOp),
 	antidote:update_objects(Update, TxId).

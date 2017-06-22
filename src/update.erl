@@ -29,7 +29,7 @@ exec(Table, Props) ->
 %%====================================================================
 
 create_map_updates(Acc, [Key | Tail], Updates) ->
-  MapUpdate = crdt:create_map_update(Key, Updates),
+  MapUpdate = crdt:map_update(Key, Updates),
   create_map_updates(lists:flatten(Acc, [MapUpdate]), Tail, Updates);
 create_map_updates(Acc, [], _Updates) ->
   Acc.
@@ -63,7 +63,7 @@ resolve_op(Column, AqlType, CrdtType, Op, Value) ->
   CType = column:type(Column),
   case CType of
     AqlType ->
-      Update = crdt:create_field_map_op(CName, CrdtType, Op(Value)),
+      Update = crdt:field_map_op(CName, CrdtType, Op(Value)),
       {ok, Update};
     _Else ->
       resolve_fail(CName, CType)
@@ -90,7 +90,7 @@ resolve_op_varchar_test() ->
   CType = ?AQL_VARCHAR,
   Column = create_column_aux(CName, CType),
   Value = "Value",
-  Expected = {ok, crdt:create_field_map_op(CName, ?CRDT_VARCHAR, crdt:assign_lww(Value))},
+  Expected = {ok, crdt:field_map_op(CName, ?CRDT_VARCHAR, crdt:assign_lww(Value))},
   Actual = resolve_op(Column, ?ASSIGN_OP("SomeChars"), ?PARSER_STRING(Value)),
   ?assertEqual(Expected, Actual).
 
@@ -99,7 +99,7 @@ resolve_op_integer_test() ->
   CType = ?AQL_INTEGER,
   Column = create_column_aux(CName, CType),
   Value = 2,
-  Expected = {ok, crdt:create_field_map_op(CName, ?CRDT_INTEGER, crdt:set_integer(Value))},
+  Expected = {ok, crdt:field_map_op(CName, ?CRDT_INTEGER, crdt:set_integer(Value))},
   Actual = resolve_op(Column, ?ASSIGN_OP("SomeChars"), ?PARSER_NUMBER(Value)),
   ?assertEqual(Expected, Actual).
 
@@ -108,7 +108,7 @@ resolve_op_counter_increment_test() ->
   CType = ?AQL_COUNTER_INT,
   Column = create_column_aux(CName, CType),
   Value = 2,
-  Expected = {ok, crdt:create_field_map_op(CName, ?CRDT_COUNTER_INT, crdt:increment_counter(Value))},
+  Expected = {ok, crdt:field_map_op(CName, ?CRDT_COUNTER_INT, crdt:increment_counter(Value))},
   Actual = resolve_op(Column, ?INCREMENT_OP("SomeChars"), ?PARSER_NUMBER(Value)),
   ?assertEqual(Expected, Actual).
 
@@ -117,7 +117,7 @@ resolve_op_counter_decrement_test() ->
   CType = ?AQL_COUNTER_INT,
   Column = create_column_aux(CName, CType),
   Value = 2,
-  Expected = {ok, crdt:create_field_map_op(CName, ?CRDT_COUNTER_INT, crdt:decrement_counter(Value))},
+  Expected = {ok, crdt:field_map_op(CName, ?CRDT_COUNTER_INT, crdt:decrement_counter(Value))},
   Actual = resolve_op(Column, ?DECREMENT_OP("SomeChars"), ?PARSER_NUMBER(Value)),
   ?assertEqual(Expected, Actual).
 

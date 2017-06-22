@@ -8,9 +8,9 @@
 -export([add_all/1,
 		 		remove_all/1]).
 
--export([create_field_map_op/3,
-				create_map_update/2,
-				create_single_map_update/4]).
+-export([field_map_op/3, field_map_op/2,
+				map_update/2,
+				single_map_update/4]).
 
 -export([increment_counter/1,
 				decrement_counter/1]).
@@ -40,17 +40,20 @@ remove_all(Entry) ->
 %% Crdt_map functions
 %% ====================================================================
 
-create_field_map_op(Key, Type, Op) ->
-	{{Key, Type}, Op}.
+field_map_op(Key, Type, Op) ->
+	field_map_op({Key, Type}, Op).
 
-create_map_update(BoundObject, ListOps) when is_list(ListOps) ->
+field_map_op(Key, Op) ->
+	{Key, Op}.
+
+map_update(BoundObject, ListOps) when is_list(ListOps) ->
 	{BoundObject, update, ListOps};
-create_map_update(BoundObject, Op) ->
-	create_map_update(BoundObject, [Op]).
+map_update(BoundObject, Op) ->
+	map_update(BoundObject, [Op]).
 
-create_single_map_update(BoundObject, FieldKey, FieldType, FieldOp) ->
-	FieldUpdate = create_field_map_op(FieldKey, FieldType, FieldOp),
-	create_map_update(BoundObject, FieldUpdate).
+single_map_update(BoundObject, FieldKey, FieldType, FieldOp) ->
+	FieldUpdate = field_map_op(FieldKey, FieldType, FieldOp),
+	map_update(BoundObject, FieldUpdate).
 
 %% ====================================================================
 %% Integer functions

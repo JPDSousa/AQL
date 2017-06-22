@@ -18,7 +18,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([new/1, new/2, create_key/2, refs_key/0,
+-export([new/1, new/2, create_key/2, refs_key/0, st_key/0,
         put/3,
         get/3,
         create_db_op/1,
@@ -31,6 +31,9 @@
 
 refs_key() ->
   ?EL_REFS.
+
+st_key() ->
+  ?EL_ST.
 
 create_key(Key, TName) ->
   crdt:create_bound_object(Key, ?CRDT_TYPE, TName).
@@ -122,7 +125,7 @@ create_db_op(Element) ->
   DataMap = dict:filter(fun is_data_field/2, Element),
   Ops = dict:to_list(DataMap),
   Key = primary_key(Element),
-  crdt:create_map_update(Key, Ops).
+  crdt:map_update(Key, Ops).
 
 is_data_field(?EL_KEY, _V) -> false;
 is_data_field(?EL_PK, _V) -> false;

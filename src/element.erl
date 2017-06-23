@@ -87,7 +87,7 @@ put(?PARSER_ATOM(ColName), Value, Element) when ?is_cname(ColName) ->
       ColType = column:type(Col),
       Element1 = handle_fk(Col, Value, Element),
       Element2 = set_if_primary(Col, Value, Element1),
-      {ok, append(ColName, Value, ColType, Element2)};
+      append(ColName, Value, ColType, Element2);
     _Else ->
       throwNoSuchColumn(ColName)
   end.
@@ -175,9 +175,8 @@ create_table_aux() ->
 
 primary_key_test() ->
   Table = create_table_aux(),
-  Pk = table:primary_key(Table),
   Element = new(key, Table),
-  ?assertEqual(Pk, primary_key(Element)).
+  ?assertEqual(create_key(key, 'Universities'), primary_key(Element)).
 
 attributes_test() ->
   Table = create_table_aux(),

@@ -1246,7 +1246,7 @@ yeccpars2_43_(__Stack0) ->
 yeccpars2_49_(__Stack0) ->
  [__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
-   { ? INSERT_TOKEN , [ { ? PROP_TABLE_NAME , __3 } , { ? PROP_VALUES , __5 } ] }
+   { ? INSERT_TOKEN , [ { ? PROP_TABLE_NAME , __3 } , { ? PROP_COLUMNS , ? PARSER_WILDCARD } , { ? PROP_VALUES , __5 } ] }
   end | __Stack].
 
 -compile({inline,yeccpars2_51_/1}).

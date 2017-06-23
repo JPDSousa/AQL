@@ -15,7 +15,7 @@
 -export([exec/2]).
 
 exec(Table, Props) ->
-	Keys = query_utils:search_clause(?PROP_COLUMNS, Props),
+	Keys = get_keys(Table, Props),
 	Values = query_utils:search_clause(?PROP_VALUES, Props),
 	AnnElement = element:new(Table),
 	{ok, Element} = element:put(Keys, Values, AnnElement),
@@ -38,6 +38,16 @@ exec(Table, Props) ->
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
+
+get_keys(Table, Props) ->
+	Clause = query_utils:search_clause(?PROP_COLUMNS, Props),
+	case Clause of
+		?PARSER_WILDCARD ->
+			Keys = table:get_col_names(Table),
+			lists:map(fun (V) -> ?PARSER_ATOM(V) end, Keys);
+		_Else ->
+			Clause
+	end.
 
 get_child(ParentKey, TxId) ->
 	{ok, [Parent]} = antidote:read_objects(ParentKey, TxId),

@@ -73,10 +73,10 @@ put([Key | OKeys], [Value | OValues], Element) ->
   %check if Keys and Values have the same size
   Res = put(Key, Value, Element),
   case Res of
-    {ok, NewElement} ->
-      put(OKeys, OValues, NewElement);
     {err, _Msg} ->
-      Res
+      Res;
+    _Else ->
+      put(OKeys, OValues, Res)
   end;
 put([], [], Element) ->
   {ok, Element};
@@ -87,7 +87,7 @@ put(?PARSER_ATOM(ColName), Value, Element) when ?is_cname(ColName) ->
       ColType = column:type(Col),
       Element1 = handle_fk(Col, Value, Element),
       Element2 = set_if_primary(Col, Value, Element1),
-      {ok, append(ColName, Value, ColType, Element2)};
+      append(ColName, Value, ColType, Element2);
     _Else ->
       throwNoSuchColumn(ColName)
   end.
@@ -172,6 +172,17 @@ create_table_aux() ->
   {ok, Tokens, _} = scanner:string("CREATE LWW TABLE Universities (WorldRank INT PRIMARY KEY, InstitutionId VARCHAR FOREIGN KEY REFERENCES Institution(id), NationalRank INTEGER DEFAULT 1);"),
 	{ok, [{?CREATE_TOKEN, Table}]} = parser:parse(Tokens),
   Table.
+
+primary_key_test() ->
+  Table = create_table_aux(),
+  Element = new(key, Table),
+  ?assertEqual(create_key(key, 'Universities'), primary_key(Element)).
+
+attributes_test() ->
+  Table = create_table_aux(),
+  Columns = table:get_columns(Table),
+  Element = new(key, Table),
+  ?assertEqual(Columns, attributes(Element)).
 
 key_test() ->
   Key = key,

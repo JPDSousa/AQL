@@ -1,0 +1,16 @@
+sudo: false
+language: erlang
+notifications:
+  email:
+    recipients: jpd.sousa@campus.fct.unl.pt
+    on_success: never
+    on_failure: always
+otp_release:
+  - 18.0
+install:
+  - pip install --user codecov
+script:
+  - make test
+after_success:
+  - bin/covertool -cover _build/test/cover/eunit.coverdata -appname aql -output cobertura.xml
+  - codecov

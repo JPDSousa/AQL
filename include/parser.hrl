@@ -35,8 +35,12 @@
 %% primary key constraint
 -define(PRIMARY_TOKEN, primary).
 -define(PRIMARY_KEY(TokenChars), {?PRIMARY_TOKEN, TokenChars}).
+-define(FOREIGN_TOKEN, foreign).
+-define(FOREIGN_KEY(TokenChars), {?FOREIGN_TOKEN, TokenChars}).
 -define(KEY_TOKEN, key).
 -define(KEY_KEY(TokenChars), {?KEY_TOKEN, TokenChars}).
+-define(REFERENCES_TOKEN, references).
+-define(REFERENCES_KEY(TokenChars), {?REFERENCES_TOKEN, TokenChars}).
 %% check constraint
 -define(CHECK_TOKEN, check).
 -define(CHECK_KEY(TokenChars), {?CHECK_TOKEN, TokenChars}).
@@ -102,5 +106,5 @@
 % create
 -define(PROP_ATTR, attribute).
 -define(PROP_ATTR_NAME(Name), {name, Name}).
--define(PROP_ATTR_CONSTRAINT(Constraint), {constriaint, Constraint}).
+-define(PROP_ATTR_CONSTRAINT(Constraint), {constraint, Constraint}).
 -define(NO_CONSTRAINT, none).

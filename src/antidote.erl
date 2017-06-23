@@ -93,7 +93,6 @@ connect() ->
 antidote_node([]) ->
 	net_adm:ping('antidote@127.0.0.1'),
 	antidote_node(nodes());
-
 antidote_node(Nodes) ->
 	[Node] = Nodes,
 	Node.

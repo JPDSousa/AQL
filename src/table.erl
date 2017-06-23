@@ -41,7 +41,7 @@ write_table(Table) when ?is_table(Table) ->
 
 create_table_update(Name, Table) when ?is_tname(Name) and ?is_table(Table) ->
 	Op = {assign, Table},
-	crdt:create_single_map_update(?BOUND_OBJECT, Name, ?CRDT_TYPE, Op).
+	crdt:single_map_update(?BOUND_OBJECT, Name, ?CRDT_TYPE, Op).
 
 get_table(Name) when ?is_tname(Name) ->
 	{ok, Tables} = read_tables(),

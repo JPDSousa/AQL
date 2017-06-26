@@ -14,7 +14,7 @@
 exec(Table, Select) ->
 	TName = table:name(Table),
 	Projection = query_utils:search_clause(?PROP_COLUMNS, Select),
-	% validate projection fields
+	% TODO validate projection fields
 	Condition = query_utils:search_clause(?WHERE_TOKEN, Select),
 	Keys = where:scan(TName, Condition),
 	{ok, Results, _CT} = antidote:read_objects(Keys),

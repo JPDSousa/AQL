@@ -57,18 +57,36 @@ exec([Query | Tail]) ->
 	exec(Tail);
 exec([]) ->
 	ok;
-exec({?CREATE_TOKEN, Table}) ->
-	{ok, _CT} = table:write_table(Table);
-exec({?INSERT_TOKEN, Insert}) ->
+exec(?CREATE_CLAUSE(Table)) ->
+	eval("Create Table", table:write_table(Table));
+exec(?INSERT_CLAUSE(Insert)) ->
 	Table = get_table_from_query(Insert),
-	ok = insert:exec(Table, Insert);
+	eval("Insert", insert:exec(Table, Insert));
+exec(?DELETE_CLAUSE(Delete)) ->
+	Table = get_table_from_query(Delete),
+	eval("Delete", delete:exec(Table, Delete));
 exec({?UPDATE_TOKEN, Update}) ->
 	Table = get_table_from_query(Update),
-	ok = update:exec(Table, Update);
+	eval("Update", update:exec(Table, Update));
 exec({?SELECT_TOKEN, Select}) ->
 	Table = get_table_from_query(Select),
-	Res = select:exec(Table, Select),
-	io:fwrite("~p~n", [Res]).
+	eval("Select", select:exec(Table, Select));
+exec(_Invalid) ->
+	io:fwrite("Invalid query").
+
+eval(Query, Status) ->
+	case Status of
+		ok ->
+			io:fwrite("[Ok] ~p~n", [Query]);
+		{ok, Msg} ->
+			io:fwrite("[Ok] ~p: ~p~n", [Query, Msg]);
+		err ->
+			io:fwrite("[Err] ~p~n", [Query]);
+		{err, Msg} ->
+			io:fwrite("[Err] ~p: ~p~n", [Query, Msg]);
+		Else ->
+			io:fwrite("[????] ~p: ~p~n", [Query, Msg])
+	end.
 
 get_table_from_query(Props) ->
 	TableName = table:name(Props),

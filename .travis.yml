@@ -9,6 +9,9 @@ otp_release:
   - 18.0
 install:
   - pip install --user codecov
+  - ./Dockerfiles/install-antidotedb.sh
+before_script:
+  - cd antidote && make console && sleep 10 &
 script:
   - make test
 after_success:

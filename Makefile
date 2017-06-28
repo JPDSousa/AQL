@@ -16,4 +16,4 @@ compile:
 	$(REBAR) compile
 
 test:
-	$(REBAR) eunit
+	$(REBAR) eunit --cover

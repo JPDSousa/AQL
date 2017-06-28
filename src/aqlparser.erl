@@ -84,7 +84,7 @@ eval(Query, Status) ->
 			io:fwrite("[Err] ~p~n", [Query]);
 		{err, Msg} ->
 			io:fwrite("[Err] ~p: ~p~n", [Query, Msg]);
-		Else ->
+		Msg ->
 			io:fwrite("[????] ~p: ~p~n", [Query, Msg])
 	end.
 

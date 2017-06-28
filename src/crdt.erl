@@ -49,7 +49,7 @@ field_map_op(Key, Op) ->
 map_update(BoundObjects, ListOps) when is_list(BoundObjects) and is_list(ListOps) ->
 	lists:for_each(fun (B) ->
 		map_update(B, ListOps)
-	end, BoundObjects).
+	end, BoundObjects);
 map_update(BoundObject, ListOps) when is_list(ListOps) ->
 	{BoundObject, update, ListOps};
 map_update(BoundObject, Op) ->

@@ -15,7 +15,7 @@
 %% API
 %%====================================================================
 
--spec parse(input()) -> ok | queryResult().
+-spec parse(input()) -> queryResult() | {err, term()}.
 parse({str, Query}) ->
 	TokensRes = scanner:string(Query),
 	case TokensRes of
@@ -25,7 +25,7 @@ parse({str, Query}) ->
 			case ParseRes of
 				{ok, ParseTree} ->
 					%io:fwrite("~p~n", [ParseTree]),
-					exec(ParseTree);
+					exec(ParseTree, []);
 				_Else ->
 					ParseRes
 			end;
@@ -51,12 +51,17 @@ read_and_exec() ->
 %% Internal functions
 %%====================================================================
 
--spec exec(queries()) -> ok.
-exec([Query | Tail]) ->
-	exec(Query),
-	exec(Tail);
-exec([]) ->
-	ok;
+exec([Query | Tail], Acc) ->
+	Res = exec(Query),
+	case Res of
+		ok ->
+			exec(Tail, Acc);
+		Else ->
+			exec(Tail, lists:append(Acc, [Else]))
+	end;
+exec([], Acc) ->
+	{ok, Acc}.
+
 exec(?CREATE_CLAUSE(Table)) ->
 	eval("Create Table", table:write_table(Table));
 exec(?INSERT_CLAUSE(Insert)) ->
@@ -72,20 +77,25 @@ exec({?SELECT_TOKEN, Select}) ->
 	Table = get_table_from_query(Select),
 	eval("Select", select:exec(Table, Select));
 exec(_Invalid) ->
-	io:fwrite("Invalid query").
+	throw("Invalid query").
 
 eval(Query, Status) ->
 	case Status of
 		ok ->
-			io:fwrite("[Ok] ~p~n", [Query]);
+			io:fwrite("[Ok] ~p~n", [Query]),
+			Status;
 		{ok, Msg} ->
-			io:fwrite("[Ok] ~p: ~p~n", [Query, Msg]);
+			io:fwrite("[Ok] ~p: ~p~n", [Query, Msg]),
+			Msg;
 		err ->
-			io:fwrite("[Err] ~p~n", [Query]);
+			io:fwrite("[Err] ~p~n", [Query]),
+			throw(Query);
 		{err, Msg} ->
-			io:fwrite("[Err] ~p: ~p~n", [Query, Msg]);
+			io:fwrite("[Err] ~p: ~p~n", [Query, Msg]),
+			throw(Msg);
 		Msg ->
-			io:fwrite("[????] ~p: ~p~n", [Query, Msg])
+			io:fwrite("[????] ~p: ~p~n", [Query, Msg]),
+			Msg
 	end.
 
 get_table_from_query(Props) ->

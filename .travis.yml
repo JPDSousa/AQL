@@ -14,7 +14,7 @@ install:
   - ls
   - ./dockerfiles/install_antidotedb.sh
 before_script:
-  - cd antidote && make console && sleep 10 &
+  - cd antidote && make console && sleep 10
 script:
   - make test
 after_success:

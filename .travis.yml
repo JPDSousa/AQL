@@ -7,8 +7,11 @@ notifications:
     on_failure: always
 otp_release:
   - 18.0
+before_install:
+  - chmod +x dockerfiles/install_antidotedb.sh
 install:
   - pip install --user codecov
+  - ls
   - ./dockerfiles/install_antidotedb.sh
 before_script:
   - cd antidote && make console && sleep 10 &

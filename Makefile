@@ -5,6 +5,8 @@ NODE_DEV_NAME = 'aqldev@127.0.0.1'
 COOKIE = antidote
 MAIN = "aqlparser:start_shell()"
 
+.PHONY: all test clean
+
 shell:
 	$(REBAR) compile
 	erl -pa $(AQL)/ebin -name $(NODE_NAME) -setcookie $(COOKIE) -noshell -eval $(MAIN)

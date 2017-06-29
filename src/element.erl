@@ -23,7 +23,8 @@
         get/3,
         create_db_op/1,
         primary_key/1, foreign_keys/1,
-        attributes/1]).
+        attributes/1,
+        st_value/1]).
 
 %% ====================================================================
 %% API functions
@@ -34,6 +35,10 @@ refs_key() ->
 
 st_key() ->
   ?EL_ST.
+
+st_value(Values) ->
+  Value = proplists:get_value(?EL_ST, Values),
+  ipa:status(ipa:add_wins(), Value).
 
 create_key(Key, TName) ->
   crdt:create_bound_object(Key, ?CRDT_TYPE, TName).

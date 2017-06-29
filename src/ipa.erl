@@ -13,6 +13,7 @@
 
 -export([new/0,
           touch/0, touch_cascade/0, insert/0, delete/0, delete_cascade/0,
+          add_wins/0, remove_wins/0,
           is_visible/1,
           status/2]).
 
@@ -24,6 +25,9 @@ touch_cascade() -> tc.
 insert() -> i.
 delete() -> d.
 delete_cascade() -> dc.
+
+add_wins() -> ?ADD_WINS.
+remove_wins() -> ?REMOVE_WINS.
 
 is_visible(i) -> true;
 is_visible(t) -> true;

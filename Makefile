@@ -19,3 +19,4 @@ compile:
 
 test:
 	$(REBAR) eunit --cover
+	$(REBAR) cover

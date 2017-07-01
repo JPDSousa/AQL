@@ -4,6 +4,8 @@ NODE_NAME = 'aql@127.0.0.1'
 NODE_DEV_NAME = 'aqldev@127.0.0.1'
 COOKIE = antidote
 MAIN = "aqlparser:start_shell()"
+EBIN = ./_build/default/lib/*/ebin
+TEST_LOGS = _build/test/logs
 
 .PHONY: all test clean
 
@@ -20,3 +22,6 @@ compile:
 test:
 	$(REBAR) eunit --cover
 	$(REBAR) cover
+
+ct: compile
+	ct_run -pa $(EBIN) -logdir $(TEST_LOGS) -dir test -erl_flags -name $(NODE_NAME) -setcookie $(COOKIE)

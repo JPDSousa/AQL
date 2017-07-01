@@ -14,7 +14,7 @@ shell:
 	erl -pa $(AQL)/ebin -name $(NODE_NAME) -setcookie $(COOKIE) -noshell -eval $(MAIN)
 
 dev:
-	$(REBAR) shell --name=$(NODE_DEV_NAME) --setcookie $(COOKIE)
+	$(REBAR) auto --name=$(NODE_DEV_NAME) --setcookie $(COOKIE)
 
 compile:
 	$(REBAR) compile

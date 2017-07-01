@@ -80,21 +80,22 @@ exec(_Invalid) ->
 	throw("Invalid query").
 
 eval(Query, Status) ->
+	AQuery = list_to_atom(Query),
 	case Status of
 		ok ->
-			io:fwrite("[Ok] ~p~n", [Query]),
+			io:fwrite("[Ok] ~p~n", [AQuery]),
 			Status;
 		{ok, Msg} ->
-			io:fwrite("[Ok] ~p: ~p~n", [Query, Msg]),
+			io:fwrite("[Ok] ~p: ~p~n", [AQuery, Msg]),
 			Msg;
 		err ->
-			io:fwrite("[Err] ~p~n", [Query]),
+			io:fwrite("[Err] ~p~n", [AQuery]),
 			throw(Query);
 		{err, Msg} ->
-			io:fwrite("[Err] ~p: ~p~n", [Query, Msg]),
+			io:fwrite("[Err] ~p: ~p~n", [AQuery, Msg]),
 			throw(Msg);
 		Msg ->
-			io:fwrite("[????] ~p: ~p~n", [Query, Msg]),
+			io:fwrite("[????] ~p: ~p~n", [AQuery, Msg]),
 			Msg
 	end.
 

@@ -52,13 +52,13 @@ create_table_aux() ->
 
 from_table_test() ->
 	Table = create_table_aux(),
-	Expected = [{{'B', ?AQL_VARCHAR}, {tb, id}}],
+	Expected = [{{'B', ?CRDT_VARCHAR}, {tb, id}}],
 	?assertEqual(Expected, from_table(Table)).
 
 from_columns_test() ->
 	Table = create_table_aux(),
 	Cols = table:get_columns(Table),
-	Expected = [{{'B', ?AQL_VARCHAR}, {tb, id}}],
+	Expected = [{{'B', ?CRDT_VARCHAR}, {tb, id}}],
 	?assertEqual(Expected, from_columns(Cols)).
 
 parents_test() ->

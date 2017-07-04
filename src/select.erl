@@ -22,8 +22,7 @@ exec(Table, Select, TxId) ->
 	{ok, ProjRes}.
 
 project(Projection, [Result | Results], Acc) ->
-	FormattedResult = lists:map(fun remove_type_map/1, Result),
-	ProjRes = project_row(Projection, FormattedResult, []),
+	ProjRes = project_row(Projection, Result, []),
 	NewAcc = lists:flatten([ProjRes], Acc),
 	project(Projection, Results, NewAcc);
 project(_Projection, [], Acc) ->
@@ -32,12 +31,19 @@ project(_Projection, [], Acc) ->
 project_row(?PARSER_WILDCARD, Result, _Acc) ->
 	Result;
 project_row([?PARSER_ATOM(Atom) | Tail], Result, Acc) ->
-	Field = proplists:get_value(Atom, Result, undefined),
+	Field = get_value(Atom, Result),
 	NewResult = proplists:delete(Atom, Result),
 	NewAcc = Acc ++ [{Atom, Field}],
 	project_row(Tail, NewResult, NewAcc);
 project_row([], _Result, Acc) ->
 	Acc.
 
-remove_type_map({{CName, _CType}, Value}) ->
-	{CName, Value}.
+get_value(Key, [{{Name, _Type}, _Value} = H| T]) ->
+	case Key of
+		Name ->
+			H;
+		_Else ->
+			get_value(Key, T)
+	end;
+get_value(_Key, []) ->
+	undefined.

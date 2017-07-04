@@ -24,11 +24,33 @@ exec(Table, Props, TxId) ->
 	% update foreign key references
 	Pk = element:primary_key(Element),
 	Fks = element:foreign_keys(Element),
-	lists:foreach(fun (Fk) -> update_ref(Fk, Pk, TxId) end, Fks).
+	lists:foreach(fun (Fk) -> touch(Fk, TxId) end, Fks),
+	lists:foreach(fun (Fk) -> add_ref(Fk, Pk, TxId) end, Fks).
 
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
+
+add_ref(Key, Ref, TxId) ->
+	Op = crdt:single_map_update(Key, element:refs_key(), crdt:add_all(Ref)),
+	antidote:update_objects(Op, TxId).
+
+touch({_ID, _Type, TName} = Key, TxId) ->
+	antidote:update_objects(crdt:ipa_update(Key, ipa:touch()), TxId),
+	{ok, [Element]} = antidote:read_objects(Key, TxId),
+	% touch cascade children
+	Refs = proplists:get_value(element:refs_key(), Element, []),
+	lists:foreach(fun (K) -> touch_cascade(K, TxId) end, Refs),
+	% touch parents
+	Table = table:get_table(TName, TxId),
+	FKs = foreign_keys:from_table(Table),
+	lists:foreach(fun (K) -> touch(K, TxId) end, foreign_keys:parents(Element, FKs)).
+
+touch_cascade(Key, TxId) ->
+	antidote:update_objects(crdt:ipa_update(Key, ipa:touch_cascade()), TxId),
+	{ok, [Element]} = antidote:read_objects(Key, TxId),
+	Refs = proplists:get_value(element:refs_key(), Element, []),
+	lists:foreach(fun (K) -> touch_cascade(K, TxId) end, Refs).
 
 get_keys(Table, Props) ->
 	Clause = proplists:get_value(?PROP_COLUMNS, Props),
@@ -39,30 +61,3 @@ get_keys(Table, Props) ->
 		_Else ->
 			Clause
 	end.
-
-get_child(ParentKey, TxId) ->
-	{ok, [Parent]} = antidote:read_objects(ParentKey, TxId),
-	RefsKey = element:refs_key(),
-	Children = proplists:get_value(RefsKey, Parent, []),
-	Children.
-
-update_ref(ParentKey, ChildKey, TxId) ->
-	% update child tree
-	Children = get_child(ParentKey, TxId),
-	lists:foreach(fun (C) -> update_child(C, TxId) end, Children),
-	% update itself
-	RefsKey = element:refs_key(),
-	StKey = element:st_key(),
-	RefOp = crdt:field_map_op(RefsKey, crdt:add_all(ChildKey)),
-	StOp = crdt:field_map_op(StKey, crdt:assign_lww(ipa:touch())),
-	Update = crdt:map_update(ParentKey, [StOp, RefOp]),
-	antidote:update_objects(Update, TxId).
-
-update_child(ParentKey, TxId) ->
-	% update child tree
-	Children = get_child(ParentKey, TxId),
-	lists:foreach(fun (C) -> update_child(C, TxId) end, Children),
-	% update itself
-	StKey = element:st_key(),
-	StOp = crdt:field_map_op(StKey, crdt:assign_lww(ipa:touch_cascade())),
-	antidote:update_objects(crdt:map_update(ParentKey, StOp), TxId).

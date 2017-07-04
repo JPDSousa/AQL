@@ -8,7 +8,7 @@
 -define(EL_PK, '#pk').
 -define(EL_FK, '#fl').
 -define(EL_ST, ?DATA_ENTRY('#st', antidote_crdt_mvreg)).
--define(EL_REFS, ?DATA_ENTRY('#refs', antidote_crdt_gset)).
+-define(EL_REFS, ?DATA_ENTRY('#refs', antidote_crdt_orset)).
 -define(EL_ANON, none).
 
 -include("aql.hrl").

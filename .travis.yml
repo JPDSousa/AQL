@@ -14,9 +14,11 @@ install:
   - ls
   - ./dockerfiles/install_antidotedb.sh
 before_script:
-  - cd antidote && make console && sleep 10
+  - cd antidote && make console &
+  - sleep 10
 script:
   - make test
+  - make ct
 after_success:
   - bin/covertool -cover _build/test/cover/eunit.coverdata -appname aql -output cobertura.xml
   - codecov

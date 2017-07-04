@@ -9,15 +9,15 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([exec/2]).
+-export([exec/3]).
 
-exec(Table, Select) ->
+exec(Table, Select, TxId) ->
 	TName = table:name(Table),
-	Projection = query_utils:search_clause(?PROP_COLUMNS, Select),
+	Projection = proplists:get_value(?PROP_COLUMNS, Select),
 	% TODO validate projection fields
-	Condition = query_utils:search_clause(?WHERE_TOKEN, Select),
+	Condition = proplists:get_value(?WHERE_TOKEN, Select),
 	Keys = where:scan(TName, Condition),
-	{ok, Results, _CT} = antidote:read_objects(Keys),
+	{ok, Results} = antidote:read_objects(Keys, TxId),
 	ProjRes = project(Projection, Results, []),
 	{ok, ProjRes}.
 

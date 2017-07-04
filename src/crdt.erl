@@ -10,7 +10,7 @@
 
 -export([field_map_op/3, field_map_op/2,
 				map_update/2,
-				single_map_update/4]).
+				single_map_update/3, single_map_update/4]).
 
 -export([increment_counter/1,
 				decrement_counter/1]).
@@ -21,6 +21,8 @@
 
 -export([create_bound_object/3,
 				create_op/3]).
+
+-export([ipa_update/2]).
 
 %% ====================================================================
 %% Crdt_Set functions
@@ -47,7 +49,7 @@ field_map_op(Key, Op) ->
 	{Key, Op}.
 
 map_update(BoundObjects, ListOps) when is_list(BoundObjects) and is_list(ListOps) ->
-	lists:for_each(fun (B) ->
+	lists:foreach(fun (B) ->
 		map_update(B, ListOps)
 	end, BoundObjects);
 map_update(BoundObject, ListOps) when is_list(ListOps) ->
@@ -58,6 +60,11 @@ map_update(BoundObject, Op) ->
 single_map_update(BoundObject, FieldKey, FieldType, FieldOp) ->
 	FieldUpdate = field_map_op(FieldKey, FieldType, FieldOp),
 	map_update(BoundObject, FieldUpdate).
+
+single_map_update(BoundObject, Key, FieldOp) ->
+	FieldUpdate = field_map_op(Key, FieldOp),
+	map_update(BoundObject, FieldUpdate).
+
 
 %% ====================================================================
 %% Integer functions
@@ -85,6 +92,16 @@ decrement_counter(Value) when is_integer(Value) ->
 
 bcounter_op(Op, Value) ->
 	{Op, {Value, term}}.
+
+%% ====================================================================
+%% Ipa functions
+%% ====================================================================
+
+ipa_update(Keys, State) when is_list(Keys) ->
+	lists:map(fun (K) -> ipa_update(K, State) end, Keys);
+ipa_update(Key, State) ->
+	Op = crdt:assign_lww(State),
+	crdt:single_map_update(Key, element:st_key(), Op).
 
 %% ====================================================================
 %% Utility functions

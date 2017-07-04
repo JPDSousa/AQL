@@ -63,23 +63,31 @@ exec([], Acc) ->
 	{ok, Acc}.
 
 exec(?CREATE_CLAUSE(Table)) ->
-	eval("Create Table", table:write_table(Table));
+	eval("Create Table", Table, table);
 exec(?INSERT_CLAUSE(Insert)) ->
-	Table = get_table_from_query(Insert),
-	eval("Insert", insert:exec(Table, Insert));
+	eval("Insert", Insert, insert);
 exec(?DELETE_CLAUSE(Delete)) ->
-	Table = get_table_from_query(Delete),
-	eval("Delete", delete:exec(Table, Delete));
+	eval("Delete", Delete, delete);
 exec({?UPDATE_TOKEN, Update}) ->
-	Table = get_table_from_query(Update),
-	eval("Update", update:exec(Table, Update));
+	eval("Update", Update, update);
 exec({?SELECT_TOKEN, Select}) ->
-	Table = get_table_from_query(Select),
-	eval("Select", select:exec(Table, Select));
+	eval("Select", Select, select);
 exec(_Invalid) ->
 	throw("Invalid query").
 
-eval(Query, Status) ->
+eval(QName, Props, M) ->
+	{ok, TxId} = antidote:start_transaction(),
+	case M of
+		table ->
+			Status = M:exec(Props, TxId);
+		_Else ->
+			Table = get_table_from_query(Props, TxId),
+			Status = M:exec(Table, Props, TxId)
+	end,
+	antidote:commit_transaction(TxId),
+	eval_status(QName, Status).
+
+eval_status(Query, Status) ->
 	AQuery = list_to_atom(Query),
 	case Status of
 		ok ->
@@ -99,11 +107,6 @@ eval(Query, Status) ->
 			Msg
 	end.
 
-get_table_from_query(Props) ->
+get_table_from_query(Props, TxId) ->
 	TableName = table:name(Props),
-	case table:get_table(TableName) of
-		{false, none} ->
-			{err, "The table does not exist.~n"};
-		Table ->
-			Table
-	end.
+	table:get_table(TableName, TxId).

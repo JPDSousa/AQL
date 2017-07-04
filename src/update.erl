@@ -8,20 +8,20 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([exec/2]).
+-export([exec/3]).
 
 %%====================================================================
 %% API
 %%====================================================================
 
-exec(Table, Props) ->
+exec(Table, Props, TxId) ->
   TName = table:name(Table),
-  SetClause = query_utils:search_clause(?SET_TOKEN, Props),
-  WhereClause = query_utils:search_clause(?WHERE_TOKEN, Props),
+  SetClause = proplists:get_value(?SET_TOKEN, Props),
+  WhereClause = proplists:get_value(?WHERE_TOKEN, Props),
   FieldUpdates = create_update(Table, [], SetClause),
   Keys = where:scan(TName, WhereClause),
   MapUpdates = crdt:map_update(Keys, FieldUpdates),
-  antidote:update_objects(MapUpdates).
+  antidote:update_objects(MapUpdates, TxId).
 
 %%====================================================================
 %% Internal functions

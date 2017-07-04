@@ -9,9 +9,11 @@
 -include("parser.hrl").
 -include("aql.hrl").
 
--export([read_tables/0,
-				write_table/1,
-				get_table/1, get_table/2]).
+-export([exec/2]).
+
+-export([read_tables/1,
+				write_table/2,
+				get_table/2]).
 
 -export([get_column/2, get_columns/1, get_col_names/1,
 				primary_key/1,
@@ -21,8 +23,11 @@
 %% Read/Write functions
 %% ====================================================================
 
-read_tables() ->
-	{ok, [TablesMeta], _CommitTime} = antidote:read_objects(?BOUND_OBJECT),
+exec(Table, TxId) ->
+	write_table(Table, TxId).
+
+read_tables(TxId) ->
+	{ok, [TablesMeta]} = antidote:read_objects(?BOUND_OBJECT, TxId),
 	UnwrappedTables = lists:map(fun unwrap_pair/1, TablesMeta),
 	{ok, UnwrappedTables}.
 
@@ -34,36 +39,36 @@ unwrap_pair(Table) ->
 			Table
 	end.
 
-write_table(Table) when ?is_table(Table) ->
+write_table(Table, TxId) when ?is_table(Table) ->
 	Name = name(Table),
 	TableUpdate = create_table_update(Name, Table),
-	antidote:update_objects(TableUpdate).
+	antidote:update_objects(TableUpdate, TxId).
 
 create_table_update(Name, Table) when ?is_tname(Name) and ?is_table(Table) ->
 	Op = {assign, Table},
 	crdt:single_map_update(?BOUND_OBJECT, Name, ?CRDT_TYPE, Op).
 
-get_table(Name) when ?is_tname(Name) ->
-	{ok, Tables} = read_tables(),
-	get_table(Tables, Name).
+get_table(Name, TxId) when ?is_tname(Name) ->
+	{ok, Tables} = read_tables(TxId),
+	lookup_table(Tables, Name).
 
-get_table([Table | Tail], Name) when ?is_table(Table) and ?is_tname(Name) ->
+lookup_table([Table | Tail], Name) when ?is_table(Table) and ?is_tname(Name) ->
 	TName = name(Table),
 	case TName of
 		Name ->
 			Table;
 		_Else ->
-			get_table(Tail, Name)
+			lookup_table(Tail, Name)
 	end;
-get_table([], _) ->
-	{false, none}.
+lookup_table([], _) ->
+	throw("No such table.").
 
 %% ====================================================================
 %% Table Props functions
 %% ====================================================================
 
 name(Table) when ?is_table(Table) ->
-	TableName = query_utils:search_clause(?PROP_TABLE_NAME, Table),
+	TableName = proplists:get_value(?PROP_TABLE_NAME, Table),
   case TableName of
     {err, ErrMsg} ->
       {err, ErrMsg};
@@ -85,7 +90,7 @@ get_column(Table, Column) when ?is_table(Table) and ?is_cname(Column) ->
 	get_column(Columns, Column).
 
 get_columns(Table) when ?is_table(Table)->
-	CList = query_utils:search_clause(?PROP_COLUMNS, Table),
+	CList = proplists:get_value(?PROP_COLUMNS, Table),
 	case CList of
 		{err, _ErrMsg} ->
 			CList;
@@ -94,7 +99,7 @@ get_columns(Table) when ?is_table(Table)->
 	end.
 
 get_col_names(Table) when ?is_table(Table) ->
-	CList = query_utils:search_clause(?PROP_COLUMNS, Table),
+	CList = proplists:get_value(?PROP_COLUMNS, Table),
 	case CList of
 		{err, _ErrMsg} ->
 			CList;

@@ -12,35 +12,26 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([exec/2]).
+-export([exec/3]).
 
-exec(Table, Props) ->
+exec(Table, Props, TxId) ->
 	Keys = get_keys(Table, Props),
-	Values = query_utils:search_clause(?PROP_VALUES, Props),
+	Values = proplists:get_value(?PROP_VALUES, Props),
 	AnnElement = element:new(Table),
 	{ok, Element} = element:put(Keys, Values, AnnElement),
 	AntidoteOp = element:create_db_op(Element),
-	{ok, TxId} = antidote:start_transaction(),
 	antidote:update_objects(AntidoteOp, TxId),
 	% update foreign key references
 	Pk = element:primary_key(Element),
 	Fks = element:foreign_keys(Element),
-	lists:foreach(fun (Fk) -> update_ref(Fk, Pk, TxId) end, Fks),
-	% end
-	Res = antidote:commit_transaction(TxId),
-	case Res of
-		{ok, _CT} ->
-			ok;
-		_Else ->
-			Res
-	end.
+	lists:foreach(fun (Fk) -> update_ref(Fk, Pk, TxId) end, Fks).
 
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
 
 get_keys(Table, Props) ->
-	Clause = query_utils:search_clause(?PROP_COLUMNS, Props),
+	Clause = proplists:get_value(?PROP_COLUMNS, Props),
 	case Clause of
 		?PARSER_WILDCARD ->
 			Keys = table:get_col_names(Table),
@@ -53,7 +44,6 @@ get_child(ParentKey, TxId) ->
 	{ok, [Parent]} = antidote:read_objects(ParentKey, TxId),
 	RefsKey = element:refs_key(),
 	Children = proplists:get_value(RefsKey, Parent, []),
-	io:fwrite("Parent: ~p~nChildren: ~p~n", [Parent, Children]),
 	Children.
 
 update_ref(ParentKey, ChildKey, TxId) ->

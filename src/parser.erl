@@ -1,6 +1,6 @@
 -module(parser).
 -export([parse/1, parse_and_scan/1, format_error/1]).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 325).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 325).
 
 -include("parser.hrl").
 
@@ -252,7 +252,7 @@ yecctoken2string(Other) ->
 
 
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 255).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 255).
 
 -dialyzer({nowarn_function, yeccpars2/7}).
 yeccpars2(0=S, Cat, Ss, Stack, T, Ts, Tzr) ->
@@ -1127,7 +1127,7 @@ yeccgoto_where_clauses(67, Cat, Ss, Stack, T, Ts, Tzr) ->
  yeccpars2_68(68, Cat, Ss, Stack, T, Ts, Tzr).
 
 -compile({inline,yeccpars2_1_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 112).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 112).
 yeccpars2_1_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
@@ -1135,7 +1135,7 @@ yeccpars2_1_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_2_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 100).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 100).
 yeccpars2_2_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
@@ -1143,7 +1143,7 @@ yeccpars2_2_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_4_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 104).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 104).
 yeccpars2_4_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
@@ -1151,33 +1151,33 @@ yeccpars2_4_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_5_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 108).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 108).
 yeccpars2_5_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
-   [ '1' ]
+   [ __1 ]
   end | __Stack].
 
 -compile({inline,yeccpars2_6_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 116).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 116).
 yeccpars2_6_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
    [ __1 ]
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1169).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1169).
 -compile({inline,yeccpars2_13_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 204).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 204).
 yeccpars2_13_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
    { ? UPDATE_TOKEN , [ { ? PROP_TABLE_NAME , __2 } , __3 ] }
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1178).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1178).
 -compile({inline,yeccpars2_15_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 212).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 212).
 yeccpars2_15_(__Stack0) ->
  [__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1185,25 +1185,25 @@ yeccpars2_15_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_16_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 220).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 220).
 yeccpars2_16_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
    [ __1 ]
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1195).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1195).
 -compile({inline,yeccpars2_19_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 238).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 238).
 yeccpars2_19_(__Stack0) ->
  [__2,__1 | __Stack] = __Stack0,
  [begin
    { __1 , __2 , ? PARSER_NUMBER ( 1 ) }
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1204).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1204).
 -compile({inline,yeccpars2_20_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 230).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 230).
 yeccpars2_20_(__Stack0) ->
  [__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1211,7 +1211,7 @@ yeccpars2_20_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_21_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 234).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 234).
 yeccpars2_21_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1219,7 +1219,7 @@ yeccpars2_21_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_22_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 242).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 242).
 yeccpars2_22_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1227,7 +1227,7 @@ yeccpars2_22_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_23_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 225).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 225).
 yeccpars2_23_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1235,16 +1235,16 @@ yeccpars2_23_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_27_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 216).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 216).
 yeccpars2_27_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
    lists : append ( __1 , [ __3 ] )
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1245).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1245).
 -compile({inline,yeccpars2_29_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 208).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 208).
 yeccpars2_29_(__Stack0) ->
  [__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1252,7 +1252,7 @@ yeccpars2_29_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_30_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 155).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 155).
 yeccpars2_30_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
@@ -1260,7 +1260,7 @@ yeccpars2_30_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_33_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 159).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 159).
 yeccpars2_33_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1268,7 +1268,7 @@ yeccpars2_33_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_35_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 151).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 151).
 yeccpars2_35_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1276,25 +1276,25 @@ yeccpars2_35_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_38_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 143).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 143).
 yeccpars2_38_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
    [ __1 ]
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1286).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1286).
 -compile({inline,yeccpars2_41_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 123).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 123).
 yeccpars2_41_(__Stack0) ->
  [__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
    { select , [ { ? PROP_TABLE_NAME , __4 } , { ? PROP_COLUMNS , __2 } ] }
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1295).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1295).
 -compile({inline,yeccpars2_43_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 127).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 127).
 yeccpars2_43_(__Stack0) ->
  [__6,__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1302,16 +1302,16 @@ yeccpars2_43_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_45_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 139).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 139).
 yeccpars2_45_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
    lists : append ( __1 , [ __3 ] )
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1312).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1312).
 -compile({inline,yeccpars2_51_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 172).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 172).
 yeccpars2_51_(__Stack0) ->
  [__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1319,7 +1319,7 @@ yeccpars2_51_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_53_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 196).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 196).
 yeccpars2_53_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
@@ -1327,7 +1327,7 @@ yeccpars2_53_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_55_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 188).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 188).
 yeccpars2_55_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1335,7 +1335,7 @@ yeccpars2_55_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_57_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 192).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 192).
 yeccpars2_57_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1343,7 +1343,7 @@ yeccpars2_57_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_59_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 184).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 184).
 yeccpars2_59_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
@@ -1351,7 +1351,7 @@ yeccpars2_59_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_60_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 176).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 176).
 yeccpars2_60_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1359,34 +1359,34 @@ yeccpars2_60_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_62_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 180).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 180).
 yeccpars2_62_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
    lists : append ( __1 , [ __3 ] )
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1369).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1369).
 -compile({inline,yeccpars2_64_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 167).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 167).
 yeccpars2_64_(__Stack0) ->
  [__6,__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
    { ? INSERT_TOKEN , [ { ? PROP_TABLE_NAME , __3 } , { ? PROP_COLUMNS , __4 } , { ? PROP_VALUES , __6 } ] }
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1378).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1378).
 -compile({inline,yeccpars2_66_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 301).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 301).
 yeccpars2_66_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
    ? DELETE_CLAUSE ( [ { ? PROP_TABLE_NAME , __3 } ] )
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1387).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1387).
 -compile({inline,yeccpars2_68_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 305).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 305).
 yeccpars2_68_(__Stack0) ->
  [__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1394,7 +1394,7 @@ yeccpars2_68_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_72_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 253).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 253).
 yeccpars2_72_(__Stack0) ->
  [__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1402,52 +1402,52 @@ yeccpars2_72_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_77_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 265).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 265).
 yeccpars2_77_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
    [ __1 ]
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1412).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1412).
 -compile({inline,yeccpars2_79_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 273).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 273).
 yeccpars2_79_(__Stack0) ->
  [__2,__1 | __Stack] = __Stack0,
  [begin
    { ? PROP_ATTR , [ ? PROP_ATTR_NAME ( __1 ) , __2 , ? PROP_ATTR_CONSTRAINT ( ? NO_CONSTRAINT ) ] }
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1421).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1421).
 -compile({inline,yeccpars2_80_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 269).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 269).
 yeccpars2_80_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
    { ? PROP_ATTR , [ ? PROP_ATTR_NAME ( __1 ) , __2 , ? PROP_ATTR_CONSTRAINT ( __3 ) ] }
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1430).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1430).
 -compile({inline,yeccpars2_85_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 277).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 277).
 yeccpars2_85_(__Stack0) ->
  [__2,__1 | __Stack] = __Stack0,
  [begin
    ? PRIMARY_TOKEN
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1439).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1439).
 -compile({inline,yeccpars2_91_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 281).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 281).
 yeccpars2_91_(__Stack0) ->
  [__7,__6,__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
    ? FOREIGN_KEY ( { __4 , __6 } )
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1448).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1448).
 -compile({inline,yeccpars2_92_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 285).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 285).
 yeccpars2_92_(__Stack0) ->
  [__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1455,16 +1455,16 @@ yeccpars2_92_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_94_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 289).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 289).
 yeccpars2_94_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
    { __2 , __3 }
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1465).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1465).
 -compile({inline,yeccpars2_95_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 257).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 257).
 yeccpars2_95_(__Stack0) ->
  [__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1472,16 +1472,16 @@ yeccpars2_95_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_97_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 261).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 261).
 yeccpars2_97_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
    lists : append ( __1 , [ __3 ] )
   end | __Stack].
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.erl", 1482).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.erl", 1482).
 -compile({inline,yeccpars2_98_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 249).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 249).
 yeccpars2_98_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1489,7 +1489,7 @@ yeccpars2_98_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_99_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 96).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 96).
 yeccpars2_99_(__Stack0) ->
  [__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1497,7 +1497,7 @@ yeccpars2_99_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_100_/1}).
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 92).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 92).
 yeccpars2_100_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -1505,4 +1505,4 @@ yeccpars2_100_(__Stack0) ->
   end | __Stack].
 
 
--file("/home/joao/workspace/AQL/_build/test/lib/aql/src/parser.yrl", 402).
+-file("/home/joao/workspace/AQL/_build/default/lib/aql/src/parser.yrl", 402).

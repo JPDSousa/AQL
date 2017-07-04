@@ -9,8 +9,6 @@
 				type/1,
 				is_primarykey/1]).
 
--export([filter_fks/1]).
-
 %% ====================================================================
 %% Column props functions
 %% ====================================================================
@@ -59,17 +57,3 @@ unwrap(Column) ->
 		Unwrapped ->
 			Unwrapped
 	end.
-
-%% ====================================================================
-%% Column utils functions
-%% ====================================================================
-
-filter_fks(Columns) ->
-	dict:filter(fun (Col) ->
-		case constraint(Col) of
-			?FOREIGN_KEY({?PARSER_ATOM(_Table), _Attr}) ->
-				true;
-			_Else ->
-				false
-		end
-	end, Columns).

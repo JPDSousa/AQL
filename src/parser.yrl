@@ -109,7 +109,7 @@ query ->
 
 query ->
 		delete_query :
-		['1'].
+		['$1'].
 
 query ->
 	update_query :

@@ -109,4 +109,4 @@ eval_status(Query, Status) ->
 
 get_table_from_query(Props, TxId) ->
 	TableName = table:name(Props),
-	table:get_table(TableName, TxId).
+	table:lookup(TableName, TxId).

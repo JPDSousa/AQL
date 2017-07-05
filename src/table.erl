@@ -40,10 +40,11 @@ check_foreign_keys(Table, TxId) ->
 	Tables = read_tables(TxId),
 	FKs = foreign_keys:from_table(Table),
 	lists:foreach(fun ({_K, {TName, Attr}}) ->
-		ErrMsg = ["Table ", TName, " in foreign key reference does not exist."],
-		Table = lookup(TName, Tables, lists:concat(ErrMsg)),
-		ErrMsg = ["Column ", Attr, " does not exist in table ", TName],
-		Col = get_column(Table, Attr, lists:concat(ErrMsg)),
+		Err1 = ["Table ", TName, " in foreign key reference does not exist."],
+		T = lookup(TName, Tables, lists:concat(Err1)),
+		Err2 = ["Column ", Attr, " does not exist in table ", TName],
+		io:fwrite("D: ~p~n", [T]),
+		Col = get_column(T, Attr, lists:concat(Err2)),
 		case column:is_primarykey(Col) of
 			false ->
 				throw("Foreign keys can only reference unique columns");
@@ -93,14 +94,14 @@ get_column(Columns, ColumnName) when ?is_cname(ColumnName) ->
 
 get_column(Table, CName, ErrMsg) when ?is_table(Table) and ?is_cname(CName) ->
 	Columns = get_columns(Table),
-	get_column(CName, Columns, ErrMsg);
+	get_column(Columns, CName, ErrMsg);
 get_column(Cols, CName, ErrMsg) when ?is_cname(CName) ->
-	Res = dict:find(ColumnName, Columns),
+	Res = dict:find(CName, Cols),
 	case Res of
 		{ok, Column} ->
-			Column
+			Column;
 		_Else ->
-			throw(ErrMsg);
+			throw(ErrMsg)
 	end.
 
 

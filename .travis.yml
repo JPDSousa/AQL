@@ -10,12 +10,10 @@ otp_release:
 before_install:
   - chmod +x dockerfiles/install_antidotedb.sh
 install:
-  - make compile
-  - mkdir -p _build/test/logs
   - ./dockerfiles/install_antidotedb.sh
+  - make compile
 before_script:
-  - cd antidote && make console &
-  - sleep 10
+  - make antidote
 script:
   - make test
   - make ct

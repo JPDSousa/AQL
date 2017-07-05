@@ -6,11 +6,11 @@ COOKIE = antidote
 MAIN = "aqlparser:start_shell()"
 EBIN = ./_build/default/lib/*/ebin
 TEST_LOGS = _build/test/logs
+ANTIDOTE = antidote/_build/default/rel/antidote
 
-.PHONY: all test clean
+.PHONY: all test clean antidote
 
-shell:
-	$(REBAR) compile
+shell: compile
 	erl -pa $(AQL)/ebin -name $(NODE_NAME) -setcookie $(COOKIE) -noshell -eval $(MAIN)
 
 dev:
@@ -18,6 +18,7 @@ dev:
 
 compile:
 	$(REBAR) compile
+	mkdir -p _build/test/logs
 
 test:
 	$(REBAR) eunit --cover
@@ -25,3 +26,6 @@ test:
 
 ct: compile
 	ct_run -pa $(EBIN) -logdir $(TEST_LOGS) -dir test -erl_flags -name $(NODE_NAME) -setcookie $(COOKIE)
+
+antidote:
+	./$(ANTIDOTE)/bin/env start && sleep 10 && tail -f $(ANTIDOTE)/log/console.log &

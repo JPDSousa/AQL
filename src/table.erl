@@ -13,7 +13,7 @@
 
 -export([read_tables/1,
 				write_table/2,
-				get_table/2]).
+				lookup/2]).
 
 -export([get_column/2, get_columns/1, get_col_names/1,
 				primary_key/1,
@@ -27,41 +27,48 @@ exec(Table, TxId) ->
 	write_table(Table, TxId).
 
 read_tables(TxId) ->
-	{ok, [TablesMeta]} = antidote:read_objects(?BOUND_OBJECT, TxId),
-	UnwrappedTables = lists:map(fun unwrap_pair/1, TablesMeta),
-	{ok, UnwrappedTables}.
-
-unwrap_pair(Table) ->
-	case Table of
-		{_column, Value} ->
-			Value;
-		_Else ->
-			Table
-	end.
+	{ok, [Tables]} = antidote:read_objects(?BOUND_OBJECT, TxId),
+	Tables.
 
 write_table(Table, TxId) when ?is_table(Table) ->
+	check_foreign_keys(Table, TxId),
 	Name = name(Table),
 	TableUpdate = create_table_update(Name, Table),
 	antidote:update_objects(TableUpdate, TxId).
 
+check_foreign_keys(Table, TxId) ->
+	Tables = read_tables(TxId),
+	FKs = foreign_keys:from_table(Table),
+	lists:foreach(fun ({_K, {TName, Attr}}) ->
+		ErrMsg = ["Table ", TName, " in foreign key reference does not exist."],
+		Table = lookup(TName, Tables, lists:concat(ErrMsg)),
+		ErrMsg = ["Column ", Attr, " does not exist in table ", TName],
+		Col = get_column(Table, Attr, lists:concat(ErrMsg)),
+		case column:is_primarykey(Col) of
+			false ->
+				throw("Foreign keys can only reference unique columns");
+			_Else ->
+				ok
+		end
+	end, FKs).
+
+
 create_table_update(Name, Table) when ?is_tname(Name) and ?is_table(Table) ->
-	Op = {assign, Table},
+	Op = crdt:assign_lww(Table),
 	crdt:single_map_update(?BOUND_OBJECT, Name, ?CRDT_TYPE, Op).
 
-get_table(Name, TxId) when ?is_tname(Name) ->
-	{ok, Tables} = read_tables(TxId),
-	lookup_table(Tables, Name).
-
-lookup_table([Table | Tail], Name) when ?is_table(Table) and ?is_tname(Name) ->
-	TName = name(Table),
-	case TName of
-		Name ->
-			Table;
+lookup(Name, Tables, ErrMsg) when ?is_tname(Name) and is_list(Tables) ->
+	Res = proplists:get_value({Name, ?CRDT_TYPE}, Tables),
+	case Res of
+		undefined ->
+			throw(ErrMsg);
 		_Else ->
-			lookup_table(Tail, Name)
-	end;
-lookup_table([], _) ->
-	throw("No such table.").
+			Res
+	end.
+
+lookup(Name, TxId) when ?is_tname(Name) ->
+	Tables = read_tables(TxId),
+	lookup(Name, Tables, "No such table").
 
 %% ====================================================================
 %% Table Props functions
@@ -77,17 +84,25 @@ name(Table) when ?is_table(Table) ->
 			Name
   end.
 
-get_column(Columns, ColumnName) when ?is_cname(ColumnName) ->
-	Res = maps:get(ColumnName, Columns),
-	case Res of
-		{badkey, _ColumnName} ->
-			{err, lists:concat(["Collumn ", ColumnName, " does not exist"])};
-		_Else ->
-			{ok, Res}
-	end;
 get_column(Table, Column) when ?is_table(Table) and ?is_cname(Column) ->
 	Columns = get_columns(Table),
-	get_column(Columns, Column).
+	get_column(Columns, Column);
+get_column(Columns, ColumnName) when ?is_cname(ColumnName) ->
+	ErrMsg = lists:concat(["Collumn ", ColumnName, " does not exist"]),
+	get_column(Columns, ColumnName, ErrMsg).
+
+get_column(Table, CName, ErrMsg) when ?is_table(Table) and ?is_cname(CName) ->
+	Columns = get_columns(Table),
+	get_column(CName, Columns, ErrMsg);
+get_column(Cols, CName, ErrMsg) when ?is_cname(CName) ->
+	Res = dict:find(ColumnName, Columns),
+	case Res of
+		{ok, Column} ->
+			Column
+		_Else ->
+			throw(ErrMsg);
+	end.
+
 
 get_columns(Table) when ?is_table(Table)->
 	CList = proplists:get_value(?PROP_COLUMNS, Table),

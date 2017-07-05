@@ -21,7 +21,7 @@ exec(Table, Props, TxId) ->
 %% ====================================================================
 
 delete_cascade_tname(TName, Key, TxId) ->
-	Table = table:get_table(TName, TxId),
+	Table = table:lookup(TName, TxId),
 	FKs = foreign_keys:from_table(Table),
 	delete_cascade(FKs, Key, TxId, ipa:delete_cascade()).
 

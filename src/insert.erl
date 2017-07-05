@@ -42,7 +42,7 @@ touch({_ID, _Type, TName} = Key, TxId) ->
 	Refs = proplists:get_value(element:refs_key(), Element, []),
 	lists:foreach(fun (K) -> touch_cascade(K, TxId) end, Refs),
 	% touch parents
-	Table = table:get_table(TName, TxId),
+	Table = table:lookup(TName, TxId),
 	FKs = foreign_keys:from_table(Table),
 	lists:foreach(fun (K) -> touch(K, TxId) end, foreign_keys:parents(Element, FKs)).
 

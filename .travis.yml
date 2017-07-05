@@ -10,8 +10,8 @@ otp_release:
 before_install:
   - chmod +x dockerfiles/install_antidotedb.sh
 install:
-  - pip install --user codecov
-  - ls
+  - make compile
+  - mkdir -p _build/test/logs
   - ./dockerfiles/install_antidotedb.sh
 before_script:
   - cd antidote && make console &

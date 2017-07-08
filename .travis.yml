@@ -7,10 +7,16 @@ notifications:
     on_failure: always
 otp_release:
   - 18.0
+before_install:
+  - chmod +x dockerfiles/install_antidotedb.sh
 install:
-  - pip install --user codecov
+  - ./dockerfiles/install_antidotedb.sh
+  - make compile
+before_script:
+  - make antidote
 script:
   - make test
+  - make ct
 after_success:
   - bin/covertool -cover _build/test/cover/eunit.coverdata -appname aql -output cobertura.xml
   - codecov

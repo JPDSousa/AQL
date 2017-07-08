@@ -16,6 +16,8 @@ insert_keys_clause
 insert_keys
 insert_values_clause
 insert_values
+%delete
+delete_query
 %create
 create_query
 table_metadata
@@ -46,6 +48,8 @@ where
 insert
 into
 values
+%delete
+delete
 %create
 create
 table
@@ -102,6 +106,10 @@ query ->
 query ->
     insert_query :
     ['$1'].
+
+query ->
+		delete_query :
+		['$1'].
 
 query ->
 	update_query :
@@ -289,6 +297,18 @@ attribute_name ->
 	'$1'.
 
 %%--------------------------------------------------------------------
+%% delete
+%%--------------------------------------------------------------------
+
+delete_query ->
+	delete from atom_value :
+	?DELETE_CLAUSE([{?PROP_TABLE_NAME, '$3'}]).
+
+delete_query ->
+	delete from atom_value where where_clauses :
+	?DELETE_CLAUSE([{?PROP_TABLE_NAME, '$3'}, {?WHERE_TOKEN, '$5'}]).
+
+%%--------------------------------------------------------------------
 %% utils
 %%--------------------------------------------------------------------
 value ->
@@ -361,6 +381,10 @@ insert_simple_test() ->
 	test_parser("INSERT INTO Test (a, b, c) VALUES ('a', 5, 'b')"),
 	test_parser("INSERT INTO Test VALUES ('a')"),
 	test_parser("INSERT INTO Test (a) VALUES (5)").
+
+delete_simple_test() ->
+	test_parser("DELETE FROM Test"),
+	test_parser("DELETE FROM Test WHERE id = 5").
 
 select_simple_test() ->
 	test_parser("SELECT * FROM Test"),

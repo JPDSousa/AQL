@@ -74,6 +74,10 @@
 -define(DECREMENT_TOKEN, decrement).
 -define(DECREMENT_OP(TokenChars), ?SET_OP_T(?DECREMENT_TOKEN, TokenChars)).
 
+% delete
+-define(DELETE_TOKEN, delete).
+-define(DELETE_CLAUSE(TokenChars), {?DELETE_TOKEN, TokenChars}).
+
 %terms
 -define(PARSER_ATOM_TOKEN, atom_value).
 -define(PARSER_STRING_TOKEN, string).

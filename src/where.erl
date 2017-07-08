@@ -19,7 +19,7 @@ scan(TName, [{?PARSER_ATOM(_ClValue), Arop, {_AQLType, Str}} | T], Acc) ->
 			NewAcc = lists:flatten(Acc, [element:create_key(Str, TName)]),
 			scan(TName, T, NewAcc);
 		_Else ->
-			{err, "Not supported yet! :)"}
+			throw("Not supported yet! :)")
 	end;
 scan(_TName, [], Acc) ->
 	Acc.

@@ -36,6 +36,9 @@ Rules.
 (table|TABLE) : {token, ?TABLE_KEY(TokenChars)}.
 (values|VALUES) : {token, ?VALUES_CLAUSE(TokenChars)}.
 
+% delete query related tokens
+(delete|DELETE) : {token, ?DELETE_CLAUSE(TokenChars)}.
+
 % conflict resolution policies
 (lww|LWW) : {token, ?TABLE_POLICY_KEY(?CRP_LWW)}.
 

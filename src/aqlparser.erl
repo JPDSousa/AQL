@@ -15,7 +15,7 @@
 %% API
 %%====================================================================
 
--spec parse(input()) -> ok | queryResult().
+-spec parse(input()) -> queryResult() | {err, term()}.
 parse({str, Query}) ->
 	TokensRes = scanner:string(Query),
 	case TokensRes of
@@ -25,7 +25,7 @@ parse({str, Query}) ->
 			case ParseRes of
 				{ok, ParseTree} ->
 					%io:fwrite("~p~n", [ParseTree]),
-					exec(ParseTree);
+					exec(ParseTree, []);
 				_Else ->
 					ParseRes
 			end;
@@ -51,30 +51,62 @@ read_and_exec() ->
 %% Internal functions
 %%====================================================================
 
--spec exec(queries()) -> ok.
-exec([Query | Tail]) ->
-	exec(Query),
-	exec(Tail);
-exec([]) ->
-	ok;
-exec({?CREATE_TOKEN, Table}) ->
-	{ok, _CT} = table:write_table(Table);
-exec({?INSERT_TOKEN, Insert}) ->
-	Table = get_table_from_query(Insert),
-	ok = insert:exec(Table, Insert);
-exec({?UPDATE_TOKEN, Update}) ->
-	Table = get_table_from_query(Update),
-	ok = update:exec(Table, Update);
-exec({?SELECT_TOKEN, Select}) ->
-	Table = get_table_from_query(Select),
-	Res = select:exec(Table, Select),
-	io:fwrite("~p~n", [Res]).
+exec([Query | Tail], Acc) ->
+	Res = exec(Query),
+	case Res of
+		ok ->
+			exec(Tail, Acc);
+		Else ->
+			exec(Tail, lists:append(Acc, [Else]))
+	end;
+exec([], Acc) ->
+	{ok, Acc}.
 
-get_table_from_query(Props) ->
-	TableName = table:name(Props),
-	case table:get_table(TableName) of
-		{false, none} ->
-			{err, "The table does not exist.~n"};
-		Table ->
-			Table
+exec(?CREATE_CLAUSE(Table)) ->
+	eval("Create Table", Table, table);
+exec(?INSERT_CLAUSE(Insert)) ->
+	eval("Insert", Insert, insert);
+exec(?DELETE_CLAUSE(Delete)) ->
+	eval("Delete", Delete, delete);
+exec({?UPDATE_TOKEN, Update}) ->
+	eval("Update", Update, update);
+exec({?SELECT_TOKEN, Select}) ->
+	eval("Select", Select, select);
+exec(_Invalid) ->
+	throw("Invalid query").
+
+eval(QName, Props, M) ->
+	{ok, TxId} = antidote:start_transaction(),
+	case M of
+		table ->
+			Status = M:exec(Props, TxId);
+		_Else ->
+			Table = get_table_from_query(Props, TxId),
+			Status = M:exec(Table, Props, TxId)
+	end,
+	antidote:commit_transaction(TxId),
+	eval_status(QName, Status).
+
+eval_status(Query, Status) ->
+	AQuery = list_to_atom(Query),
+	case Status of
+		ok ->
+			io:fwrite("[Ok] ~p~n", [AQuery]),
+			Status;
+		{ok, Msg} ->
+			io:fwrite("[Ok] ~p: ~p~n", [AQuery, Msg]),
+			Msg;
+		err ->
+			io:fwrite("[Err] ~p~n", [AQuery]),
+			throw(Query);
+		{err, Msg} ->
+			io:fwrite("[Err] ~p: ~p~n", [AQuery, Msg]),
+			throw(Msg);
+		Msg ->
+			io:fwrite("[????] ~p: ~p~n", [AQuery, Msg]),
+			Msg
 	end.
+
+get_table_from_query(Props, TxId) ->
+	TableName = table:name(Props),
+	table:lookup(TableName, TxId).

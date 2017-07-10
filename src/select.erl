@@ -4,7 +4,8 @@
 
 -module(select).
 
--include("parser.hrl").
+-include_lib("parser.hrl").
+-include_lib("aql.hrl").
 
 %% ====================================================================
 %% API functions
@@ -19,7 +20,20 @@ exec(Table, Select, TxId) ->
 	Keys = where:scan(TName, Condition),
 	{ok, Results} = antidote:read_objects(Keys, TxId),
 	ProjRes = project(Projection, Results, []),
+	ActualRes = apply_offset(ProjRes, table:get_columns(Table), []),
 	{ok, ProjRes}.
+
+apply_offset([{Key, Value} | Values], Cols, Acc) ->
+  Col = dict:fetch(Key, Cols),
+  Type = column:type(Col),
+  Cons = column:constraint(Col),
+	case {Type, Cons} of
+    {?AQL_COUNTER_INT, {?COMPARATOR_KEY(Comp), ?PARSER_NUMBER(Offset)}} ->
+			AQLCounterValue = bcounter:from_bcounter(Comp, Value, Offset),
+      apply_offset(Values, Cols, Acc++{Key, AQLCounterValue});
+    _Else -> Value
+  end.
+
 
 project(Projection, [Result | Results], Acc) ->
 	ProjRes = project_row(Projection, Result, []),

@@ -21,7 +21,7 @@ exec(Table, Select, TxId) ->
 	{ok, Results} = antidote:read_objects(Keys, TxId),
 	ProjRes = project(Projection, Results, []),
 	ActualRes = apply_offset(ProjRes, table:get_columns(Table), []),
-	{ok, ProjRes}.
+	{ok, ActualRes}.
 
 apply_offset([{Key, Value} | Values], Cols, Acc) ->
   Col = dict:fetch(Key, Cols),

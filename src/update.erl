@@ -64,7 +64,7 @@ resolve_op(Column, AQL, Op, Value) ->
 
 resolve_op_counter(Column, Forward, Reverse) ->
   case column:constraint(Column) of
-    {?COMPARATOR_KEY(Comp), ?PARSER_NUMBER(Offset)} ->
+    {?COMPARATOR_KEY(Comp), ?PARSER_NUMBER(_Offset)} ->
       case Comp of
         ?GREATER_KEY ->
           Forward;

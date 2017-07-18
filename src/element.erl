@@ -142,20 +142,27 @@ set_key(?PARSER_TYPE(_Type, Value), Element) ->
   {_Key, Type, Bucket} = dict:fetch(?EL_KEY, Element),
   dict:store(?EL_KEY, crdt:create_bound_object(Value, Type, Bucket), Element).
 
-append(Key, WrappedValue, ?AQL_INTEGER, Element) ->
-  append(Key, WrappedValue, ?CRDT_INTEGER, ?PARSER_NUMBER_TOKEN, fun crdt:set_integer/1, Element);
-append(Key, WrappedValue, ?AQL_VARCHAR, Element) ->
-  append(Key, WrappedValue, ?CRDT_VARCHAR, ?PARSER_STRING_TOKEN, fun crdt:assign_lww/1, Element);
-append(Key, WrappedValue, ?AQL_COUNTER_INT, Element) ->
-  append(Key, WrappedValue, ?CRDT_COUNTER_INT, ?PARSER_NUMBER_TOKEN, fun crdt:increment_counter/1, Element).
-
-append(Key, WrappedValue, Crdt, PTToken, Op, Element) ->
-  case WrappedValue of
-    ?PARSER_TYPE(PTToken, Value) ->
-      OpVal = Op(Value),
-      dict:store(?DATA_ENTRY(Key, Crdt), OpVal, Element);
-    {Type, _Value} ->
+append(Key, WrappedValue, AQL, Element) ->
+  Token = types:to_parser(AQL),
+  if
+    ?is_parser_type(WrappedValue, Token) ->
+      ?PARSER_TYPE(_Type, Value) = WrappedValue,
+      OffValue = apply_offset(Key, Value, Element),
+      OpVal = types:to_insert_op(AQL, OffValue),
+      dict:store(?DATA_ENTRY(Key, types:to_crdt(AQL)), OpVal, Element);
+    ?is_parser(WrappedValue) ->
+      ?PARSER_TYPE(Type, _Value) = WrappedValue,
       throwInvalidType(Type, Key)
+  end.
+
+apply_offset(Key, Value, Element) ->
+  Col = dict:fetch(Key, attributes(Element)),
+  Type = column:type(Col),
+  Cons = column:constraint(Col),
+  case {Type, Cons} of
+    {?AQL_COUNTER_INT, {?COMPARATOR_KEY(Comp), ?PARSER_NUMBER(Offset)}} ->
+      bcounter:to_bcounter(Key, Value, Offset, Comp);
+    _Else -> Value
   end.
 
 attributes(Element) ->
@@ -201,7 +208,8 @@ new_test() ->
   BoundObject = create_key(Key, table:name(Table)),
   Columns = table:get_columns(Table),
   Pk = table:primary_key(Table),
-  Data = dict:to_list(load_defaults(dict:to_list(Columns), dict:new())),
+  AnnElWithCols = dict:store(?EL_COLS, Columns, dict:new()),
+  Data = dict:to_list(load_defaults(dict:to_list(Columns), AnnElWithCols)),
   Element = new(Key, Table),
   ?assertEqual(6, dict:size(Element)),
   ?assertEqual(BoundObject, dict:fetch(?EL_KEY, Element)),
@@ -218,11 +226,10 @@ new_1_test() ->
 
 append_raw_test() ->
   Table = create_table_aux(),
-  Value = ?PARSER_STRING("Value"),
-  Op = fun crdt:assign_lww/1,
+  Value = ?PARSER_NUMBER(9),
   Element = new(key, Table),
   % assert not fail
-  append(key, Value, ?CRDT_VARCHAR, ?PARSER_STRING_TOKEN, Op, Element).
+  append('NationalRank', Value, ?AQL_INTEGER, Element).
 
 put_test() ->
   Table = create_table_aux(),

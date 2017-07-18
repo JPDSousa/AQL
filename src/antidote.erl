@@ -35,6 +35,8 @@
 				commit_transaction/1,
 		 		update_objects/1, update_objects/2, update_objects/3]).
 
+-export([handleBadRpc/1]).
+
 -spec start_transaction() -> {ok, txid()} | {error, reason()}.
 start_transaction() ->
 	start_transaction(ignore, []).
@@ -82,6 +84,12 @@ update_objects(Snapshot, Props, Objects) when is_list(Objects) ->
 	call(update_objects, [Snapshot, Props, Objects]);
 update_objects(Snapshot, Props, Object) ->
 	update_objects(Snapshot, Props, [Object]).
+
+handleBadRpc({'EXIT', {{{badmatch, {error, no_permissions}}, _}}}) ->
+	{"Constraint Breach", "A numeric invariant has been breached."};
+handleBadRpc(_Msg) ->
+	{"Internal Error", "Unexpected error"}.
+
 
 %% ====================================================================
 %% Internal functions

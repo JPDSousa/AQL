@@ -8,7 +8,8 @@
 -endif.
 
 -export([to_bcounter/4,
-        from_bcounter/3]).
+        from_bcounter/3,
+        value/1]).
 
 to_bcounter(Key, Value, Offset, Comp) ->
   OffValue = apply_offset_value(Comp, Offset, Value),
@@ -17,32 +18,50 @@ to_bcounter(Key, Value, Offset, Comp) ->
 check_bcounter_value(_Key, Value) when Value > 0 -> Value;
 check_bcounter_value(Key, Value) -> throw(lists:concat(["Invalid value ", Value, " for column ", Key])).
 
-apply_offset_value(?GREATER_KEY, Offset, Value) -> Value-Offset;
-apply_offset_value(?SMALLER_KEY, Offset, Value) -> Offset-Value.
+apply_offset_value(?GREATER_TOKEN, Offset, Value) -> Value-Offset;
+apply_offset_value(?SMALLER_TOKEN, Offset, Value) -> Offset-Value.
 
-from_bcounter(?GREATER_KEY, Value, Offset) -> Value+Offset;
-from_bcounter(?SMALLER_KEY, Value, Offset) -> Offset-Value.
+from_bcounter(Comp, {_I, _D} = Value, Offset) ->
+  BCValue = value(Value),
+  io:fwrite("Value: ~p~n", [BCValue]),
+  from_bcounter(Comp, BCValue, Offset);
+from_bcounter(?GREATER_TOKEN, Value, Offset) ->
+  Value+Offset;
+from_bcounter(?SMALLER_TOKEN, Value, Offset) -> Offset-Value.
+
+value({Incs, Decs}) ->
+  IncsList = orddict:to_list(Incs),
+  DecsList = orddict:to_list(Decs),
+  SumIncs = lists:foldl(fun sum/2, 0, IncsList),
+  SumDecs = lists:foldl(fun sum/2, 0, DecsList),
+  SumIncs-SumDecs.
+
+sum({_Ids, Value}, Acc) -> Value+Acc.
 
 %%====================================================================
 %% Eunit tests
 %%====================================================================
 
+-ifdef(TEST).
+
 to_bcounter_test() ->
   % greater than
-  ?assertEqual(5, to_bcounter(k, 5, 0, ?GREATER_KEY)),
-  ?assertEqual(3, to_bcounter(k, 5, 2, ?GREATER_KEY)),
-  ?assertEqual(1, to_bcounter(k, 31, 30, ?GREATER_KEY)),
-  ?assertThrow(_, to_bcounter(k, 5, 6, ?GREATER_KEY)),
-  ?assertThrow(_, to_bcounter(k, 5, 5, ?GREATER_KEY)),
+  ?assertEqual(5, to_bcounter(k, 5, 0, ?GREATER_TOKEN)),
+  ?assertEqual(3, to_bcounter(k, 5, 2, ?GREATER_TOKEN)),
+  ?assertEqual(1, to_bcounter(k, 31, 30, ?GREATER_TOKEN)),
+  ?assertThrow(_, to_bcounter(k, 5, 6, ?GREATER_TOKEN)),
+  ?assertThrow(_, to_bcounter(k, 5, 5, ?GREATER_TOKEN)),
   % smaller than
-  ?assertEqual(5, to_bcounter(k, 0, 5, ?SMALLER_KEY)),
-  ?assertEqual(3, to_bcounter(k, 2, 5, ?SMALLER_KEY)),
-  ?assertEqual(1, to_bcounter(k, 30, 31, ?SMALLER_KEY)),
-  ?assertThrow(_, to_bcounter(k, 6, 5, ?SMALLER_KEY)),
-  ?assertThrow(_, to_bcounter(k, 5, 5, ?SMALLER_KEY)).
+  ?assertEqual(5, to_bcounter(k, 0, 5, ?SMALLER_TOKEN)),
+  ?assertEqual(3, to_bcounter(k, 2, 5, ?SMALLER_TOKEN)),
+  ?assertEqual(1, to_bcounter(k, 30, 31, ?SMALLER_TOKEN)),
+  ?assertThrow(_, to_bcounter(k, 6, 5, ?SMALLER_TOKEN)),
+  ?assertThrow(_, to_bcounter(k, 5, 5, ?SMALLER_TOKEN)).
 
 from_bcounter_test() ->
   % greater than
-  ?assertEqual(31, from_bcounter(?GREATER_KEY, 1, 30)),
+  ?assertEqual(31, from_bcounter(?GREATER_TOKEN, 1, 30)),
   % smaller than
-  ?assertEqual(4, from_bcounter(?SMALLER_KEY, 1, 5)).
+  ?assertEqual(4, from_bcounter(?SMALLER_TOKEN, 1, 5)).
+
+-endif.

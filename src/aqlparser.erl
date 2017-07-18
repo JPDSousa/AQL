@@ -102,6 +102,10 @@ eval_status(Query, Status) ->
 		{err, Msg} ->
 			io:fwrite("[Err] ~p: ~p~n", [AQuery, Msg]),
 			throw(Msg);
+		{badrpc, Msg} ->
+			{Error, Desc} = antidote:handleBadRpc(Msg),
+			io:fwrite("[Err] ~p: ~p~n", [Error, Desc]),
+			throw(Desc);
 		Msg ->
 			io:fwrite("[????] ~p: ~p~n", [AQuery, Msg]),
 			Msg

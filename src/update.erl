@@ -28,7 +28,7 @@ exec(Table, Props, TxId) ->
 %%====================================================================
 
 create_update(Table, Acc, [{?PARSER_ATOM(ColumnName), Op, OpParam} | Tail]) ->
-  {ok, Column} = table:get_column(Table, ColumnName),
+  Column = table:get_column(Table, ColumnName),
   {ok, Update} = resolve_op(Column, Op, OpParam),
   create_update(Table, lists:flatten(Acc, [Update]), Tail);
 create_update(_Table, Acc, []) ->
@@ -37,35 +37,47 @@ create_update(_Table, Acc, []) ->
 % varchar -> assign
 resolve_op(Column, ?ASSIGN_OP(_TChars), ?PARSER_STRING(Value)) ->
   Op = fun crdt:assign_lww/1,
-  resolve_op(Column, ?AQL_VARCHAR, ?CRDT_VARCHAR, Op, Value);
+  resolve_op(Column, ?AQL_VARCHAR, Op, Value);
 % integer -> assign
 resolve_op(Column, ?ASSIGN_OP(_TChars), ?PARSER_NUMBER(Value)) ->
   Op = fun crdt:set_integer/1,
-  resolve_op(Column, ?AQL_INTEGER, ?CRDT_INTEGER, Op, Value);
+  resolve_op(Column, ?AQL_INTEGER, Op, Value);
 % counter -> increment
 resolve_op(Column, ?INCREMENT_OP(_TChars), ?PARSER_NUMBER(Value)) ->
-  Op = fun crdt:increment_counter/1,
-  resolve_op(Column, ?AQL_COUNTER_INT, ?CRDT_COUNTER_INT, Op, Value);
+  Op = resolve_op_counter(Column, fun crdt:increment_counter/1, fun crdt:decrement_counter/1),
+  resolve_op(Column, ?AQL_COUNTER_INT, Op, Value);
 % counter -> decrement
 resolve_op(Column, ?DECREMENT_OP(_Tchars), ?PARSER_NUMBER(Value)) ->
-  Op = fun crdt:decrement_counter/1,
-  resolve_op(Column, ?AQL_COUNTER_INT, ?CRDT_COUNTER_INT, Op, Value).
+  Op = resolve_op_counter(Column, fun crdt:decrement_counter/1, fun crdt:increment_counter/1),
+  resolve_op(Column, ?AQL_COUNTER_INT, Op, Value).
 
-resolve_op(Column, AqlType, CrdtType, Op, Value) ->
+resolve_op(Column, AQL, Op, Value) ->
   CName = column:name(Column),
   CType = column:type(Column),
   case CType of
-    AqlType ->
-      Update = crdt:field_map_op(CName, CrdtType, Op(Value)),
+    AQL ->
+      Update = crdt:field_map_op(CName, types:to_crdt(AQL), Op(Value)),
       {ok, Update};
     _Else ->
       resolve_fail(CName, CType)
   end.
 
+resolve_op_counter(Column, Forward, Reverse) ->
+  case column:constraint(Column) of
+    {?COMPARATOR_KEY(Comp), ?PARSER_NUMBER(_Offset)} ->
+      case Comp of
+        ?GREATER_TOKEN ->
+          Forward;
+        _Else ->
+          Reverse
+      end;
+    _Else ->
+      Forward
+  end.
+
 resolve_fail(CName, CType) ->
   Msg = string:concat(["Cannot assign to column ", CName, " of type ", CType]),
   {err, Msg}.
-
 
 %%====================================================================
 %% Eunit tests

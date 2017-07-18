@@ -44,11 +44,11 @@
 %% check constraint
 -define(CHECK_TOKEN, check).
 -define(CHECK_KEY(TokenChars), {?CHECK_TOKEN, TokenChars}).
--define(COMPARATOR_TOKEN, comparator).
+-define(COMPARATOR_KEY(Comparator), {comparator, Comparator}).
 -define(GREATER_TOKEN, greater).
--define(GREATER_KEY, {?COMPARATOR_TOKEN, ?GREATER_TOKEN}).
+-define(GREATER_KEY, ?COMPARATOR_KEY(?GREATER_TOKEN)).
 -define(SMALLER_TOKEN, smaller).
--define(SMALLER_KEY, {?COMPARATOR_TOKEN, ?SMALLER_TOKEN}).
+-define(SMALLER_KEY, ?COMPARATOR_KEY(?SMALLER_TOKEN)).
 %% default value
 -define(DEFAULT_TOKEN, default).
 -define(DEFAULT_KEY(TokenChars), {?DEFAULT_TOKEN, TokenChars}).
@@ -86,6 +86,8 @@
 -define(PARSER_ATOM(Atom), ?PARSER_TYPE(?PARSER_ATOM_TOKEN, Atom)).
 -define(PARSER_STRING(String), ?PARSER_TYPE(?PARSER_STRING_TOKEN, String)).
 -define(PARSER_NUMBER(Number), ?PARSER_TYPE(?PARSER_NUMBER_TOKEN, Number)).
+-define(is_parser(Parser), is_tuple(Parser) andalso tuple_size(Parser) =:= 2).
+-define(is_parser_type(Parser, Type), ?is_parser(Parser) andalso element(1, Parser) =:= Type).
 
 % extras
 -define(PARSER_EQUALITY, {equality, ignore}).

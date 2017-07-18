@@ -156,7 +156,6 @@ append(Key, WrappedValue, AQL, Element) ->
   end.
 
 apply_offset(Key, Value, Element) ->
-  io:fwrite("attributes: ~p~n", [attributes(Element)]),
   Col = dict:fetch(Key, attributes(Element)),
   Type = column:type(Col),
   Cons = column:constraint(Col),

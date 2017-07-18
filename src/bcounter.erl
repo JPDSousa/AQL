@@ -23,7 +23,6 @@ apply_offset_value(?SMALLER_TOKEN, Offset, Value) -> Offset-Value.
 
 from_bcounter(Comp, {_I, _D} = Value, Offset) ->
   BCValue = value(Value),
-  io:fwrite("Value: ~p~n", [BCValue]),
   from_bcounter(Comp, BCValue, Offset);
 from_bcounter(?GREATER_TOKEN, Value, Offset) ->
   Value+Offset;

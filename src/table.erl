@@ -43,7 +43,6 @@ check_foreign_keys(Table, TxId) ->
 		Err1 = ["Table ", TName, " in foreign key reference does not exist."],
 		T = lookup(TName, Tables, lists:concat(Err1)),
 		Err2 = ["Column ", Attr, " does not exist in table ", TName],
-		io:fwrite("D: ~p~n", [T]),
 		Col = get_column(T, Attr, lists:concat(Err2)),
 		case column:is_primarykey(Col) of
 			false ->

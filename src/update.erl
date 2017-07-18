@@ -28,7 +28,7 @@ exec(Table, Props, TxId) ->
 %%====================================================================
 
 create_update(Table, Acc, [{?PARSER_ATOM(ColumnName), Op, OpParam} | Tail]) ->
-  {ok, Column} = table:get_column(Table, ColumnName),
+  Column = table:get_column(Table, ColumnName),
   {ok, Update} = resolve_op(Column, Op, OpParam),
   create_update(Table, lists:flatten(Acc, [Update]), Tail);
 create_update(_Table, Acc, []) ->
@@ -66,7 +66,7 @@ resolve_op_counter(Column, Forward, Reverse) ->
   case column:constraint(Column) of
     {?COMPARATOR_KEY(Comp), ?PARSER_NUMBER(_Offset)} ->
       case Comp of
-        ?GREATER_KEY ->
+        ?GREATER_TOKEN ->
           Forward;
         _Else ->
           Reverse

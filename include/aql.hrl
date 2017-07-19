@@ -1,3 +1,5 @@
+-define(METADATA_BUCKET, aql_metadata).
+
 % AQL -> CRDT mappings
 -define(AQL_INTEGER, integer).
 -define(CRDT_INTEGER, antidote_crdt_integer).

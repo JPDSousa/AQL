@@ -5,8 +5,8 @@
 
 -include("aql.hrl").
 
--export([add_all/1,
-		 		remove_all/1]).
+-export([add_all/1, add_all/2,
+		 		remove_all/1, remove_all/2]).
 
 -export([field_map_op/3, field_map_op/2,
 				map_update/2,

@@ -33,10 +33,28 @@ add_all(Entries) when is_list(Entries) ->
 add_all(Entry) ->
 	{add, Entry}.
 
+add_all(BoundObjects, Entries) when is_list(BoundObjects) and is_list(Entries) ->
+	lists:map(fun (B) ->
+		add_all(B, Entries)
+	end, BoundObjects);
+add_all(BoundObject, Entries) when is_list(Entries) ->
+	{BoundObject, add_all, Entries};
+add_all(BoundObject, Entry) ->
+	{BoundObject, add, Entry}.
+
 remove_all(Entries) when is_list(Entries) ->
 	{remove_all, Entries};
 remove_all(Entry) ->
  	{remove, Entry}.
+
+remove_all(BoundObjects, Entries) when is_list(BoundObjects) and is_list(Entries) ->
+	lists:map(fun (B) ->
+		remove_all(B, Entries)
+	end, BoundObjects);
+remove_all(BoundObject, Entries) when is_list(Entries) ->
+	create_op(BoundObject, remove_all, Entries);
+remove_all(BoundObject, Entry) ->
+	create_op(BoundObject, remove, Entry).
 
 %% ====================================================================
 %% Crdt_map functions

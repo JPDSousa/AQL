@@ -19,7 +19,7 @@ exec(Table, Props, TxId) ->
   SetClause = proplists:get_value(?SET_TOKEN, Props),
   WhereClause = proplists:get_value(?WHERE_TOKEN, Props),
   FieldUpdates = create_update(Table, [], SetClause),
-  Keys = where:scan(TName, WhereClause),
+  Keys = where:scan(TName, WhereClause, TxId),
   MapUpdates = crdt:map_update(Keys, FieldUpdates),
   antidote:update_objects(MapUpdates, TxId).
 

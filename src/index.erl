@@ -13,10 +13,16 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([name/1,
+-export([keys/2,
+        name/1,
         put/1, put/2,
         name_tag/2,
         tag/4, tag/5]).
+
+keys(TName, TxId) ->
+  Name = name(TName),
+  {ok, [Res]} = antidote:read_objects(Name, TxId),
+  lists:map(fun(Key) -> element:create_key(Key, TName) end, Res).
 
 name(TName) ->
   TNameStr = utils:to_list(TName),

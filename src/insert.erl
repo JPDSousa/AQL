@@ -39,8 +39,8 @@ touch({_ID, _Type, TName} = Key, TxId) ->
 	antidote:update_objects(crdt:ipa_update(Key, ipa:touch()), TxId),
 	{ok, [Element]} = antidote:read_objects(Key, TxId),
 	% touch cascade children
-	Refs = proplists:get_value(element:refs_key(), Element, []),
-	lists:foreach(fun (K) -> touch_cascade(K, TxId) end, Refs),
+	%Refs = proplists:get_value(element:refs_key(), Element, []),
+	%lists:foreach(fun (K) -> touch_cascade(K, TxId) end, Refs),
 	% touch parents
 	Table = table:lookup(TName, TxId),
 	FKs = foreign_keys:from_table(Table),

@@ -8,7 +8,6 @@
 -define(EL_PK, '#pk').
 -define(EL_FK, '#fl').
 -define(EL_ST, ?DATA_ENTRY('#st', antidote_crdt_mvreg)).
--define(EL_REFS, ?DATA_ENTRY('#refs', antidote_crdt_orset)).
 -define(EL_ANON, none).
 
 -include("aql.hrl").
@@ -18,10 +17,10 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([new/1, new/2, create_key/2, refs_key/0, st_key/0,
+-export([new/1, new/2, create_key/2, st_key/0,
         put/3,
         get/3,
-        create_db_op/1,
+        insert/1, insert/2,
         primary_key/1, foreign_keys/1,
         attributes/1,
         st_value/1]).
@@ -29,9 +28,6 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
-
-refs_key() ->
-  ?EL_REFS.
 
 st_key() ->
   ?EL_ST.
@@ -126,11 +122,14 @@ get(ColName, Crdt, Element) when ?is_cname(ColName) ->
 foreign_keys(Element) ->
   dict:fetch(?EL_FK, Element).
 
-create_db_op(Element) ->
+insert(Element) ->
   DataMap = dict:filter(fun is_data_field/2, Element),
   Ops = dict:to_list(DataMap),
   Key = primary_key(Element),
   crdt:map_update(Key, Ops).
+insert(Element, TxId) ->
+  Op = insert(Element),
+  antidote:update_objects(Op, TxId).
 
 is_data_field(?EL_KEY, _V) -> false;
 is_data_field(?EL_PK, _V) -> false;

@@ -19,13 +19,13 @@ exec(Table, Props, TxId) ->
 	Values = proplists:get_value(?PROP_VALUES, Props),
 	AnnElement = element:new(Table),
 	{ok, Element} = element:put(Keys, Values, AnnElement),
-	AntidoteOp = element:create_db_op(Element),
-	antidote:update_objects(AntidoteOp, TxId),
+	elemet:insert(Element, TxId),
+	index:put(element:primary_key(Element), TxId),
 	% update foreign key references
-	Pk = element:primary_key(Element),
+	%Pk = element:primary_key(Element),
 	Fks = element:foreign_keys(Element),
-	lists:foreach(fun (Fk) -> touch(Fk, TxId) end, Fks),
-	lists:foreach(fun (Fk) -> add_ref(Fk, Pk, TxId) end, Fks).
+	lists:foreach(fun (Fk) -> touch(Fk, TxId) end, Fks).
+	%lists:foreach(fun (Fk) -> add_ref(Fk, Pk, TxId) end, Fks).
 
 %% ====================================================================
 %% Internal functions

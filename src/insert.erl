@@ -19,7 +19,7 @@ exec(Table, Props, TxId) ->
 	Values = proplists:get_value(?PROP_VALUES, Props),
 	AnnElement = element:new(Table),
 	{ok, Element} = element:put(Keys, Values, AnnElement),
-	elemet:insert(Element, TxId),
+	element:insert(Element, TxId),
 	index:put(element:primary_key(Element), TxId),
 	% update foreign key references
 	%Pk = element:primary_key(Element),

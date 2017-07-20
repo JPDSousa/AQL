@@ -3,33 +3,23 @@
 %%====================================================================
 Nonterminals
 query
+statement
+admin
+%show
+show_query
 %select
-select_query
-projection
-select_fields
+select_query projection select_fields
 %where
-where_clauses
-where_clause
+where_clauses where_clause
 %insert
-insert_query
-insert_keys_clause
-insert_keys
-insert_values_clause
-insert_values
+insert_query insert_keys_clause insert_keys insert_values_clause insert_values
 %delete
 delete_query
 %create
-create_query
-table_metadata
-create_keys
-attribute
-attribute_constraint
+create_query table_metadata create_keys attribute attribute_constraint
 attribute_name
 %update
-update_query
-set_clause
-set_assignments
-set_assignment
+update_query set_clause set_assignments set_assignment
 %utils
 value
 .
@@ -38,48 +28,29 @@ value
 %% Terminals
 %%====================================================================
 Terminals
+%show
+show tables
+%index
+index
 %select
-select
-wildcard
-from
+select wildcard from
 %where
 where
 %insert
-insert
-into
-values
+insert into values
 %delete
 delete
 %create
-create
-table
-table_policy
-primary
-foreign
-key
-references
-default
-check
+create table table_policy primary foreign key references default check
 attribute_type
 %update
-update
-set
+update set
 %types
-atom_value
-string
-number
+atom_value string number
 %expression
-assign
-increment
-decrement
-equality
-comparator
-conjunctive
+assign increment decrement equality comparator conjunctive
 %list
-sep
-start_list
-end_list
-semi_colon
+sep start_list end_list semi_colon
 .
 
 %%====================================================================
@@ -91,33 +62,36 @@ Rootsymbol query.
 %% Rules
 %%====================================================================
 
-query ->
-	query semi_colon query :
-	lists:append('$1', '$3').
+query -> statement : '$1'.
 
-query ->
-	query semi_colon :
-	'$1'.
+query -> admin: '$1'.
 
-query ->
-    select_query :
-    ['$1'].
+statement -> statement semi_colon statement :	lists:append('$1', '$3').
 
-query ->
-    insert_query :
-    ['$1'].
+statement -> statement semi_colon :	'$1'.
 
-query ->
-		delete_query :
-		['$1'].
+statement -> select_query : ['$1'].
 
-query ->
-	update_query :
-	['$1'].
+statement -> insert_query : ['$1'].
 
-query ->
-	create_query :
-	['$1'].
+statement -> delete_query : ['$1'].
+
+statement -> update_query :	['$1'].
+
+statement -> create_query :	['$1'].
+
+admin -> show_query : ['$1'].
+
+%%--------------------------------------------------------------------
+%% show
+%%--------------------------------------------------------------------
+show_query ->
+	show index from atom_value :
+	?SHOW_CLAUSE({?INDEX_TOKEN, '$4'}).
+
+show_query ->
+	show tables :
+	?SHOW_CLAUSE(?TABLES_TOKEN).
 
 %%--------------------------------------------------------------------
 %% select query
@@ -338,6 +312,12 @@ Erlang code.
 test_parser(String) ->
 	{ok, Tokens, _} = scanner:string(String),
 	{ok, _ParserTree} = parse(Tokens).
+
+show_tables_test() ->
+	test_parser("SHOW TABLES").
+
+show_index_test() ->
+	test_parser("SHOW INDEX FROM TestTable").
 
 create_table_simple_test() ->
 	test_parser("CREATE TABLE Test (a VARCHAR, b INTEGER)"),

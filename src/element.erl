@@ -17,7 +17,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([primary_key/1, foreign_keys/1, attributes/1,]).
+-export([primary_key/1, foreign_keys/1, attributes/1]).
 
 -export([create_key/2, st_key/0, st_value/1]).
 

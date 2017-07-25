@@ -20,31 +20,29 @@ exec(Table, Props, TxId) ->
 	AnnElement = element:new(Table),
 	{ok, Element} = element:put(Keys, Values, AnnElement),
 	element:insert(Element, TxId),
-	index:put(element:primary_key(Element), TxId),
+	Pk = element:primary_key(Element),
+	index:put(Pk, TxId),
 	% update foreign key references
-	%Pk = element:primary_key(Element),
+	TName = table:name(Table),
 	Fks = element:foreign_keys(Element),
-	lists:foreach(fun (Fk) -> touch(Fk, TxId) end, Fks).
-	%lists:foreach(fun (Fk) -> add_ref(Fk, Pk, TxId) end, Fks).
+	lists:foreach(fun (Fk) -> touch(Pk, Fk, TxId) end, Fks).
 
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
 
-add_ref(Key, Ref, TxId) ->
-	Op = crdt:single_map_update(Key, element:refs_key(), crdt:add_all(Ref)),
-	antidote:update_objects(Op, TxId).
-
-touch({_ID, _Type, TName} = Key, TxId) ->
-	antidote:update_objects(crdt:ipa_update(Key, ipa:touch()), TxId),
-	{ok, [Element]} = antidote:read_objects(Key, TxId),
+touch({_K, _T, CTabName} = Pk, {CName, {Value, PTabName}}, TxId) ->
+	TKey = element:create_key(Value, PTabName),
+	% TODO check if exists
+	antidote:update_objects(crdt:ipa_update(TKey, ipa:touch()), TxId),
+	{ok, [Element]} = antidote:read_objects(TKey, TxId),
 	% touch cascade children
 	%Refs = proplists:get_value(element:refs_key(), Element, []),
 	%lists:foreach(fun (K) -> touch_cascade(K, TxId) end, Refs),
 	% touch parents
-	Table = table:lookup(TName, TxId),
+	Table = table:lookup(PTabName, TxId),
 	FKs = foreign_keys:from_table(Table),
-	lists:foreach(fun (K) -> touch(K, TxId) end, foreign_keys:parents(Element, FKs)).
+	lists:foreach(fun (K) -> touch(TKey, K, TxId) end, foreign_keys:parents(Element, FKs)).
 
 touch_cascade(Key, TxId) ->
 	antidote:update_objects(crdt:ipa_update(Key, ipa:touch_cascade()), TxId),

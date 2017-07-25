@@ -20,8 +20,8 @@
         tag/4, tag/5]).
 
 keys(TName, TxId) ->
-  Name = name(TName),
-  {ok, [Res]} = antidote:read_objects(Name, TxId),
+  BoundObject = crdt:create_bound_object(name(TName), ?INDEX_CRDT, ?METADATA_BUCKET),
+  {ok, [Res]} = antidote:read_objects(BoundObject, TxId),
   lists:map(fun(Key) -> element:create_key(Key, TName) end, Res).
 
 name(TName) ->

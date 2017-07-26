@@ -12,9 +12,12 @@
 exec(Table, Props, TxId) ->
 	TName = table:name(Table),
 	Condition = proplists:get_value(?WHERE_TOKEN, Props),
-	Keys = where:scan(TName, Condition),
-	FKs = foreign_keys:from_table(Table),
-  lists:foreach(fun (K) -> delete_cascade(FKs, K, TxId, ipa:delete()) end, Keys).
+	Keys = where:scan(TName, Condition, TxId),
+	lists:foreach(fun (Key) ->
+		antidote:update_objects(crdt:ipa_update(Key, ipa:delete()), TxId)
+	end, Keys).
+	%FKs = foreign_keys:from_table(Table).
+  %lists:foreach(fun (K) -> delete_cascade(FKs, K, TxId, ipa:delete()) end, Keys).
 
 %% ====================================================================
 %% Internal functions

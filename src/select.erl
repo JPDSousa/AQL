@@ -17,7 +17,7 @@ exec(Table, Select, TxId) ->
 	Projection = proplists:get_value(?PROP_COLUMNS, Select),
 	% TODO validate projection fields
 	Condition = proplists:get_value(?WHERE_TOKEN, Select),
-	Keys = where:scan(TName, Condition),
+	Keys = where:scan(TName, Condition, TxId),
 	{ok, Results} = antidote:read_objects(Keys, TxId),
 	ProjRes = project(Projection, Results, []),
 	ActualRes = apply_offset(ProjRes, table:get_columns(Table), []),

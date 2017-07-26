@@ -62,6 +62,21 @@ exec([Query | Tail], Acc) ->
 exec([], Acc) ->
 	{ok, Acc}.
 
+exec(?SHOW_CLAUSE(?TABLES_TOKEN)) ->
+	{ok, TxId} = antidote:start_transaction(),
+	Tables = table:read_tables(TxId),
+	TNames = lists:map(fun({{Name, _Type}, _Value}) -> Name end, Tables),
+	antidote:commit_transaction(TxId),
+	io:fwrite("Tables: ~p~n", [TNames]),
+	TNames;
+exec(?SHOW_CLAUSE({?INDEX_TOKEN, ?PARSER_ATOM(TName)})) ->
+	{ok, TxId} = antidote:start_transaction(),
+	Keys = index:keys(TName, TxId),
+	lists:foreach(fun({Key, _Type, _TName}) ->
+		io:fwrite("{key: ~p, table: ~p}~n", [Key, TName])
+	end, Keys),
+	antidote:commit_transaction(TxId),
+	Keys;
 exec(?CREATE_CLAUSE(Table)) ->
 	eval("Create Table", Table, table);
 exec(?INSERT_CLAUSE(Insert)) ->

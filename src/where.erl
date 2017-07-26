@@ -4,22 +4,25 @@
 -include("parser.hrl").
 -include("aql.hrl").
 
--export([scan/2]).
+-export([scan/3]).
 
-scan(TName, Conditions) ->
-  scan(TName, Conditions, []).
+scan(TName, undefined, TxId) ->
+  %TODO scan all
+  index:keys(TName, TxId);
+scan(TName, Conditions, _TxId) ->
+  evaluate(TName, Conditions, []).
 
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
 
-scan(TName, [{?PARSER_ATOM(_ClValue), Arop, {_AQLType, Str}} | T], Acc) ->
+evaluate(TName, [{?PARSER_ATOM(_ClValue), Arop, {_AQLType, Str}} | T], Acc) ->
 	case Arop of
 		?PARSER_EQUALITY ->
 			NewAcc = lists:flatten(Acc, [element:create_key(Str, TName)]),
-			scan(TName, T, NewAcc);
+			evaluate(TName, T, NewAcc);
 		_Else ->
 			throw("Not supported yet! :)")
 	end;
-scan(_TName, [], Acc) ->
+evaluate(_TName, [], Acc) ->
 	Acc.

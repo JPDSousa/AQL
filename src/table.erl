@@ -3,11 +3,11 @@
 
 -module(table).
 
--define(BOUND_OBJECT, {'#tables1', antidote_crdt_gmap, aql_metadata}).
--define(CRDT_TYPE, antidote_crdt_lwwreg).
-
 -include("parser.hrl").
 -include("aql.hrl").
+
+-define(BOUND_OBJECT, {'#tables', antidote_crdt_gmap, ?METADATA_BUCKET}).
+-define(CRDT_TYPE, antidote_crdt_lwwreg).
 
 -export([exec/2]).
 

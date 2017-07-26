@@ -8,7 +8,6 @@
 -define(EL_PK, '#pk').
 -define(EL_FK, '#fl').
 -define(EL_ST, ?DATA_ENTRY('#st', antidote_crdt_mvreg)).
--define(EL_REFS, ?DATA_ENTRY('#refs', antidote_crdt_orset)).
 -define(EL_ANON, none).
 
 -include("aql.hrl").
@@ -18,20 +17,33 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([new/1, new/2, create_key/2, refs_key/0, st_key/0,
-        put/3,
-        get/3,
-        create_db_op/1,
-        primary_key/1, foreign_keys/1,
-        attributes/1,
-        st_value/1]).
+-export([primary_key/1, foreign_keys/1, attributes/1]).
+
+-export([create_key/2, st_key/0, st_value/1]).
+
+-export([new/1, new/2,
+        put/3, get/3,
+        insert/1, insert/2]).
 
 %% ====================================================================
-%% API functions
+%% Property functions
 %% ====================================================================
 
-refs_key() ->
-  ?EL_REFS.
+primary_key(Element) ->
+  dict:fetch(?EL_KEY, Element).
+
+foreign_keys(Element) ->
+  dict:fetch(?EL_FK, Element).
+
+attributes(Element) ->
+  dict:fetch(?EL_COLS, Element).
+
+%% ====================================================================
+%% Utils functions
+%% ====================================================================
+
+create_key(Key, TName) ->
+  crdt:create_bound_object(Key, ?CRDT_TYPE, TName).
 
 st_key() ->
   ?EL_ST.
@@ -40,11 +52,15 @@ st_value(Values) ->
   Value = proplists:get_value(?EL_ST, Values),
   ipa:status(ipa:add_wins(), Value).
 
-create_key(Key, TName) ->
-  crdt:create_bound_object(Key, ?CRDT_TYPE, TName).
+throwInvalidType(Type, CollumnName) ->
+	throw(lists:concat(["Invalid type ", Type, " for collumn: ", CollumnName])).
 
-primary_key(Element) ->
-  dict:fetch(?EL_KEY, Element).
+throwNoSuchColumn(ColName) ->
+  throw(lists:concat(["Column ", ColName, " does not exist."])).
+
+%% ====================================================================
+%% API functions
+%% ====================================================================
 
 new(Table) when ?is_table(Table) ->
   new(?EL_ANON, Table).
@@ -105,11 +121,16 @@ set_if_primary(Col, Value, Element) ->
       Element
   end.
 
+set_key(?PARSER_TYPE(_Type, Value), Element) ->
+  {_Key, Type, Bucket} = dict:fetch(?EL_KEY, Element),
+  dict:store(?EL_KEY, crdt:create_bound_object(Value, Type, Bucket), Element).
+
 handle_fk(Col, ?PARSER_TYPE(_Type, Value), Element) ->
+  CName = column:name(Col),
   Constraint = column:constraint(Col),
   case Constraint of
     ?FOREIGN_KEY({?PARSER_ATOM(Table), _Attr}) ->
-      dict:append(?EL_FK, create_key(Value, Table), Element);
+      dict:append(?EL_FK, {CName, {Value, Table}}, Element);
     _Else ->
       Element
   end.
@@ -123,24 +144,20 @@ get(ColName, Crdt, Element) when ?is_cname(ColName) ->
       throwNoSuchColumn(ColName)
   end.
 
-foreign_keys(Element) ->
-  dict:fetch(?EL_FK, Element).
-
-create_db_op(Element) ->
+insert(Element) ->
   DataMap = dict:filter(fun is_data_field/2, Element),
   Ops = dict:to_list(DataMap),
   Key = primary_key(Element),
   crdt:map_update(Key, Ops).
+insert(Element, TxId) ->
+  Op = insert(Element),
+  antidote:update_objects(Op, TxId).
 
 is_data_field(?EL_KEY, _V) -> false;
 is_data_field(?EL_PK, _V) -> false;
 is_data_field(?EL_COLS, _V) -> false;
 is_data_field(?EL_FK, _V) -> false;
 is_data_field(_Key, _V) -> true.
-
-set_key(?PARSER_TYPE(_Type, Value), Element) ->
-  {_Key, Type, Bucket} = dict:fetch(?EL_KEY, Element),
-  dict:store(?EL_KEY, crdt:create_bound_object(Value, Type, Bucket), Element).
 
 append(Key, WrappedValue, AQL, Element) ->
   Token = types:to_parser(AQL),
@@ -164,15 +181,6 @@ apply_offset(Key, Value, Element) ->
       bcounter:to_bcounter(Key, Value, Offset, Comp);
     _Else -> Value
   end.
-
-attributes(Element) ->
-  dict:fetch(?EL_COLS, Element).
-
-throwInvalidType(Type, CollumnName) ->
-	throw(lists:concat(["Invalid type ", Type, " for collumn: ", CollumnName])).
-
-throwNoSuchColumn(ColName) ->
-  throw(lists:concat(["Column ", ColName, " does not exist."])).
 
 %%====================================================================
 %% Eunit tests
@@ -249,6 +257,6 @@ foreign_keys_test() ->
   Table = create_table_aux(),
   El = new(key, Table),
   {ok, El1} = put(Keys, Values, El),
-  ?assertEqual([create_key(Fk, 'Institution')], foreign_keys(El1)).
+  ?assertEqual([{'InstitutionId', {Fk, 'Institution'}}], foreign_keys(El1)).
 
 -endif.

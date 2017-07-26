@@ -36,9 +36,10 @@ end_per_testcase(_, _) ->
   ok.
 
 all() ->
-  [insert_multilevel,
-  delete_basic, delete_multilevel,
-  create_table_fail].
+  [%insert_multilevel,
+  %delete_basic, delete_multilevel,
+  %create_table_fail
+  ].
 
 create_table_fail(_Config) ->
   % cannot create table that points to a non-existant table

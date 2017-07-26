@@ -5,8 +5,8 @@
 
 -include("aql.hrl").
 
--export([add_all/1,
-		 		remove_all/1]).
+-export([add_all/1, add_all/2,
+		 		remove_all/1, remove_all/2]).
 
 -export([field_map_op/3, field_map_op/2,
 				map_update/2,
@@ -33,10 +33,28 @@ add_all(Entries) when is_list(Entries) ->
 add_all(Entry) ->
 	{add, Entry}.
 
+add_all(BoundObjects, Entries) when is_list(BoundObjects) and is_list(Entries) ->
+	lists:map(fun (B) ->
+		add_all(B, Entries)
+	end, BoundObjects);
+add_all(BoundObject, Entries) when is_list(Entries) ->
+	{BoundObject, add_all, Entries};
+add_all(BoundObject, Entry) ->
+	{BoundObject, add, Entry}.
+
 remove_all(Entries) when is_list(Entries) ->
 	{remove_all, Entries};
 remove_all(Entry) ->
  	{remove, Entry}.
+
+remove_all(BoundObjects, Entries) when is_list(BoundObjects) and is_list(Entries) ->
+	lists:map(fun (B) ->
+		remove_all(B, Entries)
+	end, BoundObjects);
+remove_all(BoundObject, Entries) when is_list(Entries) ->
+	create_op(BoundObject, remove_all, Entries);
+remove_all(BoundObject, Entry) ->
+	create_op(BoundObject, remove, Entry).
 
 %% ====================================================================
 %% Crdt_map functions
@@ -110,9 +128,7 @@ ipa_update(Key, State) ->
 create_op(BoundObject, Operation, OpParam) ->
 	{BoundObject, Operation, OpParam}.
 
-create_bound_object(Key, Crdt, Bucket) when is_integer(Key) and ?is_crdt(Crdt) and ?is_dbbucket(Bucket) ->
-	create_bound_object(integer_to_list(Key), Crdt, Bucket);
-create_bound_object(Key, Crdt, Bucket) when is_list(Key) and ?is_crdt(Crdt) and ?is_dbbucket(Bucket) ->
-	create_bound_object(list_to_atom(Key), Crdt, Bucket);
-create_bound_object(Key, CrdtType, Bucket) when ?is_dbkey(Key) and ?is_crdt(CrdtType) and ?is_dbbucket(Bucket) ->
-	{Key, CrdtType, Bucket}.
+create_bound_object(Key, CrdtType, Bucket) ->
+	KeyAtom = utils:to_atom(Key),
+	BucketAtom = utils:to_atom(Bucket),
+	{KeyAtom, CrdtType, BucketAtom}.

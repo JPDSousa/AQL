@@ -19,6 +19,13 @@ String = '([^']*?)'
 %%====================================================================
 Rules.
 
+% show related tokens
+(show|SHOW) : {token, ?SHOW_CLAUSE(TokenChars)}.
+(tables|TABLES) : {token, ?TABLES_CLAUSE(TokenChars)}.
+
+% index related tokens
+(index|INDEX) : {token, ?INDEX_CLAUSE(TokenChars)}.
+
 % select query related tokens
 (select|SELECT) : {token, ?SELECT_CLAUSE(TokenChars)}.
 (from|FROM) : {token, ?FROM_CLAUSE(TokenChars)}.

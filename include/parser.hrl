@@ -2,8 +2,19 @@
 % --------------------------------- Lexer ------------------------------------
 % -----------------------------------------------------------------------------
 
+% show
+-define(SHOW_TOKEN, show).
+-define(SHOW_CLAUSE(TokenChars), {?SHOW_TOKEN, TokenChars}).
+
+-define(TABLES_TOKEN, tables).
+-define(TABLES_CLAUSE(TokenChars), {?TABLES_TOKEN, TokenChars}).
+
+% index
+-define(INDEX_TOKEN, index).
+-define(INDEX_CLAUSE(TokenChars), {?INDEX_TOKEN, TokenChars}).
+
 % select
--define (SELECT_TOKEN, select).
+-define(SELECT_TOKEN, select).
 -define(SELECT_CLAUSE(TokenChars), {?SELECT_TOKEN, TokenChars}).
 %% from
 -define(FROM_TOKEN, from).

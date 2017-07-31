@@ -14,7 +14,7 @@
 %% ====================================================================
 -export([exec/3]).
 
-exec(Table, Props, TxId) ->
+exec({Table, Tables}, Props, TxId) ->
 	Keys = get_keys(Table, Props),
 	Values = proplists:get_value(?PROP_VALUES, Props),
 	AnnElement = element:new(Table),

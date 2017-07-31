@@ -14,7 +14,7 @@
 %% API
 %%====================================================================
 
-exec(Table, Props, TxId) ->
+exec({Table, _Tables}, Props, TxId) ->
   TName = table:name(Table),
   SetClause = proplists:get_value(?SET_TOKEN, Props),
   WhereClause = proplists:get_value(?WHERE_TOKEN, Props),

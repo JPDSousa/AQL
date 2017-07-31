@@ -9,7 +9,7 @@
 -include("parser.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
-exec(Table, Props, TxId) ->
+exec({Table, _Tables}, Props, TxId) ->
 	TName = table:name(Table),
 	Condition = proplists:get_value(?WHERE_TOKEN, Props),
 	Keys = where:scan(TName, Condition, TxId),

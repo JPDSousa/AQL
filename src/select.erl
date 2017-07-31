@@ -12,7 +12,7 @@
 %% ====================================================================
 -export([exec/3]).
 
-exec(Table, Select, TxId) ->
+exec({Table, _Tables}, Select, TxId) ->
 	TName = table:name(Table),
 	Projection = proplists:get_value(?PROP_COLUMNS, Select),
 	% TODO validate projection fields

@@ -10,8 +10,21 @@
 
 -export([parents/2,
 			from_table/1,
-			from_columns/1
+			from_columns/1,
+			load_chain/4
 			]).
+
+load_chain([{CName, TName} | FkChain], Value, Tables, TxId) ->
+	io:fwrite("Chain: ~p~n", [[{CName, TName} | FkChain]]),
+	Table = table:lookup(TName, Tables, "No such table"),
+	Fks = from_table(Table),
+	{ok, [Parent]} = antidote:read_objects(element:create_key(Value, TName), TxId),
+	Unflat = lists:map(fun ({{_Key, FkType}, {FkTable, FkAttr}}) ->
+		FkName = [{FkAttr, FkTable}] ++ [{CName, TName}] ++ FkChain,
+		FkValue = element:get(FkAttr, types:to_crdt(FkType), Parent),
+		[{FkName, FkType, FkValue} | load_chain(FkName, FkValue, Tables, TxId)]
+	end, Fks),
+	lists:flatten(Unflat).
 
 parents(Element, FKs) ->
 	lists:map(fun ({K, {Table, _Col}}) ->
@@ -20,7 +33,7 @@ parents(Element, FKs) ->
 	end, FKs).
 
 from_table(Table) ->
-	from_columns(table:get_columns(Table)).
+	from_columns(column:s_from_table(Table)).
 
 from_columns(Columns) ->
 	F = dict:filter(fun (_ColName, Col) ->
@@ -33,7 +46,7 @@ from_columns(Columns) ->
 	end, Columns),
 	List = dict:to_list(F),
 	lists:map(fun ({Name, Column}) ->
-		Type = types:to_crdt(column:type(Column)),
+		Type = column:type(Column),
 		?FOREIGN_KEY({?PARSER_ATOM(TName), ?PARSER_ATOM(Attr)}) = column:constraint(Column),
 		{{Name, Type}, {TName, Attr}}
 	end, List).
@@ -52,13 +65,13 @@ create_table_aux() ->
 
 from_table_test() ->
 	Table = create_table_aux(),
-	Expected = [{{'B', ?CRDT_VARCHAR}, {tb, id}}],
+	Expected = [{{'B', ?AQL_VARCHAR}, {tb, id}}],
 	?assertEqual(Expected, from_table(Table)).
 
 from_columns_test() ->
 	Table = create_table_aux(),
-	Cols = table:get_columns(Table),
-	Expected = [{{'B', ?CRDT_VARCHAR}, {tb, id}}],
+	Cols = column:s_from_table(Table),
+	Expected = [{{'B', ?AQL_VARCHAR}, {tb, id}}],
 	?assertEqual(Expected, from_columns(Cols)).
 
 parents_test() ->

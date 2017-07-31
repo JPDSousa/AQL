@@ -28,7 +28,7 @@ exec({Table, _Tables}, Props, TxId) ->
 %%====================================================================
 
 create_update(Table, Acc, [{?PARSER_ATOM(ColumnName), Op, OpParam} | Tail]) ->
-  Column = table:get_column(Table, ColumnName),
+  Column = column:s_get(Table, ColumnName),
   {ok, Update} = resolve_op(Column, Op, OpParam),
   create_update(Table, lists:flatten(Acc, [Update]), Tail);
 create_update(_Table, Acc, []) ->

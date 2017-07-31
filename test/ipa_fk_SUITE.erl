@@ -10,7 +10,8 @@
           end_per_testcase/2,
           all/0]).
 
--export([insert_multilevel/1,
+-export([indirect_foreign_keys/1,
+          insert_multilevel/1,
           delete_basic/1, delete_multilevel/1,
           create_table_fail/1]).
 
@@ -18,6 +19,7 @@ init_per_suite(Config) ->
   tutils:create_single_table("FkA"),
   tutils:create_fk_table("FkB", "FkA"),
   tutils:create_fk_table("FkC", "FkB"),
+  tutils:create_fk_table("FkD", "FkC"),
   Config.
 
 end_per_suite(Config) ->
@@ -29,6 +31,8 @@ init_per_testcase(_Case, Config) ->
     {ok, []} = tutils:aql("INSERT INTO FkB VALUES (2, 1)"),
     {ok, []} = tutils:aql("INSERT INTO FkC VALUES (1, 1)"),
     {ok, []} = tutils:aql("INSERT INTO FkC VALUES (2, 1)"),
+    {ok, []} = tutils:aql("INSERT INTO FkD VALUES (1, 1)"),
+    {ok, []} = tutils:aql("INSERT INTO FkD VALUES (2, 1)"),
     Config.
 
 end_per_testcase(_, _) ->
@@ -36,10 +40,17 @@ end_per_testcase(_, _) ->
   ok.
 
 all() ->
-  [%insert_multilevel,
+  [indirect_foreign_keys
+  %insert_multilevel,
   %delete_basic, delete_multilevel,
   %create_table_fail
   ].
+
+indirect_foreign_keys(_Config) ->
+  KeyC = element:create_key('1', 'FkC'),
+  KeyD = element:create_key('1', 'FkD'),
+  {ok, [ResC, ResD], _CT} = antidote:read_objects([KeyC, KeyD]),
+  io:fwrite("One level: ~p~nTwo levels: ~p~n", [ResC, ResD]).
 
 create_table_fail(_Config) ->
   % cannot create table that points to a non-existant table

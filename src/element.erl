@@ -11,12 +11,15 @@
 -define(CRDT_TYPE, antidote_crdt_gmap).
 -define(EL_ANON, none).
 
--export([primary_key/1, foreign_keys/1, attributes/1]).
+-export([primary_key/1,
+        foreign_keys/1, foreign_keys/2, foreign_keys/3,
+        attributes/1,
+        table/1]).
 
 -export([create_key/2, st_key/0, st_value/1]).
 
 -export([new/1, new/2,
-        put/5, get/2, get/3,
+        put/5, get/2, get/3, get/4,
         insert/1, insert/2]).
 
 %% ====================================================================
@@ -46,6 +49,10 @@ foreign_keys(Element) ->
 attributes(Element) ->
   el_get_cols(Element).
 
+table(Element) ->
+  {_K, _T, TName} = primary_key(Element),
+  TName.
+
 %% ====================================================================
 %% Utils functions
 %% ====================================================================
@@ -67,11 +74,13 @@ st_value(Data) when is_list(Data) ->
 st_value(Element) when is_tuple(Element) ->
   st_value(el_get_data(Element)).
 
-throwInvalidType(Type, CollumnName) ->
-	throw(lists:concat(["Invalid type ", Type, " for collumn: ", CollumnName])).
+throwInvalidType(Type, CollumnName, TableName) ->
+	throw(lists:concat(["Invalid type ", Type, " for collumn: ",
+  CollumnName, " in table ", TableName])).
 
-throwNoSuchColumn(ColName) ->
-  throw(lists:concat(["Column ", ColName, " does not exist."])).
+throwNoSuchColumn(ColName, TableName) ->
+  throw(lists:concat(["Column ", ColName,
+    " does not exist in table ", TableName])).
 
 %% ====================================================================
 %% API functions
@@ -111,7 +120,8 @@ put(?PARSER_ATOM(ColName), Value, Element, Tables, TxId) ->
       Element2 = set_if_primary(Col, Value, Element1),
       append(ColName, Value, ColType, Element2);
     _Else ->
-      throwNoSuchColumn(ColName)
+      TName = table(Element),
+      throwNoSuchColumn(ColName, TName)
   end.
 
 set_if_primary(Col, ?PARSER_TYPE(_Type, Value), Element) ->
@@ -130,7 +140,6 @@ handle_fk(Col, Value, Element, Tables, TxId) ->
   case column:constraint(Col) of
     ?FOREIGN_KEY({?PARSER_ATOM(FkTable), ?PARSER_ATOM(FkAttr)}) ->
       IFks = foreign_keys:load_chain([{FkAttr, FkTable}], Value, Tables, TxId),
-      io:fwrite("IFKs: ~p~n", [IFks]),
       lists:foldl(fun ({CName, CType, CValue}, AccElement) ->
         append({CName}, CValue, CType, AccElement)
       end, Element, IFks);
@@ -144,17 +153,17 @@ get(ColName, Element) ->
   AQL = column:type(Col),
   get(ColName, types:to_crdt(AQL), Element).
 
-get(ColName, Crdt, Data) when is_list(Data) ->
+get(ColName, Crdt, Data, TName) when is_list(Data) ->
   Value = proplists:get_value(?MAP_KEY(ColName, Crdt), Data),
   case Value of
     undefined ->
-      throwNoSuchColumn(ColName);
+      throwNoSuchColumn(ColName, TName);
     _Else ->
       Value
-  end;
-get(ColName, Crdt, Element) ->
-  get(ColName, Crdt, el_get_data(Element)).
+  end.
 
+get(ColName, Crdt, Element) ->
+  get(ColName, Crdt, el_get_data(Element), table(Element)).
 
 insert(Element) ->
   Ops = el_get_ops(Element),
@@ -170,7 +179,8 @@ append(Key, ?PARSER_TYPE(Type, Value), AQL, Element) ->
     Token ->
       append(Key, Value, AQL, Element);
     _Else ->
-      throwInvalidType(Type, Key)
+      TName = table(Element),
+      throwInvalidType(Type, Key, TName)
   end;
 append(Key, Value, AQL, Element) ->
   Data = el_get_data(Element),
@@ -193,13 +203,15 @@ apply_offset(Key, Value, Element) when is_atom(Key) ->
   end;
 apply_offset(_Key, Value, _Element) -> Value.
 
-foreign_keys(Fks, Element) is_tuple(Element) ->
+foreign_keys(Fks, Element) when is_tuple(Element) ->
   Data = el_get_data(Element),
-  foreign_keys(Cols, Data);
-foreign_keys(Fks, Data) ->
+  TName = table(Element),
+  foreign_keys(Fks, Data, TName).
+
+foreign_keys(Fks, Data, TName) ->
   lists:map(fun({{CName, CType}, {FkTable, FkAttr}}) ->
-    Value = get(CName, CType, Data),
-    {{CName, Ctype}, {FkTable, FkAttr}, Value}
+    Value = get(CName, types:to_crdt(CType), Data, TName),
+    {{CName, CType}, {FkTable, FkAttr}, Value}
   end, Fks).
 %%====================================================================
 %% Eunit tests
@@ -239,7 +251,6 @@ new_test() ->
   Expected1 = load_defaults(Columns, Expected),
   Element = new(Key, Table),
   ?assertEqual(Expected1, Element),
-  io:fwrite("Data: ~p~n", [el_get_data(Expected1)]),
   ?assertEqual(crdt:assign_lww(ipa:new()), proplists:get_value(st_key(), el_get_ops(Element))).
 
 new_1_test() ->

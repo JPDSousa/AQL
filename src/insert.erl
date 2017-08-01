@@ -30,7 +30,7 @@ exec({Table, Tables}, Props, TxId) ->
 %% Internal functions
 %% ====================================================================
 
-touch({{CName, _CType}, {PTabName, _PTabAttr}, Value}, Tables TxId) ->
+touch({_Col, {PTabName, _PTabAttr}, Value}, Tables, TxId) ->
 	TKey = element:create_key(Value, PTabName),
 	% TODO check if exists
 	antidote:update_objects(crdt:ipa_update(TKey, ipa:touch()), TxId),
@@ -38,7 +38,7 @@ touch({{CName, _CType}, {PTabName, _PTabAttr}, Value}, Tables TxId) ->
 	% TODO touch cascade children
 	% touch parents
 	Table = table:lookup(PTabName, Tables),
-	Fks = element:foreign_keys(foreign_keys:from_table(Table), Element),
+	Fks = element:foreign_keys(foreign_keys:from_table(Table), Element, PTabName),
 	lists:foreach(fun (K) -> touch(K, Tables, TxId) end, Fks).
 
 touch_cascade(Key, TxId) ->

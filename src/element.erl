@@ -14,6 +14,7 @@
 -export([primary_key/1,
         foreign_keys/1, foreign_keys/2, foreign_keys/3,
         attributes/1,
+        data/1,
         table/1]).
 
 -export([create_key/2, st_key/0, st_value/1]).
@@ -48,6 +49,9 @@ foreign_keys(Element) ->
 
 attributes(Element) ->
   el_get_cols(Element).
+
+data(Element) ->
+  el_get_data(Element).
 
 table(Element) ->
   {_K, _T, TName} = primary_key(Element),

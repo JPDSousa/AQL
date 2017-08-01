@@ -15,13 +15,12 @@
 			]).
 
 load_chain([{CName, TName} | FkChain], Value, Tables, TxId) ->
-	io:fwrite("Chain: ~p~n", [[{CName, TName} | FkChain]]),
-	Table = table:lookup(TName, Tables, "No such table"),
+	Table = table:lookup(TName, Tables),
 	Fks = from_table(Table),
 	{ok, [Parent]} = antidote:read_objects(element:create_key(Value, TName), TxId),
 	Unflat = lists:map(fun ({{_Key, FkType}, {FkTable, FkAttr}}) ->
 		FkName = [{FkAttr, FkTable}] ++ [{CName, TName}] ++ FkChain,
-		FkValue = element:get(FkAttr, types:to_crdt(FkType), Parent),
+		FkValue = element:get(FkAttr, types:to_crdt(FkType), Parent, TName),
 		[{FkName, FkType, FkValue} | load_chain(FkName, FkValue, Tables, TxId)]
 	end, Fks),
 	lists:flatten(Unflat).

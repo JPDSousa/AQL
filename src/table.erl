@@ -64,9 +64,9 @@ lookup(Name, Tables, ErrMsg) ->
 			Res
 	end.
 
-loopup(Name, Tables) when is_list(Tales) ->
+lookup(Name, Tables) when is_list(Tables) ->
 	ErrMsg = lists:concat(["No such table: ", Name]),
-	loopup(Name, Tables, ErrMsg);
+	lookup(Name, Tables, ErrMsg);
 lookup(Name, TxId) when ?is_tname(Name) ->
 	Tables = read_tables(TxId),
 	lookup(Name, Tables).

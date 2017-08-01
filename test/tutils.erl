@@ -34,8 +34,8 @@ delete_by_key(TName, Key) ->
   aql(lists:concat(Query)).
 
 assertState(State, TName, Key) ->
-  Query = ["SELECT * FROM ", TName, " WHERE ID = ", Key],
-  {ok, [Res]} = aql(lists:concat(Query)),
+  AQLKey = element:create_key(Key, TName),
+  {ok, [Res], _CT} = antidote:read_objects(AQLKey),
   ?assertEqual(State, element:st_value(Res)).
 
 read_keys(Table, ID, Keys) ->

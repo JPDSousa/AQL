@@ -1,6 +1,9 @@
 
 -module(ipa_fk_SUITE).
 
+-include_lib("aql.hrl").
+-include_lib("parser.hrl").
+
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
@@ -50,7 +53,12 @@ indirect_foreign_keys(_Config) ->
   KeyC = element:create_key('1', 'FkC'),
   KeyD = element:create_key('1', 'FkD'),
   {ok, [ResC, ResD], _CT} = antidote:read_objects([KeyC, KeyD]),
-  io:fwrite("One level: ~p~nTwo levels: ~p~n", [ResC, ResD]).
+  ShadowAB = {{[{'ID','FkA'},{'ID','FkB'}]}, ?CRDT_INTEGER},
+  ShadowABC = {{[{'ID','FkA'},{'ID','FkB'},{'ID','FkC'}]}, ?CRDT_INTEGER},
+  ShadowBC = {{[{'ID','FkB'},{'ID','FkC'}]}, ?CRDT_INTEGER},
+  ?assertEqual(1, proplists:get_value(ShadowAB, ResC)),
+  ?assertEqual(1, proplists:get_value(ShadowABC, ResD)),
+  ?assertEqual(1, proplists:get_value(ShadowBC, ResD)).
 
 create_table_fail(_Config) ->
   % cannot create table that points to a non-existant table

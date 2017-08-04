@@ -129,6 +129,5 @@ create_op(BoundObject, Operation, OpParam) ->
 	{BoundObject, Operation, OpParam}.
 
 create_bound_object(Key, CrdtType, Bucket) ->
-	KeyAtom = utils:to_atom(Key),
 	BucketAtom = utils:to_atom(Bucket),
-	{KeyAtom, CrdtType, BucketAtom}.
+	{Key, CrdtType, BucketAtom}.

@@ -56,7 +56,8 @@ create_table_update(Name, Table) ->
 	crdt:single_map_update(?BOUND_OBJECT, Name, ?CRDT_TYPE, Op).
 
 lookup(Name, Tables, ErrMsg) ->
-	Res = proplists:get_value({Name, ?CRDT_TYPE}, Tables),
+	NameAtom = utils:to_atom(Name),
+	Res = proplists:get_value({NameAtom, ?CRDT_TYPE}, Tables),
 	case Res of
 		undefined ->
 			throw(ErrMsg);
@@ -67,7 +68,7 @@ lookup(Name, Tables, ErrMsg) ->
 lookup(Name, Tables) when is_list(Tables) ->
 	ErrMsg = lists:concat(["No such table: ", Name]),
 	lookup(Name, Tables, ErrMsg);
-lookup(Name, TxId) when ?is_tname(Name) ->
+lookup(Name, TxId) ->
 	Tables = read_tables(TxId),
 	lookup(Name, Tables).
 
@@ -82,7 +83,7 @@ name(Table) ->
       TableName;
     _Else ->
 			?PARSER_ATOM(Name) = TableName,
-			Name
+			utils:to_atom(Name)
   end.
 
 %% ====================================================================

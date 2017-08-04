@@ -14,7 +14,7 @@
 -export([new/0,
           touch/0, touch_cascade/0, insert/0, delete/0, delete_cascade/0,
           add_wins/0, remove_wins/0,
-          is_visible/1,
+          is_visible/1, is_visible/2,
           status/2]).
 
 new() ->
@@ -29,12 +29,17 @@ delete_cascade() -> dc.
 add_wins() -> ?ADD_WINS.
 remove_wins() -> ?REMOVE_WINS.
 
-is_visible(i) -> true;
-is_visible(t) -> true;
-is_visible(tc) -> true;
-is_visible(d) -> false;
-is_visible(dc) -> false;
-is_visible(_Invalid) -> err.
+is_visible(ExState) ->
+  is_visible(ExState, []).
+
+is_visible(_, [dc | _ImplicitState]) -> false;
+is_visible(ExplicitState, [tc | ImplicitState]) ->
+  is_visible(ExplicitState, ImplicitState);
+is_visible(i, []) -> true;
+is_visible(t, []) -> true;
+is_visible(d, []) -> false;
+is_visible(_InvalidE, _InvalidI) -> 
+  err.
 
 status(Mode, [H | T]) ->
   Heu = heu(Mode),
@@ -69,11 +74,15 @@ new_test() ->
   ?assertEqual(i, new()).
 
 is_visible_ok_test() ->
-  ?assertEqual(is_visible(i), true),
-  ?assertEqual(is_visible(d), false).
+  ?assertEqual(is_visible(i, [tc, tc]), true),
+  ?assertEqual(is_visible(i, [dc, tc]), false),
+  ?assertEqual(is_visible(t, [tc, tc]), true),
+  ?assertEqual(is_visible(t, [dc, tc]), false),
+  ?assertEqual(is_visible(d, [tc, tc]), false),
+  ?assertEqual(is_visible(d, [dc, tc]), false).
 
 is_visible_err_test() ->
-  ?assertEqual(is_visible(random_value), err).
+  ?assertEqual(is_visible(random_value, random_value), err).
 
 status_test() ->
   List1 = [d],

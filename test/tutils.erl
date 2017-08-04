@@ -10,7 +10,8 @@
           delete_by_key/2,
           read_keys/3]).
 
--export([assertState/3]).
+-export([assertState/3,
+          assertExists/1]).
 
 aql(Aql) ->
   aqlparser:parse({str, Aql}).
@@ -28,15 +29,24 @@ create_fk_table(Name, TPointer, CPointer) ->
     TPointer, "(", CPointer, "))"],
   aql(lists:concat(Query)).
 
-
 delete_by_key(TName, Key) ->
   Query = ["DELETE FROM ", TName, " WHERE ID = ", Key],
   aql(lists:concat(Query)).
 
 assertState(State, TName, Key) ->
   AQLKey = element:create_key(Key, TName),
-  {ok, [Res], _CT} = antidote:read_objects(AQLKey),
-  ?assertEqual(State, element:st_value(Res)).
+  {ok, TxId} = antidote:start_transaction(),
+  Table = table:lookup(TName, TxId),
+  Cols = column:s_from_table(Table),
+  {ok, [Res]} = antidote:read_objects(AQLKey, TxId),
+  TNameAtom = utils:to_atom(TName),
+  Actual = element:is_visible(Res, Cols, TNameAtom, TxId),
+  antidote:commit_transaction(TxId),
+  ?assertEqual(State, Actual).
+
+assertExists(Key) ->
+  {ok, [Res], _CT} = antidote:read_objects(Key),
+  ?assertNotEqual([], Res).
 
 read_keys(Table, ID, Keys) ->
   Join = join_keys(Keys, []),

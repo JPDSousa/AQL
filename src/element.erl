@@ -17,10 +17,13 @@
         data/1,
         table/1]).
 
--export([create_key/2, st_key/0, st_value/1]).
+-export([create_key/2, st_key/0,
+        is_visible/2, is_visible/4]).
 
 -export([new/1, new/2,
-        put/5, get/2, get/3, get/4,
+        put/5,
+        get/2, get/3, get/4,
+        get_by_name/2,
         insert/1, insert/2]).
 
 %% ====================================================================
@@ -62,21 +65,43 @@ table(Element) ->
 %% ====================================================================
 
 create_key(Key, TName) ->
-  crdt:create_bound_object(Key, ?CRDT_TYPE, TName).
+  KeyAtom = utils:to_atom(Key),
+  crdt:create_bound_object(KeyAtom, ?CRDT_TYPE, TName).
 
 st_key() ->
   ?MAP_KEY('#st', antidote_crdt_mvreg).
 
-st_value(Data) when is_list(Data) ->
+explicit_state(Element) when is_tuple(Element) ->
+  explicit_state(el_get_data(Element));
+explicit_state(Data) ->
   Value = proplists:get_value(st_key(), Data),
   case Value of
     undefined ->
       throw("No explicit state found");
     _Else ->
       ipa:status(ipa:add_wins(), Value)
-  end;
-st_value(Element) when is_tuple(Element) ->
-  st_value(el_get_data(Element)).
+  end.
+
+is_visible(Element, TxId) when is_tuple(Element) ->
+  Data = el_get_data(Element),
+  Cols = el_get_cols(Element),
+  TName = table(Element),
+  is_visible(Data, Cols, TName, TxId).
+
+is_visible(Data, Cols, TName, TxId) ->
+  ExplicitState = explicit_state(Data),
+	Fks = foreign_keys:from_columns(Cols),
+	ShadowCols = foreign_keys:shadow_cols(Data),
+  FkIS = lists:map(fun({{FkName, FkType}, _Parent}) ->
+    FkValue = element:get(FkName, types:to_crdt(FkType), Data, TName),
+    FkState = index:tag_read(TName, FkName, FkValue, TxId),
+    ipa:status(ipa:add_wins(), FkState)
+  end, Fks),
+  ShadowIS = lists:map(fun({{SCName, _SCType}, SCValue}) ->
+    SCState = index:tag_read(TName, SCName, SCValue, TxId),
+    ipa:status(ipa:add_wins(), SCState)
+  end, ShadowCols),
+  ipa:is_visible(ExplicitState, lists:append(FkIS, ShadowIS)).
 
 throwInvalidType(Type, CollumnName, TableName) ->
 	throw(lists:concat(["Invalid type ", Type, " for collumn: ",
@@ -128,12 +153,12 @@ put(?PARSER_ATOM(ColName), Value, Element, Tables, TxId) ->
       throwNoSuchColumn(ColName, TName)
   end.
 
-set_if_primary(Col, ?PARSER_TYPE(_Type, Value), Element) ->
+set_if_primary(Col, ?PARSER_TYPE(_PType, Value), Element) ->
   case column:is_primarykey(Col) of
     true ->
       % TODO use macro
-      {_Key, Type, Bucket} = el_get_key(Element),
-      el_set_key(Element, crdt:create_bound_object(Value, Type, Bucket));
+      {_Key, _Type, Bucket} = el_get_key(Element),
+      el_set_key(Element, create_key(Value, Bucket));
     _Else ->
       Element
   end.
@@ -151,23 +176,34 @@ handle_fk(Col, Value, Element, Tables, TxId) ->
       Element
   end.
 
+get_by_name(ColName, [{{Key, _Type}, Value}]) when Key =:= ColName ->
+	Value;
+get_by_name(_ColName, []) -> undefined;
+get_by_name(ColName, [_KV | Data]) ->
+	get_by_name(ColName, Data).
+
 get(ColName, Element) ->
   Cols = el_get_cols(Element),
   Col = dict:fetch(ColName, Cols),
   AQL = column:type(Col),
   get(ColName, types:to_crdt(AQL), Element).
 
-get(ColName, Crdt, Data, TName) when is_list(Data) ->
-  Value = proplists:get_value(?MAP_KEY(ColName, Crdt), Data),
+get(ColName, Crdt, Element) when is_tuple(Element) ->
+  get(ColName, Crdt, el_get_data(Element), table(Element)).
+
+get(ColName, Crdt, Data, TName) when is_atom(Crdt) ->
+  ColNameAtom = utils:to_atom(ColName),
+  Value = proplists:get_value(?MAP_KEY(ColNameAtom, Crdt), Data),
   case Value of
     undefined ->
       throwNoSuchColumn(ColName, TName);
     _Else ->
       Value
-  end.
-
-get(ColName, Crdt, Element) ->
-  get(ColName, Crdt, el_get_data(Element), table(Element)).
+    end;
+get(ColName, Cols, Data, TName) ->
+  Col = dict:fetch(ColName, Cols),
+  AQL = column:type(Col),
+  get(ColName, types:to_crdt(AQL), Data, TName).
 
 insert(Element) ->
   Ops = el_get_ops(Element),

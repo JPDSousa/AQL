@@ -11,7 +11,8 @@
 -export([parents/2,
 			from_table/1,
 			from_columns/1,
-			load_chain/4
+			load_chain/4,
+			shadow_cols/1
 			]).
 
 load_chain([{CName, TName} | FkChain], Value, Tables, TxId) ->
@@ -49,6 +50,14 @@ from_columns(Columns) ->
 		?FOREIGN_KEY({?PARSER_ATOM(TName), ?PARSER_ATOM(Attr)}) = column:constraint(Column),
 		{{Name, Type}, {TName, Attr}}
 	end, List).
+
+shadow_cols(Element) when is_tuple(Element) ->
+	shadow_cols(element:data(Element));
+shadow_cols(Data) ->
+	lists:filter(fun({{Key, _Type}, _Value}) ->
+		is_tuple(Key)
+	end, Data).
+
 
 
 %%====================================================================

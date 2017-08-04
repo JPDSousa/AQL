@@ -61,7 +61,7 @@ remove_all(BoundObject, Entry) ->
 %% ====================================================================
 
 field_map_op(Key, Type, Op) ->
-	field_map_op({Key, Type}, Op).
+	field_map_op(?MAP_KEY(Key, Type), Op).
 
 field_map_op(Key, Op) ->
 	{Key, Op}.

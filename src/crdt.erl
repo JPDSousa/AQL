@@ -130,4 +130,4 @@ create_op(BoundObject, Operation, OpParam) ->
 
 create_bound_object(Key, CrdtType, Bucket) ->
 	BucketAtom = utils:to_atom(Bucket),
-	{Key, CrdtType, BucketAtom}.
+	?BOUND_OBJECT(Key, CrdtType, BucketAtom).

@@ -3,6 +3,7 @@
 
 -include("parser.hrl").
 -include("aql.hrl").
+-include("types.hrl").
 
 -export([name/1,
 				constraint/1,
@@ -11,8 +12,12 @@
 				is_default/1,
 				is_foreign_key/1]).
 
--export([s_primary_key/1,
-				s_from_table/1,
+-export([unwrap_name/1,
+					unwrap_type/1,
+					unwrap_constraint/1]).
+
+-export([s_from_table/1,
+				s_primary_key/1,
 				s_filter_defaults/1,
 				s_get/2, s_get/3,
 				s_names/1]).
@@ -21,108 +26,63 @@
 %% Column props functions
 %% ====================================================================
 
-name([?PROP_ATTR_NAME(?PARSER_ATOM(Name)) | _]) ->
-  Name;
-name([_|Tail]) ->
-  name(Tail);
-name([]) ->
-  {err, "Could not resolve column name"};
-name(Column) ->
-	name(unwrap(Column)).
+name(?T_COL(Name, _, _)) -> Name.
 
-constraint([?PROP_ATTR_CONSTRAINT(Constraint) | _]) ->
-  Constraint;
-constraint([_|Tail]) ->
-  constraint(Tail);
-constraint([]) ->
-  {err, "Could not resolve column constraint"};
-constraint(Column) ->
-	constraint(unwrap(Column)).
+constraint(?T_COL(_, _, Constraint)) -> Constraint.
 
-type([{?ATTR_TYPE_TOKEN, AqlType} | _]) ->
-  AqlType;
-type([_|Tail]) ->
-  type(Tail);
-type([]) ->
-  {err, "Could not resolve column type"};
-type(Column) ->
-	type(unwrap(Column)).
+type(?T_COL(_, Type, _)) -> Type.
 
-is_primarykey(Col) ->
-	case constraint(unwrap(Col)) of
-		?PRIMARY_TOKEN -> true;
-		_Else -> false
-	end.
+is_primarykey(?T_COL(_, _, ?PRIMARY_TOKEN)) -> true;
+is_primarykey(_) -> false;
 
-is_default(Col) ->
-	case constraint(unwrap(Col)) of
-	 	{?DEFAULT_TOKEN, _Value} -> true;
-  	_Else -> false
-	end.
+is_default(?T_COL(_, _, {?DEFAULT_TOKEN, _V})) -> true;
+is_default(_) -> false;
 
-is_foreign_key(Col) ->
-	case constraint(unwrap(Col)) of
-		?FOREIGN_KEY(_Value) -> true;
-		_Else -> false
-	end.
+is_foreign_key(?T_COL(_, _, ?FOREIGN_KEY(_V))) -> true;
+is_foreign_key(_) -> true;
 
-unwrap(Column) ->
-	case Column of
-		{?PROP_ATTR, Meta} ->
-			Meta;
-		Unwrapped ->
-			Unwrapped
-	end.
+unwrap_name(?PARSER_ATOM(Name)) -> Name.
 
+unwrap_type(?ATTR_KEY(Type)) -> Type.
+
+unwrap_constraint(?FOREIGN_KEY({?PARSER_ATOM(Table), ?PARSER_ATOM(Attr)})) ->
+	?FOREIGN_KEY({Table, Attr});
+unwrap_constraint(?DEFAULT_KEY({?PARSER_TYPE(_Type, Value)})) ->
+	?DEFAULT_KEY({Value});
+unwrap_constraint(Constraint) -> Constraint
 %% ====================================================================
 %% Columns Utilities
 %% ====================================================================
 
-s_from_table(Table) when ?is_table(Table)->
-	CList = proplists:get_value(?PROP_COLUMNS, Table),
-	case CList of
-		undefined ->
-			throw("Cannot extract columns");
-		_Else ->
-			utils:list_to_dict(CList, fun column:name/1)
-	end.
+s_from_table(Table) ->
+	table:columns(Table).
 
-s_primary_key(Columns) when is_list(Columns) ->
-	Pks = lists:filter(fun is_primarykey/1, Columns),
-	case Pks of
-		[Pk] -> Pk;
-		[] -> throw("Could not find primary key");
-		_Else -> throw("Multiple primary keys")
-	end;
 s_primary_key(Table) when ?is_table(Table) ->
-	Columns = s_from_table(Table),
+	Columns = table:columns(Table),
 	s_primary_key(Columns);
 s_primary_key(Columns) ->
-	Pks = lists:filter(fun is_primarykey/1, Columns),
-	Size = dict:size(Pks),
-	case Size of
-		1 -> [{_K, _V}] = dict:to_list(Pks);
-		0 -> throw("Could not find primery key");
-		_Else -> throw("Multiple primary keys")
-	end.
+	PkNames = maps:get(?C_PK, Columns),
+	lists:map(fun(PkName) ->
+		maps:get(PkName, Columns)
+	end, PkNames).
 
 s_filter_defaults(Columns) when is_list(Columns) ->
 	lists:filter(fun is_default/1, Columns);
 s_filter_defaults(Columns) ->
-	dict:filter(fun (_K, V) -> is_default(V) end, Columns).
+	maps:filter(fun (_K, V) -> is_default(V) end, Columns).
 
-s_get(Table, Column) when is_list(Table) ->
-	Columns = s_from_table(Table),
+s_get(Table, Column) when ?is_table(Table) ->
+	Columns = table:columns(Table),
 	s_get(Columns, Column);
 s_get(Columns, ColumnName) ->
 	ErrMsg = lists:concat(["Collumn ", ColumnName, " does not exist"]),
 	s_get(Columns, ColumnName, ErrMsg).
 
-s_get(Table, CName, ErrMsg) when is_list(Table) ->
-	Columns = s_from_table(Table),
+s_get(Table, CName, ErrMsg) when ?is_table(Table) ->
+	Columns = table:columns(Table),
 	s_get(Columns, CName, ErrMsg);
 s_get(Cols, CName, ErrMsg) ->
-	Res = dict:find(CName, Cols),
+	Res = maps:find(CName, Cols),
 	case Res of
 		{ok, Column} ->
 			Column;
@@ -130,11 +90,7 @@ s_get(Cols, CName, ErrMsg) ->
 			throw(ErrMsg)
 	end.
 
-s_names(Table) when is_list(Table) ->
-	CList = proplists:get_value(?PROP_COLUMNS, Table),
-	case CList of
-		undefined ->
-			throw("Cannot extract columns");
-		_Else ->
-			lists:map(fun column:name/1, CList)
-	end.
+s_names(Table) when ?is_table(Table) ->
+	s_names(table:columns(Table));
+s_names(Cols) when is_map(Cols) ->
+	maps:get(?NAMES, Cols).

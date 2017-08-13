@@ -8,12 +8,29 @@
 -include("aql.hrl").
 -include("parser.hrl").
 
--export([parents/2,
-			from_table/1,
+-export([from_table/1,
 			from_columns/1,
-			load_chain/4,
-			shadow_cols/1
+			load_chain/4
 			]).
+
+from_column(Column) ->
+	Name = column:name(Column),
+	Type = column:type(Column),
+	Constraint = column:constraint(Column),
+	?FOREIGN_KEY({?PARSER_ATOM(TName), ?PARSER_ATOM(Attr)}) = Constraint,
+	?T_FK(Name, Type, TName, Attr).
+
+from_table(Table) ->
+	from_columns(column:s_from_table(Table)).
+
+from_columns(Columns) ->
+	Fks = maps:filter(fun (_CName, Col) ->
+		column:is_foreign_key(Col)
+	end, Columns),
+	FkList = dict:to_list(Fks),
+	lists:map(fun ({_Name, Column}) ->
+		from_column(Column)
+	end, FkList).
 
 load_chain([{CName, TName} | FkChain], Value, Tables, TxId) ->
 	Table = table:lookup(TName, Tables),
@@ -25,40 +42,6 @@ load_chain([{CName, TName} | FkChain], Value, Tables, TxId) ->
 		[{FkName, FkType, FkValue} | load_chain(FkName, FkValue, Tables, TxId)]
 	end, Fks),
 	lists:flatten(Unflat).
-
-parents(Element, FKs) ->
-	lists:map(fun ({K, {Table, _Col}}) ->
-		Value = proplists:get_value(K, Element),
-		element:create_key(Value, Table)
-	end, FKs).
-
-from_table(Table) ->
-	from_columns(column:s_from_table(Table)).
-
-from_columns(Columns) ->
-	F = dict:filter(fun (_ColName, Col) ->
-		case column:constraint(Col) of
-			?FOREIGN_KEY({?PARSER_ATOM(_Table), _Attr}) ->
-				true;
-			_Else ->
-				false
-		end
-	end, Columns),
-	List = dict:to_list(F),
-	lists:map(fun ({Name, Column}) ->
-		Type = column:type(Column),
-		?FOREIGN_KEY({?PARSER_ATOM(TName), ?PARSER_ATOM(Attr)}) = column:constraint(Column),
-		{{Name, Type}, {TName, Attr}}
-	end, List).
-
-shadow_cols(Element) when is_tuple(Element) ->
-	shadow_cols(element:data(Element));
-shadow_cols(Data) ->
-	lists:filter(fun({{Key, _Type}, _Value}) ->
-		is_tuple(Key)
-	end, Data).
-
-
 
 %%====================================================================
 %% Eunit tests

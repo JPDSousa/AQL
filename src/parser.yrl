@@ -98,11 +98,11 @@ show_query ->
 %%--------------------------------------------------------------------
 select_query ->
     select projection from atom_value :
-    {select, [{?PROP_TABLE_NAME, '$4'}, {?PROP_COLUMNS, '$2'}]}.
+		?SELECT_CLAUSE({'$4', '$2', ?PARSER_WILDCARD}).
 
 select_query ->
     select projection from atom_value where where_clauses:
-    {select, [{?PROP_TABLE_NAME, '$4'}, {?PROP_COLUMNS, '$2'}, {?WHERE_TOKEN, '$6'}]}.
+		?SELECT_CLAUSE({'$4', '$2', '$6'}).
 
 projection ->
     wildcard :
@@ -142,12 +142,12 @@ where_clause ->
 insert_query ->
     insert into atom_value insert_keys_clause
     values insert_values_clause :
-    {?INSERT_TOKEN, [{?PROP_TABLE_NAME, '$3'}, {?PROP_COLUMNS, '$4'}, {?PROP_VALUES, '$6'}]}.
+		?INSERT_CLAUSE({'$3', '$4', '$6'}).
 
 insert_query ->
     insert into atom_value
     values insert_values_clause :
-    {?INSERT_TOKEN, [{?PROP_TABLE_NAME, '$3'}, {?PROP_COLUMNS, ?PARSER_WILDCARD}, {?PROP_VALUES, '$5'}]}.
+		?INSERT_CLAUSE({'$3', ?PARSER_WILDCARD, '$5'}).
 
 insert_keys_clause ->
     start_list insert_keys end_list :
@@ -179,15 +179,15 @@ insert_values ->
 
 update_query ->
 	update atom_value set_clause :
-	{?UPDATE_TOKEN, [{?PROP_TABLE_NAME, '$2'}, '$3']}.
+	?UPDATE_CLAUSE({'$2', '$3'}).
 
 update_query ->
 	update atom_value set_clause where where_clauses :
-	{?UPDATE_TOKEN, [{?PROP_TABLE_NAME, '$2'}, '$3', {?WHERE_TOKEN, '$5'}]}.
+	?UPDATE_CLAUSE({'$2', '$3', '$5'}).
 
 set_clause ->
 	set set_assignments :
-	{?SET_TOKEN, '$2'}.
+	?SET_CLAUSE('$2').
 
 set_assignments ->
 	set_assignments conjunctive set_assignment :
@@ -223,16 +223,8 @@ set_assignment ->
 %% create query
 %%--------------------------------------------------------------------
 create_query ->
-	create table table_metadata :
-	{?CREATE_TOKEN, '$3'}.
-
-create_query ->
-	create table_policy table table_metadata :
-	{create, lists:append(['$2'], '$4')}.
-
-table_metadata ->
-	atom_value start_list create_keys end_list :
-	[{?PROP_TABLE_NAME, '$1'}, {?PROP_COLUMNS, '$3'}].
+	create table_policy table atom_value start_list create_keys end_list :
+	?CREATE_CLAUSE(?T_TABLE('$4', '$2', '$6', [])).
 
 create_keys ->
 	create_keys sep attribute :
@@ -244,11 +236,11 @@ create_keys ->
 
 attribute ->
 	attribute_name attribute_type attribute_constraint :
-	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT('$3')]}.
+	?T_COL('$1', '$2', '$3').
 
 attribute ->
 	attribute_name attribute_type :
-	{?PROP_ATTR, [?PROP_ATTR_NAME('$1'), '$2', ?PROP_ATTR_CONSTRAINT(?NO_CONSTRAINT)]}.
+	?T_COL('$1', '$2', ?NO_CONSTRAINT).
 
 attribute_constraint ->
 	primary key :
@@ -276,22 +268,22 @@ attribute_name ->
 
 delete_query ->
 	delete from atom_value :
-	?DELETE_CLAUSE([{?PROP_TABLE_NAME, '$3'}]).
+	?DELETE_CLAUSE({'$3'}).
 
 delete_query ->
 	delete from atom_value where where_clauses :
-	?DELETE_CLAUSE([{?PROP_TABLE_NAME, '$3'}, {?WHERE_TOKEN, '$5'}]).
+	?DELETE_CLAUSE({unwrap_type('$3'), '$5'}).
 
 %%--------------------------------------------------------------------
 %% utils
 %%--------------------------------------------------------------------
 value ->
 	number :
-	'$1'.
+	unwrap_type('$1').
 
 value ->
 	string :
-	'$1'.
+	unwrap_type('$1').
 
 %%====================================================================
 %% Erlang Code
@@ -299,6 +291,9 @@ value ->
 Erlang code.
 
 -include("parser.hrl").
+-include("types.hrl").
+
+unwrap_type(?PARSER_TYPE(_Type, Value)) -> Value.
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

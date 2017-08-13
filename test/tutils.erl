@@ -17,14 +17,14 @@ aql(Aql) ->
   aqlparser:parse({str, Aql}).
 
 create_single_table(Name) ->
-  Query = ["CREATE TABLE ", Name, " (ID INT PRIMARY KEY)"],
+  Query = ["CREATE @AW TABLE ", Name, " (ID INT PRIMARY KEY)"],
   aql(lists:concat(Query)).
 
 create_fk_table(Name, Pointer) ->
   create_fk_table(Name, Pointer, "ID").
 
 create_fk_table(Name, TPointer, CPointer) ->
-  Query = ["CREATE TABLE ", Name,
+  Query = ["CREATE @AW TABLE ", Name,
     " (ID INT PRIMARY KEY, ", TPointer, " INT FOREIGN KEY REFERENCES ",
     TPointer, "(", CPointer, "))"],
   aql(lists:concat(Query)).

@@ -3,6 +3,7 @@
 
 -include("aql.hrl").
 -include("parser.hrl").
+-include("types.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -18,7 +19,7 @@
         table/1]).
 
 -export([create_key/2, st_key/0,
-        is_visible/2, is_visible/4]).
+        is_visible/2, is_visible/3]).
 
 -export([new/1, new/2,
         put/5,
@@ -30,19 +31,19 @@
 %% Property functions
 %% ====================================================================
 
-el_create(BObj, Cols, Ops, Data) -> {BObj, Cols, Ops, Data}.
+el_create(BObj, Table, Ops, Data) -> ?T_ELEMENT(BObj, Table, Ops, Data).
 
-el_get_key({BObj, _Cols, _Ops, _Data}) -> BObj.
-el_set_key({_BObj, Cols, Ops, Data}, BObj) -> el_create(BObj, Cols, Ops, Data).
+el_get_key({BObj, _Table, _Ops, _Data}) -> BObj.
+el_set_key({_BObj, Table, Ops, Data}, BObj) -> el_create(BObj, Table, Ops, Data).
 
-el_get_cols({_BObj, Cols, _Ops, _Data}) -> Cols.
-el_set_cols({BObj, _Cols, Ops, Data}, Cols) -> el_create(BObj, Cols, Ops, Data).
+el_get_table({_BObj, Table, _Ops, _Data}) -> Table.
+el_set_table({BObj, _Table, Ops, Data}, Table) -> el_create(BObj, Table, Ops, Data).
 
-el_get_ops({_BObj, _Cols, Ops, _Data}) -> Ops.
-el_set_ops({BObj, Cols, _Ops, Data}, Ops) -> el_create(BObj, Cols, Ops, Data).
+el_get_ops({_BObj, _Table, Ops, _Data}) -> Ops.
+el_set_ops({BObj, Table, _Ops, Data}, Ops) -> el_create(BObj, Table, Ops, Data).
 
-el_get_data({_BObj, _Cols, _Ops, Data}) -> Data.
-el_set_data({BObj, Cols, Ops, _Data}, Data) -> el_create(BObj, Cols, Ops, Data).
+el_get_data({_BObj, _Table, _Ops, Data}) -> Data.
+el_set_data({BObj, Table, Ops, _Data}, Data) -> el_create(BObj, Table, Ops, Data).
 
 primary_key(Element) ->
   el_get_key(Element).
@@ -51,13 +52,14 @@ foreign_keys(Element) ->
   foreign_keys:from_columns(attributes(Element)).
 
 attributes(Element) ->
-  el_get_cols(Element).
+  Table = el_get_table(Element),
+  table:columns(Table).
 
 data(Element) ->
   el_get_data(Element).
 
 table(Element) ->
-  {_K, _T, TName} = primary_key(Element),
+  ?BOUND_OBJECT(_K, _T, TName) = primary_key(Element),
   TName.
 
 %% ====================================================================
@@ -84,24 +86,20 @@ explicit_state(Data) ->
 
 is_visible(Element, TxId) when is_tuple(Element) ->
   Data = el_get_data(Element),
-  Cols = el_get_cols(Element),
+  Table = el_get_table(Element),
   TName = table(Element),
-  is_visible(Data, Cols, TName, TxId).
+  is_visible(Data, Table, TxId).
 
-is_visible(Data, Cols, TName, TxId) ->
+is_visible(Data, Table, TxId) ->
+  TName = table:name(Table),
   ExplicitState = explicit_state(Data),
-	Fks = foreign_keys:from_columns(Cols),
-	ShadowCols = foreign_keys:shadow_cols(Data),
-  FkIS = lists:map(fun({{FkName, FkType}, _Parent}) ->
+	Fks = foreign_keys:all(Table),
+  ImplicitState = lists:map(fun(?T_FK(FkName, FkType, _, _)) ->
     FkValue = element:get(FkName, types:to_crdt(FkType), Data, TName),
     FkState = index:tag_read(TName, FkName, FkValue, TxId),
     ipa:status(ipa:add_wins(), FkState)
   end, Fks),
-  ShadowIS = lists:map(fun({{SCName, _SCType}, SCValue}) ->
-    SCState = index:tag_read(TName, SCName, SCValue, TxId),
-    ipa:status(ipa:add_wins(), SCState)
-  end, ShadowCols),
-  ipa:is_visible(ExplicitState, lists:append(FkIS, ShadowIS)).
+  ipa:is_visible(ExplicitState, ImplicitState).
 
 throwInvalidType(Type, CollumnName, TableName) ->
 	throw(lists:concat(["Invalid type ", Type, " for collumn: ",
@@ -118,7 +116,7 @@ throwNoSuchColumn(ColName, TableName) ->
 new(Table) when ?is_table(Table) ->
   new(?EL_ANON, Table).
 
-new(Key, Table) when ?is_dbkey(Key) and ?is_table(Table) ->
+new(Key, Table) ->
   Bucket = table:name(Table),
   BoundObject = create_key(Key, Bucket),
   Columns = column:s_from_table(Table),

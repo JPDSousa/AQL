@@ -14,7 +14,8 @@
 
 -export([to_atom/1, to_list/1,
         assert_same_size/3,
-        list_to_dict/2]).
+        list_to_dict/2,
+        seek_and_destroy/2]).
 
 to_atom(Term) when is_list(Term) ->
   list_to_atom(Term);
@@ -45,6 +46,19 @@ list_to_dict([Value | T], KeyMapper, Acc) ->
 	list_to_dict(T, KeyMapper, NewMap);
 list_to_dict([], _KeyMapper, Acc) ->
 	Acc.
+
+seek_and_destroy(Name, PropList) ->
+  seek_and_destroy(Name, [], PropList).
+
+seek_and_destroy(Name, Seen, [{Key, Value} | PropList]) ->
+  case Name of
+    Key ->
+      {Value, lists:append(Seen, PropList)};
+    _Else ->
+      seek_and_destroy(Name, lists:append(Seen, [{Key, Value}]))
+  end;
+seek_and_destroy(_Name, Seen, []) ->
+  {undefined, Seen}.
 
 %%====================================================================
 %% Eunit tests

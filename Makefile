@@ -25,7 +25,7 @@ test:
 	$(REBAR) cover
 
 ct: compile
-	ct_run -pa $(EBIN) -logdir $(TEST_LOGS) -dir test -erl_flags -name $(NODE_NAME) -setcookie $(COOKIE)
+	ct_run -pa $(EBIN) -logdir $(TEST_LOGS) -dir test -include include -erl_flags -name $(NODE_NAME) -setcookie $(COOKIE)
 
 antidote:
 	./$(ANTIDOTE)/bin/env start && sleep 10 && tail -f $(ANTIDOTE)/log/console.log &

@@ -61,7 +61,7 @@ remove_all(BoundObject, Entry) ->
 %% ====================================================================
 
 field_map_op(Key, Type, Op) ->
-	field_map_op({Key, Type}, Op).
+	field_map_op(?MAP_KEY(Key, Type), Op).
 
 field_map_op(Key, Op) ->
 	{Key, Op}.
@@ -129,6 +129,5 @@ create_op(BoundObject, Operation, OpParam) ->
 	{BoundObject, Operation, OpParam}.
 
 create_bound_object(Key, CrdtType, Bucket) ->
-	KeyAtom = utils:to_atom(Key),
 	BucketAtom = utils:to_atom(Bucket),
-	{KeyAtom, CrdtType, BucketAtom}.
+	{Key, CrdtType, BucketAtom}.

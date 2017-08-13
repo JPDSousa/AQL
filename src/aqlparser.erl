@@ -96,8 +96,8 @@ eval(QName, Props, M) ->
 		table ->
 			Status = M:exec(Props, TxId);
 		_Else ->
-			Table = get_table_from_query(Props, TxId),
-			Status = M:exec(Table, Props, TxId)
+			Tables = get_table_from_query(Props, TxId),
+			Status = M:exec(Tables, Props, TxId)
 	end,
 	antidote:commit_transaction(TxId),
 	eval_status(QName, Status).
@@ -128,4 +128,6 @@ eval_status(Query, Status) ->
 
 get_table_from_query(Props, TxId) ->
 	TableName = table:name(Props),
-	table:lookup(TableName, TxId).
+	Tables = table:read_tables(TxId),
+	Table = table:lookup(TableName, Tables),
+	{Table, Tables}.

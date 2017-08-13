@@ -1,4 +1,5 @@
 -define(METADATA_BUCKET, aql_metadata).
+-define(MAP_KEY(Key, Type), {Key, Type}).
 
 % AQL -> CRDT mappings
 -define(AQL_INTEGER, integer).

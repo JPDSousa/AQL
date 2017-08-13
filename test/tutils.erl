@@ -7,9 +7,11 @@
 -export([aql/1,
           create_single_table/1,
           create_fk_table/2, create_fk_table/3,
-          delete_by_key/2]).
+          delete_by_key/2,
+          read_keys/3]).
 
--export([assertState/3]).
+-export([assertState/3,
+          assertExists/1]).
 
 aql(Aql) ->
   aqlparser:parse({str, Aql}).
@@ -27,12 +29,34 @@ create_fk_table(Name, TPointer, CPointer) ->
     TPointer, "(", CPointer, "))"],
   aql(lists:concat(Query)).
 
-
 delete_by_key(TName, Key) ->
   Query = ["DELETE FROM ", TName, " WHERE ID = ", Key],
   aql(lists:concat(Query)).
 
 assertState(State, TName, Key) ->
-  Query = ["SELECT * FROM ", TName, " WHERE ID = ", Key],
+  AQLKey = element:create_key(Key, TName),
+  {ok, TxId} = antidote:start_transaction(),
+  Table = table:lookup(TName, TxId),
+  Cols = column:s_from_table(Table),
+  {ok, [Res]} = antidote:read_objects(AQLKey, TxId),
+  TNameAtom = utils:to_atom(TName),
+  Actual = element:is_visible(Res, Cols, TNameAtom, TxId),
+  antidote:commit_transaction(TxId),
+  ?assertEqual(State, Actual).
+
+assertExists(Key) ->
+  {ok, [Res], _CT} = antidote:read_objects(Key),
+  ?assertNotEqual([], Res).
+
+read_keys(Table, ID, Keys) ->
+  Join = join_keys(Keys, []),
+  Query = ["SELECT ", Join, " FROM ", Table, " WHERE ID = ", ID],
   {ok, [Res]} = aql(lists:concat(Query)),
-  ?assertEqual(State, element:st_value(Res)).
+  lists:map(fun({_k, V}) -> V end, Res).
+
+join_keys([Key | Keys], []) ->
+  join_keys(Keys, Key);
+join_keys([Key | Keys], Acc) ->
+  NewAcc = lists:concat([Acc, ", ", Key]),
+  join_keys(Keys, NewAcc);
+join_keys([], Acc) -> Acc.

@@ -207,15 +207,6 @@ insert(Element, TxId) ->
   Op = insert(Element),
   antidote:update_objects(Op, TxId).
 
-append(Key, ?PARSER_TYPE(Type, Value), AQL, Element) ->
-  Token = types:to_parser(AQL),
-  case Type of
-    Token ->
-      append(Key, Value, AQL, Element);
-    _Else ->
-      TName = table(Element),
-      throwInvalidType(Type, Key, TName)
-  end;
 append(Key, Value, AQL, Element) ->
   Data = el_get_data(Element),
   Ops = el_get_ops(Element),
@@ -231,7 +222,7 @@ apply_offset(Key, Value, Element) when is_atom(Key) ->
   Type = column:type(Col),
   Cons = column:constraint(Col),
   case {Type, Cons} of
-    {?AQL_COUNTER_INT, {?COMPARATOR_KEY(Comp), ?PARSER_NUMBER(Offset)}} ->
+    {?AQL_COUNTER_INT, ?CHECK_KEY({?COMPARATOR_KEY(Comp), Offset})} ->
       bcounter:to_bcounter(Key, Value, Offset, Comp);
     _Else -> Value
   end;
@@ -247,6 +238,7 @@ foreign_keys(Fks, Data, TName) ->
     Value = get(CName, types:to_crdt(CType), Data, TName),
     {{CName, CType}, {FkTable, FkAttr}, Value}
   end, Fks).
+
 %%====================================================================
 %% Eunit tests
 %%====================================================================

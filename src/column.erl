@@ -16,10 +16,6 @@
 				is_default/1,
 				is_foreign_key/1]).
 
--export([unwrap_name/1,
-					unwrap_type/1,
-					unwrap_constraint/1]).
-
 -export([s_primary_key/1,
 				s_filter_defaults/1,
 				s_get/2, s_get/3,
@@ -44,15 +40,6 @@ is_default(_) -> false.
 is_foreign_key(?T_COL(_, _, ?FOREIGN_KEY(_V))) -> true;
 is_foreign_key(_) -> false.
 
-unwrap_name(?PARSER_ATOM(Name)) -> Name.
-
-unwrap_type(?ATTR_KEY(Type)) -> Type.
-
-unwrap_constraint(?FOREIGN_KEY({?PARSER_ATOM(Table), ?PARSER_ATOM(Attr)})) ->
-	?FOREIGN_KEY({Table, Attr});
-unwrap_constraint(?DEFAULT_KEY({?PARSER_TYPE(_Type, Value)})) ->
-	?DEFAULT_KEY({Value});
-unwrap_constraint(Constraint) -> Constraint
 %% ====================================================================
 %% Columns Utilities
 %% ====================================================================

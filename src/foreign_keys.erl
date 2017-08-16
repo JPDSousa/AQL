@@ -17,7 +17,7 @@ from_column(Column) ->
 	Name = column:name(Column),
 	Type = column:type(Column),
 	Constraint = column:constraint(Column),
-	?FOREIGN_KEY({?PARSER_ATOM(TName), ?PARSER_ATOM(Attr)}) = Constraint,
+	?FOREIGN_KEY({TName, Attr}) = Constraint,
 	?T_FK(Name, Type, TName, Attr).
 
 from_table(Table) ->

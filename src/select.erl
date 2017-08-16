@@ -42,7 +42,7 @@ apply_offset([{{Key, Type}, V} | Values], Cols, Acc) ->
   Col = dict:fetch(Key, Cols),
   Cons = column:constraint(Col),
 	case {Type, Cons} of
-    {?AQL_COUNTER_INT, {?COMPARATOR_KEY(Comp), ?PARSER_NUMBER(Offset)}} ->
+    {?AQL_COUNTER_INT, ?CHECK_KEY({?COMPARATOR_KEY(Comp), Offset})} ->
 			AQLCounterValue = bcounter:from_bcounter(Comp, V, Offset),
 			NewAcc = lists:append(Acc, [{Key, AQLCounterValue}]),
       apply_offset(Values, Cols, NewAcc);
@@ -59,11 +59,11 @@ project(_Projection, [], Acc, _Cols) ->
 
 project_row(?PARSER_WILDCARD, Result, _Acc, _Cols) ->
 	Result;
-project_row([?PARSER_ATOM(Atom) | Tail], Result, Acc, Cols) ->
-	{{Key, _Type}, Value} = get_value(Atom, Result),
+project_row([ColName | Tail], Result, Acc, Cols) ->
+	{{Key, _Type}, Value} = get_value(ColName, Result),
 	Col = column:s_get(Cols, Key),
 	Type = column:type(Col),
-	NewResult = proplists:delete(Atom, Result),
+	NewResult = proplists:delete(ColName, Result),
 	NewAcc = Acc ++ [{{Key, Type}, Value}],
 	project_row(Tail, NewResult, NewAcc, Cols);
 project_row([], _Result, Acc, _Cols) ->

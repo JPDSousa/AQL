@@ -69,7 +69,7 @@ exec(?SHOW_CLAUSE(?TABLES_TOKEN)) ->
 	antidote:commit_transaction(TxId),
 	io:fwrite("Tables: ~p~n", [TNames]),
 	TNames;
-exec(?SHOW_CLAUSE({?INDEX_TOKEN, ?PARSER_ATOM(TName)})) ->
+exec(?SHOW_CLAUSE({?INDEX_TOKEN, TName})) ->
 	{ok, TxId} = antidote:start_transaction(),
 	Keys = index:keys(TName, TxId),
 	lists:foreach(fun({Key, _Type, _TName}) ->

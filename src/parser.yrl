@@ -16,12 +16,12 @@ insert_query insert_keys_clause insert_keys insert_values_clause insert_values
 %delete
 delete_query
 %create
-create_query table_metadata create_keys attribute attribute_constraint
+create_query create_keys attribute attribute_constraint
 attribute_name
 %update
 update_query set_clause set_assignments set_assignment
 %utils
-value
+value atom number_unwrap
 .
 
 %%====================================================================
@@ -86,7 +86,7 @@ admin -> show_query : ['$1'].
 %% show
 %%--------------------------------------------------------------------
 show_query ->
-	show index from atom_value :
+	show index from atom :
 	?SHOW_CLAUSE({?INDEX_TOKEN, '$4'}).
 
 show_query ->
@@ -97,11 +97,11 @@ show_query ->
 %% select query
 %%--------------------------------------------------------------------
 select_query ->
-    select projection from atom_value :
+    select projection from atom :
 		?SELECT_CLAUSE({'$4', '$2', ?PARSER_WILDCARD}).
 
 select_query ->
-    select projection from atom_value where where_clauses:
+    select projection from atom where where_clauses:
 		?SELECT_CLAUSE({'$4', '$2', '$6'}).
 
 projection ->
@@ -113,11 +113,11 @@ projection ->
 	'$1'.
 
 select_fields ->
-  select_fields sep atom_value :
+  select_fields sep atom :
 	lists:append('$1', ['$3']).
 
 select_fields ->
-	atom_value :
+	atom :
 	['$1'].
 
 %%--------------------------------------------------------------------
@@ -133,19 +133,19 @@ where_clauses ->
 	 ['$1'].
 
 where_clause ->
-	atom_value equality value :
+	atom equality value :
 	{'$1', '$2', '$3'}.
 
 %%--------------------------------------------------------------------
 %% insert query
 %%--------------------------------------------------------------------
 insert_query ->
-    insert into atom_value insert_keys_clause
+    insert into atom insert_keys_clause
     values insert_values_clause :
 		?INSERT_CLAUSE({'$3', '$4', '$6'}).
 
 insert_query ->
-    insert into atom_value
+    insert into atom
     values insert_values_clause :
 		?INSERT_CLAUSE({'$3', ?PARSER_WILDCARD, '$5'}).
 
@@ -154,11 +154,11 @@ insert_keys_clause ->
     '$2'.
 
 insert_keys ->
-	insert_keys sep atom_value :
+	insert_keys sep atom :
 	lists:append('$1', ['$3']).
 
 insert_keys ->
-	atom_value :
+	atom :
 	['$1'].
 
 insert_values_clause ->
@@ -178,11 +178,11 @@ insert_values ->
 %%--------------------------------------------------------------------
 
 update_query ->
-	update atom_value set_clause :
-	?UPDATE_CLAUSE({'$2', '$3'}).
+	update atom set_clause :
+	?UPDATE_CLAUSE({'$2', '$3', ?PARSER_WILDCARD}).
 
 update_query ->
-	update atom_value set_clause where where_clauses :
+	update atom set_clause where where_clauses :
 	?UPDATE_CLAUSE({'$2', '$3', '$5'}).
 
 set_clause ->
@@ -199,31 +199,31 @@ set_assignments ->
 
 %assignment expression
 set_assignment ->
-	atom_value assign value :
+	atom assign value :
 	{'$1', '$2', '$3'}.
 
 %increment/decrement expression
 set_assignment ->
-	atom_value increment :
-	{'$1', '$2', ?PARSER_NUMBER(1)}.
+	atom increment :
+	{'$1', '$2', 1}.
 
 set_assignment ->
-	atom_value increment number :
+	atom increment number_unwrap :
 	{'$1', '$2', '$3'}.
 
 set_assignment ->
-	atom_value decrement :
-	{'$1', '$2', ?PARSER_NUMBER(1)}.
+	atom decrement :
+	{'$1', '$2', 1}.
 
 set_assignment ->
-	atom_value decrement number :
+	atom decrement number_unwrap :
 	{'$1', '$2', '$3'}.
 
 %%--------------------------------------------------------------------
 %% create query
 %%--------------------------------------------------------------------
 create_query ->
-	create table_policy table atom_value start_list create_keys end_list :
+	create table_policy table atom start_list create_keys end_list :
 	?CREATE_CLAUSE(?T_TABLE('$4', '$2', '$6', [])).
 
 create_keys ->
@@ -236,18 +236,18 @@ create_keys ->
 
 attribute ->
 	attribute_name attribute_type attribute_constraint :
-	?T_COL('$1', '$2', '$3').
+	?T_COL('$1', unwrap_type('$2'), '$3').
 
 attribute ->
 	attribute_name attribute_type :
-	?T_COL('$1', '$2', ?NO_CONSTRAINT).
+	?T_COL('$1', unwrap_type('$2'), ?NO_CONSTRAINT).
 
 attribute_constraint ->
 	primary key :
 	?PRIMARY_TOKEN.
 
 attribute_constraint ->
-	foreign key references atom_value start_list atom_value end_list :
+	foreign key references atom start_list atom end_list :
 	?FOREIGN_KEY({'$4', '$6'}).
 
 attribute_constraint ->
@@ -255,11 +255,11 @@ attribute_constraint ->
 	?DEFAULT_KEY('$2').
 
 attribute_constraint ->
-	check comparator value :
-	{'$2', '$3'}.
+	check comparator number_unwrap :
+	?CHECK_KEY({'$2', '$3'}).
 
 attribute_name ->
-	atom_value :
+	atom :
 	'$1'.
 
 %%--------------------------------------------------------------------
@@ -267,16 +267,24 @@ attribute_name ->
 %%--------------------------------------------------------------------
 
 delete_query ->
-	delete from atom_value :
-	?DELETE_CLAUSE({'$3'}).
+	delete from atom :
+	?DELETE_CLAUSE({'$3', ?PARSER_WILDCARD}).
 
 delete_query ->
-	delete from atom_value where where_clauses :
-	?DELETE_CLAUSE({unwrap_type('$3'), '$5'}).
+	delete from atom where where_clauses :
+	?DELETE_CLAUSE({'$3', '$5'}).
 
 %%--------------------------------------------------------------------
 %% utils
 %%--------------------------------------------------------------------
+atom ->
+    atom_value :
+    unwrap_type('$1').
+
+number_unwrap ->
+    number :
+    unwrap_type('$1').
+
 value ->
 	number :
 	unwrap_type('$1').
@@ -315,21 +323,21 @@ show_index_test() ->
 	test_parser("SHOW INDEX FROM TestTable").
 
 create_table_simple_test() ->
-	test_parser("CREATE TABLE Test (a VARCHAR, b INTEGER)"),
-	test_parser("CREATE TABLE Test (a VARCHAR)"),
-	test_parser("CREATE TABLE TestA (a VARCHAR);CREATE TABLE TestB (b INTEGER)").
+	test_parser("CREATE @AW TABLE Test (a VARCHAR, b INTEGER)"),
+	test_parser("CREATE @AW TABLE Test (a VARCHAR)"),
+	test_parser("CREATE @AW TABLE TestA (a VARCHAR);CREATE @AW TABLE TestB (b INTEGER)").
 
 create_table_pk_test() ->
-	test_parser("CREATE TABLE Test (a VARCHAR PRIMARY KEY, b INTEGER)").
+	test_parser("CREATE @AW TABLE Test (a VARCHAR PRIMARY KEY, b INTEGER)").
 
 create_table_def_test() ->
-	test_parser("CREATE TABLE Test (a VARCHAR, b INTEGER DEFAULT 5)").
+	test_parser("CREATE @AW TABLE Test (a VARCHAR, b INTEGER DEFAULT 5)").
 
 create_table_check_test() ->
-	test_parser("CREATE TABLE Test(a INTEGER, b COUNTER_INT CHECK GREATER 0)").
+	test_parser("CREATE @AW TABLE Test(a INTEGER, b COUNTER_INT CHECK GREATER 0)").
 
 create_table_fk_test() ->
-	test_parser("CREATE TABLE Test (a VARCHAR, b INTEGER FOREIGN KEY REFERENCES TestB(b))").
+	test_parser("CREATE @AW TABLE Test (a VARCHAR, b INTEGER FOREIGN KEY REFERENCES TestB(b))").
 
 update_simple_test() ->
 	test_parser("UPDATE Test SET name ASSIGN 'aaa'"),

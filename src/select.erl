@@ -39,7 +39,7 @@ where({_TName, _Projection, Where}) -> Where.
 %% ====================================================================
 
 apply_offset([{{Key, Type}, V} | Values], Cols, Acc) ->
-  Col = dict:fetch(Key, Cols),
+  Col = maps:get(Key, Cols),
   Cons = column:constraint(Col),
 	case {Type, Cons} of
     {?AQL_COUNTER_INT, ?CHECK_KEY({?COMPARATOR_KEY(Comp), Offset})} ->

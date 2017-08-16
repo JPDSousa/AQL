@@ -69,7 +69,7 @@ create_table_fail(_Config) ->
   ?assertThrow(_, tutils:create_fk_table("FkETest", "FkFTest")),
   % cannot create a table that points to a non-existant column
   ?assertThrow(_, tutils:create_fk_table("FkETest", "FkA", "ABC")),
-  % canot create a table that points to a non-primary key column
+  % cannot create a table that points to a non-primary key column
   ?assertThrow(_, tutils:create_fk_table("FkETest", "FkB", "FkA")).
 
 touch_cascade(_Config) ->

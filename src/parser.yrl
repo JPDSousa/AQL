@@ -224,7 +224,7 @@ set_assignment ->
 %%--------------------------------------------------------------------
 create_query ->
 	create table_policy table atom start_list create_keys end_list :
-	?CREATE_CLAUSE(?T_TABLE('$4', '$2', '$6', [])).
+	?CREATE_CLAUSE(?T_TABLE('$4', unwrap_type('$2'), '$6', [])).
 
 create_keys ->
 	create_keys sep attribute :

@@ -1580,7 +1580,7 @@ yeccpars2_102_(__Stack0) ->
 yeccpars2_103_(__Stack0) ->
  [__7,__6,__5,__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
-   ? CREATE_CLAUSE ( ? T_TABLE ( __4 , __2 , __6 , [ ] ) )
+   ? CREATE_CLAUSE ( ? T_TABLE ( __4 , unwrap_type ( __2 ) , __6 , [ ] ) )
   end | __Stack].
 
 -compile({inline,yeccpars2_105_/1}).

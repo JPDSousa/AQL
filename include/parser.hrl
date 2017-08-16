@@ -71,6 +71,8 @@
 %% table policies
 -define(TABLE_POLICY_TOKEN, table_policy).
 -define(TABLE_POLICY_KEY(Crp), {?TABLE_POLICY_TOKEN, Crp}).
+-define(DEP_POLICY_TOKEN, dep_policy).
+-define(DEP_POLICY_KEY(Crp), {?DEP_POLICY_TOKEN, Crp}).
 
 % udpate
 -define(UPDATE_TOKEN, update).

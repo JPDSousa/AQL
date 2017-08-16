@@ -46,7 +46,9 @@ apply_offset([{{Key, Type}, V} | Values], Cols, Acc) ->
 			AQLCounterValue = bcounter:from_bcounter(Comp, V, Offset),
 			NewAcc = lists:append(Acc, [{Key, AQLCounterValue}]),
       apply_offset(Values, Cols, NewAcc);
-    _Else -> {{Key, Type}, V}
+    _Else ->
+			NewAcc = lists:append(Acc, [{Key, V}]),
+			apply_offset(Values, Cols, NewAcc)
   end;
 apply_offset([], _Cols, Acc) -> Acc.
 

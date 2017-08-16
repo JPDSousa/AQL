@@ -3,6 +3,7 @@
 
 -include("aql.hrl").
 -include("parser.hrl").
+-include("types.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -10,18 +11,28 @@
 
 -export([exec/3]).
 
+-export([table/1,
+        set/1,
+        where/1]).
+
 %%====================================================================
 %% API
 %%====================================================================
 
 exec({Table, _Tables}, Props, TxId) ->
   TName = table:name(Table),
-  SetClause = proplists:get_value(?SET_TOKEN, Props),
-  WhereClause = proplists:get_value(?WHERE_TOKEN, Props),
+  SetClause = set(Props),
+  WhereClause = where(Props),
   FieldUpdates = create_update(Table, [], SetClause),
   Keys = where:scan(TName, WhereClause, TxId),
   MapUpdates = crdt:map_update(Keys, FieldUpdates),
   antidote:update_objects(MapUpdates, TxId).
+
+table({TName, _Set, _Where}) -> TName.
+
+set({_TName, ?SET_CLAUSE(Set), _Where}) -> Set.
+
+where({_TName, _Set, Where}) -> Where.
 
 %%====================================================================
 %% Internal functions

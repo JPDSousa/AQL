@@ -12,7 +12,7 @@
 -export([format_error/1]).
 
 %% User code. This is placed here to allow extra attributes.
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 104).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 104).
 
 -include("parser.hrl").
 -include("aql.hrl").
@@ -288,7 +288,7 @@ yysuf(List, N) -> lists:nthtail(N, List).
 %% return signal either an unrecognised character or end of current
 %% input.
 
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.erl", 290).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.erl", 290).
 yystate() -> 299.
 
 yystate(302, [67|Ics], Line, Tlen, _, _) ->
@@ -3392,215 +3392,215 @@ yyaction(41, _, _, _) ->
 yyaction(_, _, _, _) -> error.
 
 -compile({inline,yyaction_0/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 21).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 21).
 yyaction_0(TokenChars) ->
      { token, ? SHOW_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_1/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 22).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 22).
 yyaction_1(TokenChars) ->
      { token, ? TABLES_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_2/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 25).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 25).
 yyaction_2(TokenChars) ->
      { token, ? INDEX_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_3/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 28).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 28).
 yyaction_3(TokenChars) ->
      { token, ? SELECT_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_4/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 29).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 29).
 yyaction_4(TokenChars) ->
      { token, ? FROM_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_5/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 32).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 32).
 yyaction_5(TokenChars) ->
      { token, ? WHERE_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_6/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 33).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 33).
 yyaction_6(TokenChars) ->
      { token, ? CONJUNCTIVE_KEY (TokenChars) } .
 
 -compile({inline,yyaction_7/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 36).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 36).
 yyaction_7(TokenChars) ->
      { token, ? INSERT_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_8/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 37).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 37).
 yyaction_8(TokenChars) ->
      { token, ? INTO_KEY (TokenChars) } .
 
 -compile({inline,yyaction_9/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 40).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 40).
 yyaction_9(TokenChars) ->
      { token, ? CREATE_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_10/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 41).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 41).
 yyaction_10(TokenChars) ->
      { token, ? TABLE_KEY (TokenChars) } .
 
 -compile({inline,yyaction_11/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 42).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 42).
 yyaction_11(TokenChars) ->
      { token, ? VALUES_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_12/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 45).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 45).
 yyaction_12(TokenChars) ->
      { token, ? DELETE_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_13/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 48).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 48).
 yyaction_13() ->
      { token, ? TABLE_POLICY_KEY (? CRP_AW) } .
 
 -compile({inline,yyaction_14/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 49).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 49).
 yyaction_14() ->
      { token, ? TABLE_POLICY_KEY (? CRP_RW) } .
 
 -compile({inline,yyaction_15/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 52).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 52).
 yyaction_15(TokenChars) ->
      { token, ? UPDATE_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_16/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 53).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 53).
 yyaction_16(TokenChars) ->
      { token, ? SET_CLAUSE (TokenChars) } .
 
 -compile({inline,yyaction_17/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 56).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 56).
 yyaction_17(TokenChars) ->
      { token, ? ASSIGN_OP (TokenChars) } .
 
 -compile({inline,yyaction_18/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 57).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 57).
 yyaction_18(TokenChars) ->
      { token, ? INCREMENT_OP (TokenChars) } .
 
 -compile({inline,yyaction_19/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 58).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 58).
 yyaction_19(TokenChars) ->
      { token, ? DECREMENT_OP (TokenChars) } .
 
 -compile({inline,yyaction_20/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 61).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 61).
 yyaction_20() ->
      { token, ? SMALLER_KEY } .
 
 -compile({inline,yyaction_21/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 62).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 62).
 yyaction_21() ->
      { token, ? GREATER_KEY } .
 
 -compile({inline,yyaction_22/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 65).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 65).
 yyaction_22(TokenChars) ->
      { token, ? PRIMARY_KEY (TokenChars) } .
 
 -compile({inline,yyaction_23/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 66).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 66).
 yyaction_23(TokenChars) ->
      { token, ? FOREIGN_KEY (TokenChars) } .
 
 -compile({inline,yyaction_24/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 67).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 67).
 yyaction_24(TokenChars) ->
      { token, ? KEY_KEY (TokenChars) } .
 
 -compile({inline,yyaction_25/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 68).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 68).
 yyaction_25(TokenChars) ->
      { token, ? REFERENCES_KEY (TokenChars) } .
 
 -compile({inline,yyaction_26/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 69).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 69).
 yyaction_26(TokenChars) ->
      { token, ? CHECK_KEY (TokenChars) } .
 
 -compile({inline,yyaction_27/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 72).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 72).
 yyaction_27(TokenChars) ->
      { token, ? DEFAULT_KEY (TokenChars) } .
 
 -compile({inline,yyaction_28/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 75).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 75).
 yyaction_28() ->
      { token, ? ATTR_KEY (? AQL_VARCHAR) } .
 
 -compile({inline,yyaction_29/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 76).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 76).
 yyaction_29() ->
      { token, ? ATTR_KEY (? AQL_BOOLEAN) } .
 
 -compile({inline,yyaction_30/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 77).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 77).
 yyaction_30() ->
      { token, ? ATTR_KEY (? AQL_INTEGER) } .
 
 -compile({inline,yyaction_31/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 78).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 78).
 yyaction_31() ->
      { token, ? ATTR_KEY (? AQL_COUNTER_INT) } .
 
 -compile({inline,yyaction_32/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 81).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 81).
 yyaction_32(TokenChars) ->
      A = list_to_atom (TokenChars),
      { token, ? PARSER_ATOM (A) } .
 
 -compile({inline,yyaction_33/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 84).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 84).
 yyaction_33(TokenChars) ->
      S = strip_value (TokenChars),
      { token, ? PARSER_STRING (S) } .
 
 -compile({inline,yyaction_34/1}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 87).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 87).
 yyaction_34(TokenChars) ->
      { N, _ } = string : to_integer (TokenChars),
      { token, ? PARSER_NUMBER (N) } .
 
 -compile({inline,yyaction_35/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 90).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 90).
 yyaction_35() ->
      { token, ? PARSER_EQUALITY } .
 
 -compile({inline,yyaction_36/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 91).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 91).
 yyaction_36() ->
      { token, ? PARSER_WILDCARD } .
 
 -compile({inline,yyaction_37/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 92).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 92).
 yyaction_37() ->
      skip_token .
 
 -compile({inline,yyaction_38/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 94).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 94).
 yyaction_38() ->
      { token, ? PARSER_SLIST } .
 
 -compile({inline,yyaction_39/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 95).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 95).
 yyaction_39() ->
      { token, ? PARSER_ELIST } .
 
 -compile({inline,yyaction_40/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 96).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 96).
 yyaction_40() ->
      { token, ? PARSER_SEP } .
 
 -compile({inline,yyaction_41/0}).
--file("/home/joao/workspace/AQL/_build/default/lib/aql/src/scanner.xrl", 97).
+-file("/home/joao/IdeaProjects/AQL/_build/test/lib/aql/src/scanner.xrl", 97).
 yyaction_41() ->
      { token, ? PARSER_SCOLON } .
 

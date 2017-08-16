@@ -43,6 +43,8 @@
 %% values
 -define(VALUES_TOKEN, values).
 -define(VALUES_CLAUSE(TokenChars), {?VALUES_TOKEN, TokenChars}).
+%% no constraint
+-define(NO_CONSTRAINT, ignore).
 %% primary key constraint
 -define(PRIMARY_TOKEN, primary).
 -define(PRIMARY_KEY(TokenChars), {?PRIMARY_TOKEN, TokenChars}).

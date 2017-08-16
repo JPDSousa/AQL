@@ -76,6 +76,7 @@ is_visible(Element, TxId) when is_tuple(Element) ->
   Table = table(Element),
   is_visible(Data, Table, TxId).
 
+is_visible([], _Table, _TxId) -> false;
 is_visible(Data, Table, TxId) ->
   TName = table:name(Table),
   ExplicitState = explicit_state(Data),

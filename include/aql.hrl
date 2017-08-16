@@ -22,11 +22,6 @@
 -define(AQL_COUNTER_INT, counter_int).
 -define(CRDT_COUNTER_INT, antidote_crdt_bcounter).
 
--define(CRP_AW, aw).
--define(CRP_RW, rw).
--define(CRP_R, r).
--define(CRP_NR, nr).
-
 % types
 -export_type([]).%complete with private types
 

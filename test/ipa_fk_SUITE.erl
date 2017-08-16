@@ -22,7 +22,8 @@
           touch_cascade/1,
           insert_multilevel/1,
           delete_basic/1, delete_multilevel/1,
-          create_table_fail/1]).
+          create_table_fail/1,
+          reference_deleted_fail/1]).
 
 init_per_suite(Config) ->
   tutils:create_single_table("FkA"),
@@ -49,11 +50,13 @@ end_per_testcase(_, _) ->
   ok.
 
 all() ->
-  [indirect_foreign_keys,
-  touch_cascade,
-  insert_multilevel
-  %delete_basic, delete_multilevel,
-  %create_table_fail
+  [
+    indirect_foreign_keys,
+    touch_cascade,
+    insert_multilevel,
+    delete_basic, delete_multilevel,
+    create_table_fail,
+    reference_deleted_fail
   ].
 
 indirect_foreign_keys(_Config) ->
@@ -73,11 +76,11 @@ create_table_fail(_Config) ->
   ?assertThrow(_, tutils:create_fk_table("FkETest", "FkB", "FkA")).
 
 touch_cascade(_Config) ->
-  tutils:assertExists(index:tag_key('FkB', 'FkA')),
-  tutils:assertExists(index:tag_key('FkC', 'FkB')),
+  tutils:assertExists(index:tag_key('FkB', [{'FkB', 'FkA'}])),
+  tutils:assertExists(index:tag_key('FkC', [{'FkC', 'FkB'}])),
   {TypelessCAB, _TypeCAB} = ?SHADOW_AB,
   tutils:assertExists(index:tag_key('FkC', TypelessCAB)),
-  tutils:assertExists(index:tag_key('FkD', 'FkC')),
+  tutils:assertExists(index:tag_key('FkD', [{'FkD', 'FkC'}])),
   {TypelessDABC, _TypeDABC} = ?SHADOW_ABC,
   tutils:assertExists(index:tag_key('FkD', TypelessDABC)),
   {TypelessDBC, _TypeDBC} = ?SHADOW_BC,
@@ -96,16 +99,20 @@ insert_multilevel(_Config) ->
   tutils:assertState(true, "FkC", "2").
 
 delete_basic(_Config) ->
-  {ok, []} = tutils:aql("INSERT INTO FkA VALUES (1)"),
-  {ok, []} = tutils:aql("INSERT INTO FkB VALUES (1, 1)"),
   {ok, []} = tutils:delete_by_key("FkA", "1"),
-  tutils:assertState(ipa:delete(), "FkA", "1"),
-  tutils:assertState(ipa:delete_cascade(), "FkB", "1").
+  tutils:assertState(false, "FkA", "1"),
+  tutils:assertState(false, "FkB", "1").
 
 delete_multilevel(_Config) ->
   {ok, []} = tutils:delete_by_key("FkA", "1"),
-  tutils:assertState(ipa:delete(), "FkA", "1"),
-  tutils:assertState(ipa:delete_cascade(), "FkB", "1"),
-  tutils:assertState(ipa:delete_cascade(), "FkB", "2"),
-  tutils:assertState(ipa:delete_cascade(), "FkC", "1"),
-  tutils:assertState(ipa:delete_cascade(), "FkB", "2").
+  tutils:assertState(false, "FkA", "1"),
+  tutils:assertState(false, "FkB", "1"),
+  tutils:assertState(false, "FkB", "2"),
+  tutils:assertState(false, "FkC", "1"),
+  tutils:assertState(false, "FkB", "2"),
+  tutils:assertState(false, "FkD", "1").
+
+reference_deleted_fail(_Config) ->
+  {ok, []} = tutils:delete_by_key("FkA", "1"),
+  ?assertThrow(_, tutils:aql("INSERT INTO FkB VALUES (2, 1)")),
+  ?assertThrow(_, tutils:aql("INSERT INTO FkC VALUES (1, 1)")).

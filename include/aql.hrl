@@ -2,6 +2,9 @@
 -define(MAP_KEY(Key, Type), {Key, Type}).
 -define(BOUND_OBJECT(Key, Crdt, Bucket), {Key, Crdt, Bucket}).
 
+-define(ADD_WINS, add).
+-define(REMOVE_WINS, remove).
+
 % column
 -define(C_NAMES, {names}).
 -define(C_PK, {pk}).

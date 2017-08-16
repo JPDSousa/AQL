@@ -1,6 +1,10 @@
 
 -module(column).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -include("parser.hrl").
 -include("aql.hrl").
 -include("types.hrl").
@@ -94,3 +98,49 @@ s_names(Table) when ?is_table(Table) ->
 	s_names(table:columns(Table));
 s_names(Cols) when is_map(Cols) ->
 	maps:get(?NAMES, Cols).
+%%====================================================================
+%% Eunit tests
+%%====================================================================
+
+-ifdef(TEST).
+
+pk() -> ?PRIMARY_TOKEN.
+def() -> ?DEFAULT_KEY("Test").
+fk() -> ?FOREIGN_KEY({"TName", "TCol"}).
+check() -> ?CHECK_KEY({"<", 3}).
+no() -> ?NO_CONSTRAINT.
+
+name_test() ->
+	Expected = test,
+	?assertEqual(Expected, name(?T_COL(Expected, a, a))).
+
+constraint_test() ->
+	Expected = check(),
+	?assertEqual(Expected, constraint(?T_COL(a, a, Expected))).
+
+type_test() ->
+	Expected = test,
+	?assertEqual(Expected, type(?T_COL(a, Expected, a))).
+
+is_primary_key_test() ->
+	?assertEqual(true, is_primary_key(?T_COL(a, a, pk()))),
+	?assertEqual(false, is_primary_key(?T_COL(a, a, def()))),
+	?assertEqual(false, is_primary_key(?T_COL(a, a, fk()))),
+	?assertEqual(false, is_primary_key(?T_COL(a, a, check()))),
+	?assertEqual(false, is_primary_key(?T_COL(a, a, no()))).
+
+is_default_test() ->
+	?assertEqual(false, is_default(?T_COL(a, a, pk()))),
+	?assertEqual(true, is_default(?T_COL(a, a, def()))),
+	?assertEqual(false, is_default(?T_COL(a, a, fk()))),
+	?assertEqual(false, is_default(?T_COL(a, a, check()))),
+	?assertEqual(false, is_default(?T_COL(a, a, no()))).
+
+is_foreign_key_test() ->
+	?assertEqual(false, is_foreign_key(?T_COL(a, a, pk()))),
+	?assertEqual(false, is_foreign_key(?T_COL(a, a, def()))),
+	?assertEqual(true, is_foreign_key(?T_COL(a, a, fk()))),
+	?assertEqual(false, is_foreign_key(?T_COL(a, a, check()))),
+	?assertEqual(false, is_foreign_key(?T_COL(a, a, no()))).
+
+-endif.

@@ -87,7 +87,7 @@ resolve_op_counter(Column, Forward, Reverse) ->
   end.
 
 resolve_fail(CName, CType) ->
-  Msg = string:concat(["Cannot assign to column ", CName, " of type ", CType]),
+  Msg = lists:concat(["Cannot assign to column ", CName, " of type ", CType]),
   {err, Msg}.
 
 %%====================================================================

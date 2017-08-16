@@ -15,7 +15,8 @@
 -export([to_atom/1, to_list/1,
         assert_same_size/3,
         list_to_dict/2,
-        seek_and_destroy/2]).
+        seek_and_destroy/2,
+        proplists_values/1]).
 
 to_atom(Term) when is_list(Term) ->
   list_to_atom(Term);
@@ -59,6 +60,9 @@ seek_and_destroy(Name, Seen, [{Key, Value} | PropList]) ->
   end;
 seek_and_destroy(_Name, Seen, []) ->
   {undefined, Seen}.
+
+proplists_values(List) ->
+  lists:map(fun({_K, V}) -> V end, List).
 
 %%====================================================================
 %% Eunit tests

@@ -1,15 +1,14 @@
 
 -module(ipa).
 
--define(ADD_WINS, add).
--define(REMOVE_WINS, remove).
-
 -define(H_AW, [{dc, 1}, {tc, 2}, {d, 3}, {t, 4}, {i, 5}]).
 -define(H_RW, [{tc, 1}, {t, 2}, {i, 3}, {dc, 4}, {d, 5}]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
+
+-include("aql.hrl").
 
 -export([new/0,
           touch/0, touch_cascade/0, insert/0, delete/0, delete_cascade/0,

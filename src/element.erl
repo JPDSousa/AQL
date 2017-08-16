@@ -296,4 +296,10 @@ get_default_test() ->
   El = new(key, Table),
   ?assertEqual("aaa", get('InstitutionId', ?CRDT_VARCHAR, El)).
 
+get_by_name_test() ->
+  Data = [{{a, abc}, 1}, {{b, abc}, 2}],
+  ?assertEqual(1, get_by_name(a, Data)),
+  ?assertEqual(undefined, get_by_name(c, Data)),
+  ?assertEqual(undefined, get_by_name(a, [])).
+
 -endif.

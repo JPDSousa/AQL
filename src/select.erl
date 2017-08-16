@@ -24,8 +24,8 @@ exec({Table, _Tables}, Select, TxId) ->
 	Condition = where(Select),
 	Keys = where:scan(TName, Condition, TxId),
 	{ok, Results} = antidote:read_objects(Keys, TxId),
-	ProjRes = project(Projection, Results, [], Cols),
-	ActualRes = apply_offset(ProjRes, Cols, []),
+	ProjectionResult = project(Projection, Results, [], Cols),
+	ActualRes = apply_offset(ProjectionResult, Cols, []),
 	{ok, ActualRes}.
 
 table({TName, _Projection, _Where}) -> TName.

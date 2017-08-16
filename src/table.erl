@@ -15,7 +15,8 @@
 -export([read_tables/1,
 				write_table/2,
 				lookup/2, lookup/3,
-				dependents/2]).
+				dependants/2,
+				prepare_table/2]).
 
 -export([name/1,
 				policy/1,
@@ -35,11 +36,11 @@ read_tables(TxId) ->
 
 write_table(RawTable, TxId) ->
 	Tables = read_tables(TxId),
-	Table = prepare_table(RawTable),
+	Table = prepare_table(RawTable, Tables),
 	TableUpdate = create_table_update(Table),
 	antidote:update_objects(TableUpdate, TxId).
 
-prepare_table(Table) ->
+prepare_table(Table, Tables) ->
 	Table1 = prepare_cols(Table),
 	prepare_foreign_keys(Table1, Tables).
 
@@ -69,8 +70,8 @@ prepare_foreign_keys(Table, Tables) ->
 	end, FKs),
 	set_shadow_columns(lists:flatten(ShadowCols), Table).
 
-
-create_table_update(Name, Table) ->
+create_table_update(Table) ->
+	Name = name(Table),
 	Op = crdt:assign_lww(Table),
 	crdt:single_map_update(?TABLE_META, Name, ?CRDT_TYPE, Op).
 
@@ -91,14 +92,26 @@ lookup(Name, TxId) ->
 	Tables = read_tables(TxId),
 	lookup(Name, Tables).
 
-% dependents(TName, Tables) when is_list(Tables) ->
-% 	{Table, NewTables} = utils:seek_and_destroy(TName, Tables),
-% 	dependents(TName, NewTables, Table, []).
-% dependents(TName, TxId) ->
-% 	dependents(TName, read_tables(TxId)).
-%
-% dependents(TName, Tables, Current, FlatTree) ->
-%
+dependants(TName, Tables) ->
+	dependants(TName, Tables, []).
+
+dependants(TName, [{TName, _Table} | Tables], Acc) ->
+	dependants(TName, Tables, Acc);
+dependants(TName, [{{T1TName, _}, Table} | Tables], Acc) ->
+	Fks = shadow_columns(Table),
+	Refs = references(TName, Fks, []),
+	case Refs of
+		[] ->
+			dependants(TName, Tables, Acc);
+		_Else ->
+			dependants(TName, Tables, lists:append(Acc, [{T1TName, Refs}]))
+	end;
+dependants(_TName, [], Acc) -> Acc.
+
+references(TName, [?T_FK(_, _, TName, _) = Fk | Fks], Acc) ->
+	references(TName, Fks, lists:append(Acc, [Fk]));
+references(TName, [_ | Fks], Acc) ->	references(TName, Fks, Acc);
+references(_TName, [], Acc) -> Acc.
 
 %% ====================================================================
 %% Table Props functions

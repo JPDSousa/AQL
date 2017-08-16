@@ -17,10 +17,10 @@ new() ->
   {maps:new(), [], []}.
 
 put_raw(Col, {Maps, Names, Pks}) ->
-  Name = column:name(RawCol),
+  Name = column:name(Col),
   NewMaps = maps:put(Name, Col, Maps),
-  NewNames = lists:append(Names, [Names]),
-  case column:is_primarykey(Col) of
+  NewNames = lists:append(Names, [Name]),
+  case column:is_primary_key(Col) of
     true ->
       NewPks = lists:append(Pks, [Name]),
       {NewMaps, NewNames, NewPks};

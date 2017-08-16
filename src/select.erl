@@ -14,8 +14,8 @@
 
 exec({Table, _Tables}, Select, TxId) ->
 	TName = table:name(Table),
-	Cols = column:s_from_table(Table),
 	Projection = proplists:get_value(?PROP_COLUMNS, Select),
+	Cols = table:columns(Table),
 	% TODO validate projection fields
 	Condition = proplists:get_value(?WHERE_TOKEN, Select),
 	Keys = where:scan(TName, Condition, TxId),

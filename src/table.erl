@@ -49,22 +49,25 @@ prepare_cols(Table) ->
 	set_columns(columns_builder:build(Builder), Table).
 
 prepare_foreign_keys(Table, Tables) ->
+	TName = table:name(Table),
 	FKs = foreign_keys:from_table(Table),
-	ShadowCols = lists:map(fun ({_K, {TName, Attr}}) ->
-		Err1 = ["Table ", TName, " in foreign key reference does not exist."],
-		Err2 = ["Column ", Attr, " does not exist in table ", TName],
-		T = lookup(TName, Tables, lists:concat(Err1)),
-		Col = column:s_get(T, Attr, lists:concat(Err2)),
-		% TODO fetch foreign keys and create shadow cols from that
-		% TODO fetch shadow columns and create shadow cols from that
-		case column:is_primarykey(Col) of
-			false ->
-				throw("Foreign keys can only reference unique columns");
+	ShadowCols = lists:map(fun (?T_FK(FkName, FkType, T1TName, T1CName)) ->
+		ShFk = ?T_FK([{TName, FkName}], FkType, T1TName, T1CName),
+		Err1 = ["Table ", T1TName, " in foreign key reference does not exist."],
+		Err2 = ["Column ", T1CName, " does not exist in table ", T1TName],
+		TargetTable = lookup(T1TName, Tables, lists:concat(Err1)),
+		TargetCol = column:s_get(TargetTable, T1CName, lists:concat(Err2)),
+		case column:is_primary_key(TargetCol) of
+			false -> throw("Foreign keys can only reference unique columns");
 			_Else ->
-				ok
+				ParentFks = lists:map(fun(?T_FK(TFkName, TFKType, TFKTName, TFKTColName)) ->
+					TFKName1 = lists:append([{TName, FkName}], TFkName),
+					?T_FK(TFKName1, TFKType, TFKTName, TFKTColName)
+				end, shadow_columns(TargetTable)),
+				lists:append([ShFk], ParentFks)
 		end
 	end, FKs),
-	Table.
+	set_shadow_columns(lists:flatten(ShadowCols), Table).
 
 
 create_table_update(Name, Table) ->

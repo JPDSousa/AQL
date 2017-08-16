@@ -12,7 +12,7 @@
 -define(CRDT_TYPE, antidote_crdt_gmap).
 -define(EL_ANON, none).
 
--export([primary_key/1,
+-export([primary_key/1, set_primary_key/2,
         foreign_keys/1, foreign_keys/2, foreign_keys/3,
         attributes/1,
         data/1,
@@ -33,9 +33,6 @@
 
 el_create(BObj, Table, Ops, Data) -> ?T_ELEMENT(BObj, Table, Ops, Data).
 
-el_get_key({BObj, _Table, _Ops, _Data}) -> BObj.
-el_set_key({_BObj, Table, Ops, Data}, BObj) -> el_create(BObj, Table, Ops, Data).
-
 el_get_table({_BObj, Table, _Ops, _Data}) -> Table.
 el_set_table({BObj, _Table, Ops, Data}, Table) -> el_create(BObj, Table, Ops, Data).
 
@@ -45,8 +42,8 @@ el_set_ops({BObj, Table, _Ops, Data}, Ops) -> el_create(BObj, Table, Ops, Data).
 el_get_data({_BObj, _Table, _Ops, Data}) -> Data.
 el_set_data({BObj, Table, Ops, _Data}, Data) -> el_create(BObj, Table, Ops, Data).
 
-primary_key(Element) ->
-  el_get_key(Element).
+primary_key({BObj, _Table, _Ops, _Data}) -> BObj.
+set_primary_key({_BObj, Table, Ops, Data}, BObj) -> ?T_ELEMENT(BObj, Table, Ops, Data).
 
 foreign_keys(Element) ->
   foreign_keys:from_columns(attributes(Element)).
@@ -151,12 +148,11 @@ put(?PARSER_ATOM(ColName), Value, Element, Tables, TxId) ->
       throwNoSuchColumn(ColName, TName)
   end.
 
-set_if_primary(Col, ?PARSER_TYPE(_PType, Value), Element) ->
-  case column:is_primarykey(Col) of
+set_if_primary(Col, Value, Element) ->
+  case column:is_primary_key(Col) of
     true ->
-      % TODO use macro
-      {_Key, _Type, Bucket} = el_get_key(Element),
-      el_set_key(Element, create_key(Value, Bucket));
+      ?BOUND_OBJECT(_Key, _Type, Bucket) = primary_key(Element),
+      set_primary_key(Element, create_key(Value, Bucket));
     _Else ->
       Element
   end.
@@ -205,7 +201,7 @@ get(ColName, Cols, Data, TName) ->
 
 insert(Element) ->
   Ops = el_get_ops(Element),
-  Key = el_get_key(Element),
+  Key = primary_key(Element),
   crdt:map_update(Key, Ops).
 insert(Element, TxId) ->
   Op = insert(Element),
@@ -269,7 +265,7 @@ primary_key_test() ->
 
 attributes_test() ->
   Table = create_table_aux(),
-  Columns = column:s_from_table(Table),
+  Columns = table:columns(Table),
   Element = new(key, Table),
   ?assertEqual(Columns, attributes(Element)).
 
@@ -283,7 +279,6 @@ new_test() ->
   Key = key,
   Table = create_table_aux(),
   BoundObject = create_key(Key, table:name(Table)),
-  Columns = column:s_from_table(Table),
   Ops = [crdt:field_map_op(st_key(), crdt:assign_lww(ipa:new()))],
   Expected = el_create(BoundObject, Columns, Ops, []),
   Expected1 = load_defaults(Columns, Expected),

@@ -14,7 +14,6 @@
 
 -export([to_atom/1, to_list/1,
         assert_same_size/3,
-        list_to_dict/2,
         seek_and_destroy/2,
         proplists_values/1]).
 
@@ -37,16 +36,6 @@ assert_same_size(List1, List2, ErrMsg) ->
   if length(List1) =:= length(List2) -> ok;
     true -> throw(ErrMsg)
   end.
-
-list_to_dict(List, KeyMapper) ->
-	list_to_dict(List, KeyMapper, dict:new()).
-
-list_to_dict([Value | T], KeyMapper, Acc) ->
-	Key = KeyMapper(Value),
-	NewMap = dict:store(Key, Value, Acc),
-	list_to_dict(T, KeyMapper, NewMap);
-list_to_dict([], _KeyMapper, Acc) ->
-	Acc.
 
 seek_and_destroy(Name, PropList) ->
   seek_and_destroy(Name, [], PropList).

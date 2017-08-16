@@ -252,18 +252,13 @@ foreign_keys(Fks, Data, TName) ->
 
 -ifdef(TEST).
 
-create_table_aux() ->
-  {ok, Tokens, _} = scanner:string("CREATE LWW TABLE Universities (WorldRank INT PRIMARY KEY, InstitutionId VARCHAR FOREIGN KEY REFERENCES Institution(id), NationalRank INTEGER DEFAULT 1);"),
-	{ok, [{?CREATE_TOKEN, Table}]} = parser:parse(Tokens),
-  Table.
-
 primary_key_test() ->
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   Element = new(key, Table),
   ?assertEqual(create_key(key, 'Universities'), primary_key(Element)).
 
 attributes_test() ->
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   Columns = table:columns(Table),
   Element = new(key, Table),
   ?assertEqual(Columns, attributes(Element)).
@@ -276,7 +271,7 @@ create_key_test() ->
 
 new_test() ->
   Key = key,
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   BoundObject = create_key(Key, table:name(Table)),
   Ops = [crdt:field_map_op(st_key(), crdt:assign_lww(ipa:new()))],
   Expected = ?T_ELEMENT(BoundObject, Table, Ops, []),
@@ -286,18 +281,18 @@ new_test() ->
   ?assertEqual(crdt:assign_lww(ipa:new()), proplists:get_value(st_key(), ops(Element))).
 
 new_1_test() ->
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   ?assertEqual(new(?EL_ANON, Table), new(Table)).
 
 append_raw_test() ->
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   Value = 9,
   Element = new(key, Table),
   % assert not fail
   append('NationalRank', Value, ?AQL_INTEGER, Element).
 
 get_default_test() ->
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   El = new(key, Table),
   ?assertEqual("aaa", get('InstitutionId', ?CRDT_VARCHAR, El)).
 

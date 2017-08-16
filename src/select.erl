@@ -12,17 +12,31 @@
 %% ====================================================================
 -export([exec/3]).
 
+-export([table/1,
+				projection/1,
+				where/1]).
+
 exec({Table, _Tables}, Select, TxId) ->
 	TName = table:name(Table),
-	Projection = proplists:get_value(?PROP_COLUMNS, Select),
 	Cols = table:columns(Table),
+	Projection = projection(Select),
 	% TODO validate projection fields
-	Condition = proplists:get_value(?WHERE_TOKEN, Select),
+	Condition = where(Select),
 	Keys = where:scan(TName, Condition, TxId),
 	{ok, Results} = antidote:read_objects(Keys, TxId),
 	ProjRes = project(Projection, Results, [], Cols),
 	ActualRes = apply_offset(ProjRes, Cols, []),
 	{ok, ActualRes}.
+
+table({TName, _Projection, _Where}) -> TName.
+
+projection({_TName, Projection, _Where}) -> Projection.
+
+where({_TName, _Projection, Where}) -> Where.
+
+%% ====================================================================
+%% Private functions
+%% ====================================================================
 
 apply_offset([{{Key, Type}, V} | Values], Cols, Acc) ->
   Col = dict:fetch(Key, Cols),

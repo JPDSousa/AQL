@@ -47,8 +47,10 @@ Rules.
 (delete|DELETE) : {token, ?DELETE_CLAUSE(TokenChars)}.
 
 % conflict resolution policies
-(@aw|@AW) : {token, ?TABLE_POLICY_KEY(?CRP_AW)}.
-(@rw|@RW) : {token, ?TABLE_POLICY_KEY(?CRP_RW)}.
+(@aw|@AW) : {token, ?TABLE_POLICY_KEY(?ADD_WINS)}.
+(@rw|@RW) : {token, ?TABLE_POLICY_KEY(?REMOVE_WINS)}.
+(@fr|@FR) : {token, ?DEP_POLICY_KEY(?ADD_WINS)}.
+(@ir|@IR) : {token, ?DEP_POLICY_KEY(?REMOVE_WINS)}.
 
 % update query related tokens
 (update|UPDATE) : {token, ?UPDATE_CLAUSE(TokenChars)}.

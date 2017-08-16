@@ -33,7 +33,7 @@ read_tables(TxId) ->
 	{ok, [Tables]} = antidote:read_objects(?TABLE_META, TxId),
 	Tables.
 
-write_table(RawTable, TxId) when ?is_table(Table) ->
+write_table(RawTable, TxId) ->
 	Tables = read_tables(TxId),
 	Table = prepare_table(RawTable),
 	TableUpdate = create_table_update(Table),

@@ -7,9 +7,9 @@
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
--define(SHADOW_AB, {{[{'ID','FkA'},{'ID','FkB'}]}, ?CRDT_INTEGER}).
--define(SHADOW_ABC, {{[{'ID','FkA'},{'ID','FkB'},{'ID','FkC'}]}, ?CRDT_INTEGER}).
--define(SHADOW_BC, {{[{'ID','FkB'},{'ID','FkC'}]}, ?CRDT_INTEGER}).
+-define(SHADOW_AB, {[{'FkC','FkB'},{'FkB','FkA'}],?CRDT_INTEGER}).
+-define(SHADOW_ABC, {[{'FkD','FkC'},{'FkC','FkB'},{'FkB','FkA'}], ?CRDT_INTEGER}).
+-define(SHADOW_BC, {[{'FkD','FkC'},{'FkC','FkB'}], ?CRDT_INTEGER}).
 
 
 -export([init_per_suite/1,

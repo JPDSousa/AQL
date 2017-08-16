@@ -10,7 +10,9 @@
 -include("aql.hrl").
 -include("types.hrl").
 
+-ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+-endif.
 
 exec({Table, Tables}, Props, TxId) ->
 	TName = table(Props),

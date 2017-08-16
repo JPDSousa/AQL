@@ -41,6 +41,7 @@ is_visible(d, []) -> false;
 is_visible(_InvalidE, _InvalidI) -> 
   err.
 
+status(_Mode, []) -> [];
 status(Mode, [H | T]) ->
   Heu = heu(Mode),
   status(Heu, T, H).

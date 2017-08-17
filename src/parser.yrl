@@ -42,7 +42,7 @@ insert into values
 delete
 %create
 create table table_policy primary foreign key references default check
-attribute_type
+attribute_type dep_policy
 %update
 update set
 %types
@@ -224,7 +224,7 @@ set_assignment ->
 %%--------------------------------------------------------------------
 create_query ->
 	create table_policy table atom start_list create_keys end_list :
-	?CREATE_CLAUSE(?T_TABLE('$4', unwrap_type('$2'), '$6', [])).
+	?CREATE_CLAUSE(?T_TABLE('$4', crp:set_table_level(unwrap_type('$2'), crp:new()), '$6', [])).
 
 create_keys ->
 	create_keys sep attribute :
@@ -247,8 +247,8 @@ attribute_constraint ->
 	?PRIMARY_TOKEN.
 
 attribute_constraint ->
-	foreign key references atom start_list atom end_list :
-	?FOREIGN_KEY({'$4', '$6'}).
+	foreign key dep_policy references atom start_list atom end_list :
+	?FOREIGN_KEY({'$5', '$7', unwrap_type('$3')}).
 
 attribute_constraint ->
 	default value :
@@ -337,7 +337,7 @@ create_table_check_test() ->
 	test_parser("CREATE @AW TABLE Test(a INTEGER, b COUNTER_INT CHECK GREATER 0)").
 
 create_table_fk_test() ->
-	test_parser("CREATE @AW TABLE Test (a VARCHAR, b INTEGER FOREIGN KEY REFERENCES TestB(b))").
+	test_parser("CREATE @AW TABLE Test (a VARCHAR, b INTEGER FOREIGN KEY @FR REFERENCES TestB(b))").
 
 update_simple_test() ->
 	test_parser("UPDATE Test SET name ASSIGN 'aaa'"),

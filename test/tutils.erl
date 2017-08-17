@@ -13,7 +13,8 @@
           print_state/2]).
 
 -export([assertState/3,
-          assertExists/1]).
+          assertExists/1,
+          assert_table_policy/2]).
 
 aql(Aql) ->
   aqlparser:parse({str, Aql}).
@@ -58,6 +59,13 @@ print_state(TName, Key) ->
   end, table:shadow_columns(Table)),
   io:fwrite("Final: ~p~n", [element:is_visible(Data, Table, TxId)]),
 antidote:commit_transaction(TxId).
+
+assert_table_policy(Expected, TName) ->
+  TNameAtom = utils:to_atom(TName),
+  {ok, TxId} = antidote:start_transaction(),
+  Table = table:lookup(TNameAtom, TxId),
+  antidote:commit_transaction(TxId),
+  ?assertEqual(Expected, table:policy(Table)).
 
 assertExists(Key) ->
   {ok, [Res], _CT} = antidote:read_objects(Key),

@@ -10,7 +10,7 @@
 -include("types.hrl").
 
 -export([name/1,
-				constraint/1,
+				constraint/1, set_constraint/2,
 				type/1,
 				is_primary_key/1,
 				is_default/1,
@@ -28,6 +28,7 @@
 name(?T_COL(Name, _, _)) -> Name.
 
 constraint(?T_COL(_, _, Constraint)) -> Constraint.
+set_constraint(Constraint, ?T_COL(Name, Type, _)) -> ?T_COL(Name, Type, Constraint).
 
 type(?T_COL(_, Type, _)) -> Type.
 

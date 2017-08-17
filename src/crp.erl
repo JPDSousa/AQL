@@ -9,6 +9,8 @@
 -module(crp).
 -author("joao").
 
+-define(ERR_FR_IR, "A table with 'Force-Revive' foreign keys cannot be linked to a table with 'Ignore-Revive' foreign keys").
+
 -include("aql.hrl").
 -include("types.hrl").
 
@@ -31,29 +33,28 @@ dep_level(?T_CRP(_, DepLevel, _)) -> DepLevel.
 
 p_dep_level(?T_CRP(_, _, PDepLevel)) -> PDepLevel.
 
-set_table_level(Rule, Crp) ->
-  set(Rule, table, Crp).
+set_table_level(undefined, CRP) -> CRP;
+set_table_level(Rule, ?T_CRP(Rule, _, _) = CRP) -> CRP;
+set_table_level(Rule, ?T_CRP(undefined, DepLevel, PDepLevel)) ->
+  ?T_CRP(Rule, DepLevel, PDepLevel);
+set_table_level(_, ?T_CRP(TableLevel, _, _)) ->
+  throw(io:format("Table level already set to ~p", [TableLevel])).
 
-set_dep_level(Rule, Crp) ->
-  set(Rule, dep, Crp).
+set_dep_level(undefined, CRP) -> CRP;
+set_dep_level(Rule, ?T_CRP(_, Rule, _) = CRP) -> CRP;
+set_dep_level(Rule, ?T_CRP(TableLevel, undefined, PDepLevel)) ->
+  ?T_CRP(TableLevel, Rule, PDepLevel);
+set_dep_level(_, ?T_CRP(_, DepLevel, _)) ->
+  throw(io:format("Table level already set to ~p", [DepLevel])).
 
-set_p_dep_level(Rule, Crp) ->
-  set(Rule, pdep, Crp).
-
-set(Rule, Level, Crp) ->
-  ?T_CRP(TableLevel, DepLevel, PDepLevel) = Crp,
-  case Level of
-    table -> Prev = TableLevel;
-    dep -> Prev = DepLevel;
-    _Else -> Prev = PDepLevel
-  end,
-  case {Level, Prev} of
-    {table, undefined} -> ?T_CRP(Rule, DepLevel, PDepLevel);
-    {dep, undefined} -> ?T_CRP(TableLevel, Rule, PDepLevel);
-    {pdep, undefined} -> ?T_CRP(TableLevel, DepLevel, PDepLevel);
-    {Level1, Prev1} ->
-      throw(lists:concat([Level1, " already set to ", Prev1]))
-  end.
+set_p_dep_level(undefined, CRP) -> CRP;
+set_p_dep_level(Rule, ?T_CRP(_, _, Rule) = CRP) -> CRP;
+set_p_dep_level(Rule, ?T_CRP(TableLevel, DepLevel, undefined)) ->
+  ?T_CRP(TableLevel, DepLevel, Rule);
+set_p_dep_level(?ADD_WINS, ?T_CRP(_, ?REMOVE_WINS, _)) ->
+  throw(?ERR_FR_IR);
+set_p_dep_level(_, ?T_CRP(_, _, PDepLevel)) ->
+  throw(io:format("Table level already set to ~p", [PDepLevel])).
 
 get_rule(Crp) ->
   ?T_CRP(TableLevel, DepLevel, PDepLevel) = Crp,

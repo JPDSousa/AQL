@@ -14,23 +14,46 @@
         build/1]).
 
 new() ->
-  {maps:new(), [], []}.
+  create(maps:new(), [], [], []).
 
-put_raw(Col, {Maps, Names, Pks}) ->
+create(Cols, Names, Pks, CRPs) ->
+  {Cols, Names, Pks, CRPs}.
+
+put_raw(Col, {Maps, Names, Pks, CRPs}) ->
   Name = column:name(Col),
-  NewMaps = maps:put(Name, Col, Maps),
   NewNames = lists:append(Names, [Name]),
+  NewMaps = maps:put(Name, Col, Maps),
+  handle_constraint(fun(NewPks) ->
+    create(NewMaps, NewNames, NewPks, CRPs)
+  end, fun(NewCol, Crp) ->
+    NewMaps1 = maps:put(Name, NewCol, Maps),
+    create(NewMaps1, NewNames, Pks, lists:append(CRPs, [{Name, Crp}]))
+  end, fun() ->
+    create(NewMaps, NewNames, Pks, CRPs)
+  end, Col, Name, Pks).
+
+handle_constraint(IsPk, IsFk, Else, Col, CName, Pks) ->
   case column:is_primary_key(Col) of
     true ->
-      NewPks = lists:append(Pks, [Name]),
-      {NewMaps, NewNames, NewPks};
+      NewPks = lists:append(Pks, [CName]),
+      IsPk(NewPks);
     _Else ->
-      {NewMaps, NewNames, Pks}
+      case column:is_foreign_key(Col) of
+        true ->
+          {NewCol, Crp} = remove_dep_crp(Col),
+          IsFk(NewCol, Crp);
+        _Else ->
+          Else()
+      end
   end.
 
-build({Maps, Names, Pks}) ->
+remove_dep_crp(Col) ->
+  ?FOREIGN_KEY({TName, CName, Crp}) = column:constraint(Col),
+  {column:set_constraint(?FOREIGN_KEY({TName, CName}), Col), Crp}.
+
+build({Maps, Names, Pks, CRPs}) ->
   Build = maps:put(?C_NAMES, Names, Maps),
-  maps:put(?C_PK, Pks, Build).
+  {maps:put(?C_PK, Pks, Build), CRPs}.
 
 %%====================================================================
 %% Eunit tests
@@ -39,16 +62,16 @@ build({Maps, Names, Pks}) ->
 -ifdef(TEST).
 
 new_test() ->
-  ?assertEqual({maps:new(), [], []}, new()).
+  ?assertEqual({maps:new(), [], [], []}, new()).
 
 put_raw_test() ->
   Col = ?T_COL("Test", ?AQL_INTEGER, ?NO_CONSTRAINT),
-  Expected = {#{"Test" => Col}, ["Test"], []},
+  Expected = {#{"Test" => Col}, ["Test"], [], []},
   ?assertEqual(Expected, put_raw(Col, new())).
 
 put_raw_pk_test() ->
   Col = ?T_COL("Test", ?AQL_INTEGER, ?PRIMARY_TOKEN),
-  Expected = {#{"Test" => Col}, ["Test"], ["Test"]},
+  Expected = {#{"Test" => Col}, ["Test"], ["Test"], []},
   ?assertEqual(Expected, put_raw(Col, new())).
 
 build_test() ->
@@ -58,6 +81,6 @@ build_test() ->
   Actual1 = new(),
   Actual2 = put_raw(Col1, Actual1),
   Actual3 = put_raw(Col2, Actual2),
-  ?assertEqual(Expected, build(Actual3)).
+  ?assertEqual({Expected, []}, build(Actual3)).
 
 -endif.

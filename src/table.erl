@@ -16,7 +16,7 @@
 				write_table/2,
 				lookup/2, lookup/3,
 				dependants/2,
-				prepare_table/2]).
+				prepare_table/3]).
 
 -export([name/1,
 				policy/1,
@@ -36,18 +36,50 @@ read_tables(TxId) ->
 
 write_table(RawTable, TxId) ->
 	Tables = read_tables(TxId),
-	Table = prepare_table(RawTable, Tables),
+	Table = prepare_table(RawTable, Tables, TxId),
 	TableUpdate = create_table_update(Table),
 	antidote:update_objects(TableUpdate, TxId).
 
-prepare_table(Table, Tables) ->
-	Table1 = prepare_cols(Table),
-	prepare_foreign_keys(Table1, Tables).
+prepare_table(Table, Tables, TxId) ->
+	{Table1, Crps} = prepare_cols(Table),
+	Cols = columns(Table1),
+	DepRule = lists:foldl(fun({_CName, Rule}, CurrentRule) ->
+		case CurrentRule of
+			undefined -> Rule;
+			Rule -> Rule;
+			_Else ->
+				io:fwrite("Warning: Both 'Force-Revive' and 'Ignore-Revive' found. 'Ignore-Revive will prevail."),
+				?REMOVE_WINS
+		end
+ 	end, undefined, Crps),
+	Ops = lists:foldl(fun({CName, _Rule}, CurrentOps) ->
+		Col = maps:get(CName, Cols),
+		?FOREIGN_KEY({T1TName, _T1CName}) = column:constraint(Col),
+		T1Table = lookup(T1TName, Tables),
+		T1Policy = policy(T1Table),
+		T1Policy1 = crp:set_p_dep_level(DepRule, T1Policy),
+		case T1Policy1 of
+			T1Policy -> CurrentOps;
+			_Else ->
+				T1Table1 = set_policy(T1Policy1, T1Table),
+				lists:append(CurrentOps, [create_table_update(T1Table1)])
+		end
+	end, [], Crps),
+	case Ops of
+		[] -> ok;
+		_Else ->
+			antidote:update_objects(Ops, TxId)
+	end,
+	Policy = policy(Table1),
+	Policy1 = crp:set_dep_level(DepRule, Policy),
+	Table2 = set_policy(Policy1, Table1),
+	prepare_foreign_keys(Table2, Tables).
 
 prepare_cols(Table) ->
 	RawCols = columns(Table),
 	Builder = lists:foldl(fun columns_builder:put_raw/2, columns_builder:new(), RawCols),
-	set_columns(columns_builder:build(Builder), Table).
+	{Cols, Crps} = columns_builder:build(Builder),
+	{set_columns(Cols, Table), Crps}.
 
 prepare_foreign_keys(Table, Tables) ->
 	TName = table:name(Table),

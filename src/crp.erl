@@ -66,12 +66,14 @@ rule_table_level(?ADD_WINS) -> [ipa:delete(), ipa:insert()];
 rule_table_level(?REMOVE_WINS) -> [ipa:insert(), ipa:delete()];
 rule_table_level(Crp) -> rule_table_level(table_level(Crp)).
 
+rule_dep_level(undefined, Rule) -> Rule;
 rule_dep_level(?ADD_WINS, Rule) ->
   lists:append([ipa:delete_cascade(), ipa:touch_cascade()], Rule);
 rule_dep_level(?REMOVE_WINS, Rule) ->
   lists:append([[ipa:touch_cascade()], Rule, [ipa:delete_cascade()]]);
 rule_dep_level(Crp, Rule) -> rule_dep_level(dep_level(Crp), Rule).
 
+rule_p_dep_level(undefined, Rule) -> Rule;
 rule_p_dep_level(?ADD_WINS, Rule) -> lists:append(Rule, [ipa:touch()]);
 rule_p_dep_level(?REMOVE_WINS, Rule) -> lists:append([ipa:touch(), Rule]);
 rule_p_dep_level(Crp, Rule) -> rule_p_dep_level(p_dep_level(Crp), Rule).

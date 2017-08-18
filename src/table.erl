@@ -109,7 +109,7 @@ create_table_update(Table) ->
 
 lookup(Name, Tables, ErrMsg) ->
 	NameAtom = utils:to_atom(Name),
-	Res = proplists:get_value({NameAtom, ?CRDT_TYPE}, Tables),
+	Res = proplists:get_value(?MAP_KEY(NameAtom, ?CRDT_TYPE), Tables),
 	case Res of
 		undefined ->
 			throw(ErrMsg);

@@ -1,9 +1,6 @@
 
 -module(ipa).
 
--define(H_AW, [{dc, 1}, {tc, 2}, {d, 3}, {t, 4}, {i, 5}]).
--define(H_RW, [{tc, 1}, {t, 2}, {i, 3}, {dc, 4}, {d, 5}]).
-
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
@@ -12,7 +9,6 @@
 
 -export([new/0,
           touch/0, touch_cascade/0, insert/0, delete/0, delete_cascade/0,
-          add_wins/0, remove_wins/0,
           is_visible/1, is_visible/2,
           status/2]).
 
@@ -24,9 +20,6 @@ touch_cascade() -> tc.
 insert() -> i.
 delete() -> d.
 delete_cascade() -> dc.
-
-add_wins() -> ?ADD_WINS.
-remove_wins() -> ?REMOVE_WINS.
 
 is_visible(ExState) ->
   is_visible(ExState, []).
@@ -40,10 +33,9 @@ is_visible(d, []) -> false;
 is_visible(_InvalidE, _InvalidI) -> 
   err.
 
-status(_Mode, []) -> [];
-status(Mode, [H | T]) ->
-  Heu = heu(Mode),
-  status(Heu, T, H).
+status(_Rule, []) -> [];
+status(Rule, [H | T]) ->
+  status(Rule, T, H).
 
 status(Heu, [H | T], Current) ->
   Res = merge(Heu, H, Current),
@@ -51,19 +43,16 @@ status(Heu, [H | T], Current) ->
 status(_Heu, [], Current) ->
   Current.
 
-heu(?ADD_WINS) -> ?H_AW;
-heu(?REMOVE_WINS) -> ?H_RW;
-heu(_Invalid) -> err.
-
-merge(Heu, X, Y) ->
-  ScoreX = proplists:get_value(X, Heu),
-  ScoreY = proplists:get_value(Y, Heu),
-  if
-    ScoreX >= ScoreY ->
-      X;
-    true ->
-      Y
-  end.
+% if X and Y are the same, both prevail
+merge(_, X, X) -> X;
+% if X is found first, Y prevails
+merge([X | _T], X, Y) -> Y;
+% if Y is found first, X prevails
+merge([Y | _T], X, Y) -> X;
+% if Z is not X or Y, find next
+merge([_Z | T], X, Y) -> merge(T, X, Y);
+% if both not found, error
+merge([], _X, _Y) -> err.
 
 %%====================================================================
 %% Eunit tests
@@ -89,9 +78,9 @@ status_test() ->
   List2 = [i, d, tc],
   List3 = [d, d, dc],
   List4 = [i, d, d],
-  ?assertEqual(status(?ADD_WINS, List1), d),
-  ?assertEqual(status(?ADD_WINS, List2), i),
-  ?assertEqual(status(?ADD_WINS, List3), d),
-  ?assertEqual(status(?ADD_WINS, List4), i).
+  ?assertEqual(status([d, i, tc, dc, t], List1), d),
+  ?assertEqual(status([d, tc, i, t, dc], List2), i),
+  ?assertEqual(status([dc, d, tc, t, i], List3), d),
+  ?assertEqual(status([tc, dc, t, d, i], List4), i).
 
 -endif.

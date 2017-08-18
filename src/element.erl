@@ -60,15 +60,13 @@ create_key(Key, TName) ->
 st_key() ->
   ?MAP_KEY('#st', antidote_crdt_mvreg).
 
-explicit_state(Element) when is_tuple(Element) ->
-  explicit_state(data(Element));
-explicit_state(Data) ->
+explicit_state(Data, Rule) ->
   Value = proplists:get_value(st_key(), Data),
   case Value of
     undefined ->
       throw("No explicit state found");
     _Else ->
-      ipa:status(ipa:add_wins(), Value)
+      ipa:status(Rule, Value)
   end.
 
 is_visible(Element, TxId) when is_tuple(Element) ->
@@ -79,12 +77,14 @@ is_visible(Element, TxId) when is_tuple(Element) ->
 is_visible([], _Table, _TxId) -> false;
 is_visible(Data, Table, TxId) ->
   TName = table:name(Table),
-  ExplicitState = explicit_state(Data),
+  Policy = table:policy(Table),
+  Rule = crp:get_rule(Policy),
+  ExplicitState = explicit_state(Data, Rule),
 	Fks = table:shadow_columns(Table),
   ImplicitState = lists:map(fun(?T_FK(FkName, FkType, _, _)) ->
     FkValue = element:get(foreign_keys:to_cname(FkName), types:to_crdt(FkType), Data, Table),
     FkState = index:tag_read(TName, FkName, FkValue, TxId),
-    ipa:status(ipa:add_wins(), FkState)
+    ipa:status(Rule, FkState)
   end, Fks),
   ipa:is_visible(ExplicitState, ImplicitState).
 

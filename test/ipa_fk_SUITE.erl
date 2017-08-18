@@ -26,10 +26,10 @@
           reference_deleted_fail/1]).
 
 init_per_suite(Config) ->
-  tutils:create_single_table("FkA"),
-  tutils:create_fk_table("FkB", "FkA"),
-  tutils:create_fk_table("FkC", "FkB"),
-  tutils:create_fk_table("FkD", "FkC"),
+  {ok, []} = tutils:create_single_table("FkA"),
+  {ok, []} = tutils:create_fk_table("FkB", "FkA"),
+  {ok, []} = tutils:create_fk_table("FkC", "FkB"),
+  {ok, []} = tutils:create_fk_table("FkD", "FkC"),
   Config.
 
 end_per_suite(Config) ->

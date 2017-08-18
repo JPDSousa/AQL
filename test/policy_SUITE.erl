@@ -56,35 +56,35 @@ create_crp(TableLevel, DepLevel, PDepLevel) ->
   crp:set_p_dep_level(PDepLevel, create_crp(TableLevel, DepLevel)).
 
 create_query(TName, CRP) ->
-  lists:concat(["CREATE ", CRP, " TABLE ", TName, " (ID INTEGER PRIMARY KEY);"]).
+  lists:concat(["CREATE ", CRP, " TABLE ", TName, " (ID INTEGER PRIMARY KEY);\n"]).
 
 create_query(TName, [TTName1, TTName2], TableLevel, DepLevel) ->
   lists:concat(["CREATE ", TableLevel, " TABLE ", TName,
     " (ID INTEGER PRIMARY KEY, ",
-    "FK1 FOREIGN KEY ", DepLevel, " REFERENCES ", TTName1, "(ID),",
-    "FK2 FOREIGN KEY ", DepLevel, " REFERENCES ", TTName2, "(ID));"]);
+    "  FKA INTEGER FOREIGN KEY ", DepLevel, " REFERENCES ", TTName1, "(ID),",
+    "  FKB INTEGER FOREIGN KEY ", DepLevel, " REFERENCES ", TTName2, "(ID));\n"]);
 create_query(TName, TTName, TableLevel, DepLevel) ->
   lists:concat(["CREATE ", TableLevel, " TABLE ", TName,
-    " (ID INTEGER PRIMARY KEY, FK FOREIGN KEY ", DepLevel,
-    "REFERENCES ", TTName, "(ID));"]).
+    " (ID INTEGER PRIMARY KEY, ",
+    "  FK INTEGER FOREIGN KEY ", DepLevel, "REFERENCES ", TTName, "(ID));\n"]).
 
 one_level(_Config) ->
-  AWTName = "L1Aw",
-  RWTName = "L1Rw",
+  AWTName = "LAAw",
+  RWTName = "LARw",
   AWQuery = create_query(AWTName, "@AW"),
   RWQuery = create_query(RWTName, "@RW"),
-  tutils:aql(lists:concat([AWQuery, RWQuery])),
+  {ok, []} = tutils:aql(lists:concat([AWQuery, RWQuery])),
   tutils:assert_table_policy(create_crp(?ADD_WINS), AWTName),
   tutils:assert_table_policy(create_crp(?REMOVE_WINS), RWTName).
 
 two_levels(_Config) ->
-  AwTName = "L21Aw",
-  RwTName = "L21Rw",
-  AwFrTName = "L22AwFr",
-  AwIrTName = "L22AwIr",
-  RwFrTName = "L22RwFr",
-  RwIrTName = "L22RwIr",
-  tutils:aql(lists:concat([
+  AwTName = "LBAAw",
+  RwTName = "LBARw",
+  AwFrTName = "LBBAwFr",
+  AwIrTName = "LBBAwIr",
+  RwFrTName = "LBBRwFr",
+  RwIrTName = "LBBRwIr",
+  {ok, []} = tutils:aql(lists:concat([
     create_query(AwTName, "@AW"),
     create_query(RwTName, "@RW"),
     create_query(AwFrTName, AwTName, "@AW", "@FR"),
@@ -100,29 +100,29 @@ two_levels(_Config) ->
 
 three_levels(_Config) ->
   % level1
-  AwTName = "L31Aw",
-  RwTName = "L31Rw",
+  AwTName = "LCAAw",
+  RwTName = "LCARw",
   % level 2
-  AwFr1TName = "L32AwFr",
-  AwIr1TName = "L32AwIr",
-  RwFr1TName = "L32RwFr",
-  RwIr1TName = "L32RwIr",
+  AwFr1TName = "LCBAwFr",
+  AwIr1TName = "LCBAwIr",
+  RwFr1TName = "LCBRwFr",
+  RwIr1TName = "LCBRwIr",
   % level 3
-  AwIr2TName = "L33AwIr",
-  RwIr2TName = "L33RwIr",
-  AwFr2TName = "L33AwFr",
-  RwFr2TName = "L33RwFr",
-  tutils:aql(lists:concat([
-    create_query(AwTName, ?ADD_WINS),
-    create_query(RwTName, ?REMOVE_WINS),
-    create_query(AwFr1TName, RwTName, ?ADD_WINS, ?ADD_WINS),
-    create_query(AwIr1TName, AwTName, ?ADD_WINS, ?REMOVE_WINS),
-    create_query(RwFr1TName, RwTName, ?REMOVE_WINS, ?ADD_WINS),
-    create_query(RwIr1TName, AwTName, ?REMOVE_WINS, ?REMOVE_WINS),
-    create_query(AwIr2TName, [AwIr1TName, RwIr1TName], ?ADD_WINS, ?REMOVE_WINS),
-    create_query(RwIr2TName, [AwIr1TName, RwIr1TName], ?REMOVE_WINS, ?REMOVE_WINS),
-    create_query(AwFr2TName, [AwFr1TName, RwFr1TName], ?ADD_WINS, ?ADD_WINS),
-    create_query(RwFr2TName, [AwFr1TName, RwFr1TName], ?REMOVE_WINS, ?ADD_WINS)
+  AwIr2TName = "LCCAwIr",
+  RwIr2TName = "LCCRwIr",
+  AwFr2TName = "LCCAwFr",
+  RwFr2TName = "LCCRwFr",
+  {ok, []} = tutils:aql(lists:concat([
+    create_query(AwTName, "@AW"),
+    create_query(RwTName, "@RW"),
+    create_query(AwFr1TName, RwTName, "@AW", "@FR"),
+    create_query(AwIr1TName, AwTName, "@AW", "@IR"),
+    create_query(RwFr1TName, RwTName, "@RW", "@FR"),
+    create_query(RwIr1TName, AwTName, "@RW", "@IR"),
+    create_query(AwIr2TName, [AwIr1TName, RwIr1TName], "@AW", "@IR"),
+    create_query(RwIr2TName, [AwIr1TName, RwIr1TName], "@RW", "@IR"),
+    create_query(AwFr2TName, [AwFr1TName, RwFr1TName], "@AW", "@FR"),
+    create_query(RwFr2TName, [AwFr1TName, RwFr1TName], "@RW", "@FR")
   ])),
   tutils:assert_table_policy(create_crp(?ADD_WINS, undefined, ?REMOVE_WINS), AwTName),
   tutils:assert_table_policy(create_crp(?REMOVE_WINS, undefined, ?ADD_WINS), RwTName),

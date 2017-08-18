@@ -1,5 +1,13 @@
 -define(METADATA_BUCKET, aql_metadata).
 -define(MAP_KEY(Key, Type), {Key, Type}).
+-define(BOUND_OBJECT(Key, Crdt, Bucket), {Key, Crdt, Bucket}).
+
+-define(ADD_WINS, add).
+-define(REMOVE_WINS, remove).
+
+% column
+-define(C_NAMES, {names}).
+-define(C_PK, {pk}).
 
 % AQL -> CRDT mappings
 -define(AQL_INTEGER, integer).
@@ -13,20 +21,6 @@
 
 -define(AQL_COUNTER_INT, counter_int).
 -define(CRDT_COUNTER_INT, antidote_crdt_bcounter).
-
--define(CRP_LWW, lww).
-
-% custom guards
--define(is_table(Table), is_list(Table)).
--define(is_tname(Name), is_atom(Name)).
-
--define(is_column(Column), is_list(Column)).
--define(is_cname(Name), is_atom(Name)).
-
--define(is_dbkey(Key), is_atom(Key)).
--define(is_crdt(CRDT), is_atom(CRDT)).
--define(is_dbbucket(Bucket), is_atom(Bucket)).
-
 
 % types
 -export_type([]).%complete with private types

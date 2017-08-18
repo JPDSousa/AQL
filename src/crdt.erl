@@ -19,6 +19,9 @@
 
 -export([assign_lww/1]).
 
+-export([enable_flag/0,
+				disable_flag/0]).
+
 -export([create_bound_object/3,
 				create_op/3]).
 
@@ -99,6 +102,16 @@ assign_lww(Value) ->
 	{assign, Value}.
 
 %% ====================================================================
+%% Flag functions
+%% ====================================================================
+
+enable_flag() ->
+	{enable, {}}.
+
+disable_flag() ->
+	{disable, {}}.
+
+%% ====================================================================
 %% Bounded counter functions
 %% ====================================================================
 
@@ -130,4 +143,4 @@ create_op(BoundObject, Operation, OpParam) ->
 
 create_bound_object(Key, CrdtType, Bucket) ->
 	BucketAtom = utils:to_atom(Bucket),
-	{Key, CrdtType, BucketAtom}.
+	?BOUND_OBJECT(Key, CrdtType, BucketAtom).

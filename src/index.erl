@@ -18,7 +18,7 @@
         put/1, put/2]).
 -export([tag_name/2,
         tag_key/2, tag_subkey/1,
-        tag/4, tag/5,
+        tag/5,
         tag_read/4]).
 
 keys(TName, TxId) ->

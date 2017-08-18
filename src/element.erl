@@ -3,6 +3,7 @@
 
 -include("aql.hrl").
 -include("parser.hrl").
+-include("types.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -11,17 +12,17 @@
 -define(CRDT_TYPE, antidote_crdt_gmap).
 -define(EL_ANON, none).
 
--export([primary_key/1,
+-export([primary_key/1, set_primary_key/2,
         foreign_keys/1, foreign_keys/2, foreign_keys/3,
         attributes/1,
         data/1,
         table/1]).
 
 -export([create_key/2, st_key/0,
-        is_visible/2, is_visible/4]).
+        is_visible/2, is_visible/3]).
 
 -export([new/1, new/2,
-        put/5,
+        put/3, build_fks/2,
         get/2, get/3, get/4,
         get_by_name/2,
         insert/1, insert/2]).
@@ -30,35 +31,23 @@
 %% Property functions
 %% ====================================================================
 
-el_create(BObj, Cols, Ops, Data) -> {BObj, Cols, Ops, Data}.
+ops({_BObj, _Table, Ops, _Data}) -> Ops.
+set_ops({BObj, Table, _Ops, Data}, Ops) -> ?T_ELEMENT(BObj, Table, Ops, Data).
 
-el_get_key({BObj, _Cols, _Ops, _Data}) -> BObj.
-el_set_key({_BObj, Cols, Ops, Data}, BObj) -> el_create(BObj, Cols, Ops, Data).
-
-el_get_cols({_BObj, Cols, _Ops, _Data}) -> Cols.
-el_set_cols({BObj, _Cols, Ops, Data}, Cols) -> el_create(BObj, Cols, Ops, Data).
-
-el_get_ops({_BObj, _Cols, Ops, _Data}) -> Ops.
-el_set_ops({BObj, Cols, _Ops, Data}, Ops) -> el_create(BObj, Cols, Ops, Data).
-
-el_get_data({_BObj, _Cols, _Ops, Data}) -> Data.
-el_set_data({BObj, Cols, Ops, _Data}, Data) -> el_create(BObj, Cols, Ops, Data).
-
-primary_key(Element) ->
-  el_get_key(Element).
+primary_key({BObj, _Table, _Ops, _Data}) -> BObj.
+set_primary_key({_BObj, Table, Ops, Data}, BObj) -> ?T_ELEMENT(BObj, Table, Ops, Data).
 
 foreign_keys(Element) ->
   foreign_keys:from_columns(attributes(Element)).
 
 attributes(Element) ->
-  el_get_cols(Element).
+  Table = table(Element),
+  table:columns(Table).
 
-data(Element) ->
-  el_get_data(Element).
+data({_BObj, _Table, _Ops, Data}) -> Data.
+set_data({BObj, Table, Ops, _Data}, Data) -> ?T_ELEMENT(BObj, Table, Ops, Data).
 
-table(Element) ->
-  {_K, _T, TName} = primary_key(Element),
-  TName.
+table({_BObj, Table, _Ops, _Data}) -> Table.
 
 %% ====================================================================
 %% Utils functions
@@ -71,41 +60,37 @@ create_key(Key, TName) ->
 st_key() ->
   ?MAP_KEY('#st', antidote_crdt_mvreg).
 
-explicit_state(Element) when is_tuple(Element) ->
-  explicit_state(el_get_data(Element));
-explicit_state(Data) ->
+explicit_state(Data, Rule) ->
   Value = proplists:get_value(st_key(), Data),
   case Value of
     undefined ->
       throw("No explicit state found");
     _Else ->
-      ipa:status(ipa:add_wins(), Value)
+      ipa:status(Rule, Value)
   end.
 
 is_visible(Element, TxId) when is_tuple(Element) ->
-  Data = el_get_data(Element),
-  Cols = el_get_cols(Element),
-  TName = table(Element),
-  is_visible(Data, Cols, TName, TxId).
+  Data = data(Element),
+  Table = table(Element),
+  is_visible(Data, Table, TxId).
 
-is_visible(Data, Cols, TName, TxId) ->
-  ExplicitState = explicit_state(Data),
-	Fks = foreign_keys:from_columns(Cols),
-	ShadowCols = foreign_keys:shadow_cols(Data),
-  FkIS = lists:map(fun({{FkName, FkType}, _Parent}) ->
-    FkValue = element:get(FkName, types:to_crdt(FkType), Data, TName),
+is_visible([], _Table, _TxId) -> false;
+is_visible(Data, Table, TxId) ->
+  TName = table:name(Table),
+  Policy = table:policy(Table),
+  Rule = crp:get_rule(Policy),
+  ExplicitState = explicit_state(Data, Rule),
+	Fks = table:shadow_columns(Table),
+  ImplicitState = lists:map(fun(?T_FK(FkName, FkType, _, _)) ->
+    FkValue = element:get(foreign_keys:to_cname(FkName), types:to_crdt(FkType), Data, Table),
     FkState = index:tag_read(TName, FkName, FkValue, TxId),
-    ipa:status(ipa:add_wins(), FkState)
+    ipa:status(Rule, FkState)
   end, Fks),
-  ShadowIS = lists:map(fun({{SCName, _SCType}, SCValue}) ->
-    SCState = index:tag_read(TName, SCName, SCValue, TxId),
-    ipa:status(ipa:add_wins(), SCState)
-  end, ShadowCols),
-  ipa:is_visible(ExplicitState, lists:append(FkIS, ShadowIS)).
+  ipa:is_visible(ExplicitState, ImplicitState).
 
-throwInvalidType(Type, CollumnName, TableName) ->
+throwInvalidType(Type, ColumnName, TableName) ->
 	throw(lists:concat(["Invalid type ", Type, " for collumn: ",
-  CollumnName, " in table ", TableName])).
+  ColumnName, " in table ", TableName])).
 
 throwNoSuchColumn(ColName, TableName) ->
   throw(lists:concat(["Column ", ColName,
@@ -118,133 +103,140 @@ throwNoSuchColumn(ColName, TableName) ->
 new(Table) when ?is_table(Table) ->
   new(?EL_ANON, Table).
 
-new(Key, Table) when ?is_dbkey(Key) and ?is_table(Table) ->
+new(Key, Table) ->
   Bucket = table:name(Table),
   BoundObject = create_key(Key, Bucket),
-  Columns = column:s_from_table(Table),
   StateOp = crdt:field_map_op(st_key(), crdt:assign_lww(ipa:new())),
   Ops = [StateOp],
-  Element = el_create(BoundObject, Columns, Ops, []),
-  load_defaults(Columns, Element).
+  Element = ?T_ELEMENT(BoundObject, Table, Ops, []),
+  load_defaults(Element).
 
-load_defaults(Columns, Element) ->
+load_defaults(Element) ->
+  Columns = attributes(Element),
   Defaults = column:s_filter_defaults(Columns),
-  dict:fold(fun (CName, Column, Acc) ->
+  maps:fold(fun (CName, Column, Acc) ->
     {?DEFAULT_TOKEN, Value} = column:constraint(Column),
     append(CName, Value, column:type(Column), Acc)
   end, Element, Defaults).
 
-put([Key | OKeys], [Value | OValues], Element, Tables, TxId) ->
+put([Key | OKeys], [Value | OValues], Element) ->
   utils:assert_same_size(OKeys, OValues, "Illegal number of keys and values"),
-  Res = put(Key, Value, Element, Tables, TxId),
-  put(OKeys, OValues, Res, Tables, TxId);
-put([], [], Element, _Tables, _TxId) ->
+  Res = put(Key, Value, Element),
+  put(OKeys, OValues, Res);
+put([], [], Element) ->
   {ok, Element};
-put(?PARSER_ATOM(ColName), Value, Element, Tables, TxId) ->
-  ColSearch = dict:find(ColName, attributes(Element)),
+put(ColName, Value, Element) ->
+  ColSearch = maps:get(ColName, attributes(Element)),
   case ColSearch of
-    {ok, Col} ->
+    {badkey, _} ->
+      Table = table(Element),
+      TName = table:name(Table),
+      throwNoSuchColumn(ColName, TName);
+    Col ->
       ColType = column:type(Col),
-      Element1 = handle_fk(Col, Value, Element, Tables, TxId),
-      Element2 = set_if_primary(Col, Value, Element1),
-      append(ColName, Value, ColType, Element2);
-    _Else ->
-      TName = table(Element),
-      throwNoSuchColumn(ColName, TName)
+      Element1 = set_if_primary(Col, Value, Element),
+      append(ColName, Value, ColType, Element1)
   end.
 
-set_if_primary(Col, ?PARSER_TYPE(_PType, Value), Element) ->
-  case column:is_primarykey(Col) of
+set_if_primary(Col, Value, Element) ->
+  case column:is_primary_key(Col) of
     true ->
-      % TODO use macro
-      {_Key, _Type, Bucket} = el_get_key(Element),
-      el_set_key(Element, create_key(Value, Bucket));
+      ?BOUND_OBJECT(_Key, _Type, Bucket) = primary_key(Element),
+      set_primary_key(Element, create_key(Value, Bucket));
     _Else ->
       Element
   end.
 
-handle_fk(Col, ?PARSER_TYPE(_Type, Value), Element, Tables, TxId) ->
-  handle_fk(Col, Value, Element, Tables, TxId);
-handle_fk(Col, Value, Element, Tables, TxId) ->
-  case column:constraint(Col) of
-    ?FOREIGN_KEY({?PARSER_ATOM(FkTable), ?PARSER_ATOM(FkAttr)}) ->
-      IFks = foreign_keys:load_chain([{FkAttr, FkTable}], Value, Tables, TxId),
-      lists:foldl(fun ({CName, CType, CValue}, AccElement) ->
-        append({CName}, CValue, CType, AccElement)
-      end, Element, IFks);
-    _Else ->
-      Element
-  end.
+build_fks(Element, TxId) ->
+  Data = data(Element),
+  Table = table(Element),
+  Fks = table:shadow_columns(Table),
+  Parents = parents(Data, Fks, Table, TxId),
+  lists:foldl(fun(?T_FK(FkName, FkType, _, _), AccElement) ->
+    case length(FkName) of
+      1 -> AccElement;
+      _Else ->
+        [{_, ParentId} | ParentCol] = FkName,
+        Parent = dict:fetch(ParentId, Parents),
+        Value = get_by_name(foreign_keys:to_cname(ParentCol), Parent),
+        append(FkName, Value, FkType, AccElement)
+    end
+  end, Element, Fks).
 
-get_by_name(ColName, [{{Key, _Type}, Value}]) when Key =:= ColName ->
+parents(Data, Fks, Table, TxId) ->
+  lists:foldl(fun(?T_FK(Name, Type, TTName, _), Dict) ->
+    case Name of
+      [ShCol] ->
+        {_FkTable, FkName} = ShCol,
+        Value = get(FkName, types:to_crdt(Type), Data, Table),
+        Key = create_key(Value, TTName),
+        {ok, [Parent]} = antidote:read_objects(Key, TxId),
+        dict:store(FkName, Parent, Dict);
+      _Else -> Dict
+    end
+  end, dict:new(), Fks).
+
+
+get_by_name(ColName, [{{ColName, _Type}, Value} | _]) ->
 	Value;
-get_by_name(_ColName, []) -> undefined;
 get_by_name(ColName, [_KV | Data]) ->
-	get_by_name(ColName, Data).
+	get_by_name(ColName, Data);
+get_by_name(_ColName, []) -> undefined.
 
 get(ColName, Element) ->
-  Cols = el_get_cols(Element),
-  Col = dict:fetch(ColName, Cols),
+  Columns = attributes(Element),
+  Col = maps:get(ColName, Columns),
   AQL = column:type(Col),
   get(ColName, types:to_crdt(AQL), Element).
 
-get(ColName, Crdt, Element) when is_tuple(Element) ->
-  get(ColName, Crdt, el_get_data(Element), table(Element)).
+get(ColName, Crdt, Element) when ?is_element(Element) ->
+  get(ColName, Crdt, data(Element), table(Element)).
 
-get(ColName, Crdt, Data, TName) when is_atom(Crdt) ->
-  ColNameAtom = utils:to_atom(ColName),
-  Value = proplists:get_value(?MAP_KEY(ColNameAtom, Crdt), Data),
+get(ColName, Crdt, Data, Table) when is_atom(Crdt) ->
+  Value = proplists:get_value(?MAP_KEY(ColName, Crdt), Data),
   case Value of
     undefined ->
+      TName = table:name(Table),
       throwNoSuchColumn(ColName, TName);
     _Else ->
       Value
     end;
 get(ColName, Cols, Data, TName) ->
-  Col = dict:fetch(ColName, Cols),
+  Col = maps:get(ColName, Cols),
   AQL = column:type(Col),
   get(ColName, types:to_crdt(AQL), Data, TName).
 
 insert(Element) ->
-  Ops = el_get_ops(Element),
-  Key = el_get_key(Element),
+  Ops = ops(Element),
+  Key = primary_key(Element),
   crdt:map_update(Key, Ops).
 insert(Element, TxId) ->
   Op = insert(Element),
   antidote:update_objects(Op, TxId).
 
-append(Key, ?PARSER_TYPE(Type, Value), AQL, Element) ->
-  Token = types:to_parser(AQL),
-  case Type of
-    Token ->
-      append(Key, Value, AQL, Element);
-    _Else ->
-      TName = table(Element),
-      throwInvalidType(Type, Key, TName)
-  end;
 append(Key, Value, AQL, Element) ->
-  Data = el_get_data(Element),
-  Ops = el_get_ops(Element),
+  Data = data(Element),
+  Ops = ops(Element),
   OffValue = apply_offset(Key, Value, Element),
   OpKey = ?MAP_KEY(Key, types:to_crdt(AQL)),
   OpVal = types:to_insert_op(AQL, OffValue),
-  Element1 = el_set_data(Element, lists:append(Data, [{OpKey, Value}])),
-  el_set_ops(Element1, lists:append(Ops, [{OpKey, OpVal}])).
+  Element1 = set_data(Element, lists:append(Data, [{OpKey, Value}])),
+  set_ops(Element1, lists:append(Ops, [{OpKey, OpVal}])).
 
 
 apply_offset(Key, Value, Element) when is_atom(Key) ->
-  Col = dict:fetch(Key, attributes(Element)),
+  Col = maps:get(Key, attributes(Element)),
   Type = column:type(Col),
   Cons = column:constraint(Col),
   case {Type, Cons} of
-    {?AQL_COUNTER_INT, {?COMPARATOR_KEY(Comp), ?PARSER_NUMBER(Offset)}} ->
+    {?AQL_COUNTER_INT, ?CHECK_KEY({?COMPARATOR_KEY(Comp), Offset})} ->
       bcounter:to_bcounter(Key, Value, Offset, Comp);
     _Else -> Value
   end;
 apply_offset(_Key, Value, _Element) -> Value.
 
 foreign_keys(Fks, Element) when is_tuple(Element) ->
-  Data = el_get_data(Element),
+  Data = data(Element),
   TName = table(Element),
   foreign_keys(Fks, Data, TName).
 
@@ -253,25 +245,21 @@ foreign_keys(Fks, Data, TName) ->
     Value = get(CName, types:to_crdt(CType), Data, TName),
     {{CName, CType}, {FkTable, FkAttr}, Value}
   end, Fks).
+
 %%====================================================================
 %% Eunit tests
 %%====================================================================
 
 -ifdef(TEST).
 
-create_table_aux() ->
-  {ok, Tokens, _} = scanner:string("CREATE LWW TABLE Universities (WorldRank INT PRIMARY KEY, InstitutionId VARCHAR FOREIGN KEY REFERENCES Institution(id), NationalRank INTEGER DEFAULT 1);"),
-	{ok, [{?CREATE_TOKEN, Table}]} = parser:parse(Tokens),
-  Table.
-
 primary_key_test() ->
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   Element = new(key, Table),
   ?assertEqual(create_key(key, 'Universities'), primary_key(Element)).
 
 attributes_test() ->
-  Table = create_table_aux(),
-  Columns = column:s_from_table(Table),
+  Table = eutils:create_table_aux(),
+  Columns = table:columns(Table),
   Element = new(key, Table),
   ?assertEqual(Columns, attributes(Element)).
 
@@ -283,30 +271,35 @@ create_key_test() ->
 
 new_test() ->
   Key = key,
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   BoundObject = create_key(Key, table:name(Table)),
-  Columns = column:s_from_table(Table),
   Ops = [crdt:field_map_op(st_key(), crdt:assign_lww(ipa:new()))],
-  Expected = el_create(BoundObject, Columns, Ops, []),
-  Expected1 = load_defaults(Columns, Expected),
+  Expected = ?T_ELEMENT(BoundObject, Table, Ops, []),
+  Expected1 = load_defaults(Expected),
   Element = new(Key, Table),
   ?assertEqual(Expected1, Element),
-  ?assertEqual(crdt:assign_lww(ipa:new()), proplists:get_value(st_key(), el_get_ops(Element))).
+  ?assertEqual(crdt:assign_lww(ipa:new()), proplists:get_value(st_key(), ops(Element))).
 
 new_1_test() ->
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   ?assertEqual(new(?EL_ANON, Table), new(Table)).
 
 append_raw_test() ->
-  Table = create_table_aux(),
-  Value = ?PARSER_NUMBER(9),
+  Table = eutils:create_table_aux(),
+  Value = 9,
   Element = new(key, Table),
   % assert not fail
   append('NationalRank', Value, ?AQL_INTEGER, Element).
 
 get_default_test() ->
-  Table = create_table_aux(),
+  Table = eutils:create_table_aux(),
   El = new(key, Table),
-  ?assertEqual(1, get('NationalRank', ?CRDT_INTEGER, El)).
+  ?assertEqual("aaa", get('InstitutionId', ?CRDT_VARCHAR, El)).
+
+get_by_name_test() ->
+  Data = [{{a, abc}, 1}, {{b, abc}, 2}],
+  ?assertEqual(1, get_by_name(a, Data)),
+  ?assertEqual(undefined, get_by_name(c, Data)),
+  ?assertEqual(undefined, get_by_name(a, [])).
 
 -endif.

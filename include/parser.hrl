@@ -43,6 +43,8 @@
 %% values
 -define(VALUES_TOKEN, values).
 -define(VALUES_CLAUSE(TokenChars), {?VALUES_TOKEN, TokenChars}).
+%% no constraint
+-define(NO_CONSTRAINT, ignore).
 %% primary key constraint
 -define(PRIMARY_TOKEN, primary).
 -define(PRIMARY_KEY(TokenChars), {?PRIMARY_TOKEN, TokenChars}).
@@ -69,6 +71,8 @@
 %% table policies
 -define(TABLE_POLICY_TOKEN, table_policy).
 -define(TABLE_POLICY_KEY(Crp), {?TABLE_POLICY_TOKEN, Crp}).
+-define(DEP_POLICY_TOKEN, dep_policy).
+-define(DEP_POLICY_KEY(Crp), {?DEP_POLICY_TOKEN, Crp}).
 
 % udpate
 -define(UPDATE_TOKEN, update).
@@ -108,20 +112,3 @@
 -define(PARSER_ELIST, {end_list, ignore}).
 -define(PARSER_SEP, {sep, ignore}).
 -define(PARSER_SCOLON, {semi_colon, ignore}).
-
-% -----------------------------------------------------------------------------
-% --------------------------------- Parser ------------------------------------
-% -----------------------------------------------------------------------------
-
-% table
--define(PROP_TABLE_NAME, table_name).
--define(PROP_COLUMNS, columns).
-
-% insert
--define(PROP_VALUES, values).
-
-% create
--define(PROP_ATTR, attribute).
--define(PROP_ATTR_NAME(Name), {name, Name}).
--define(PROP_ATTR_CONSTRAINT(Constraint), {constraint, Constraint}).
--define(NO_CONSTRAINT, none).

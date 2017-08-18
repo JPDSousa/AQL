@@ -8,73 +8,84 @@
 
 -include("aql.hrl").
 -include("parser.hrl").
+-include("types.hrl").
 
 %% ====================================================================
 %% API functions
 %% ====================================================================
 -export([exec/3]).
 
+-export([table/1,
+				keys/2,
+				values/1]).
+
 exec({Table, Tables}, Props, TxId) ->
-	Keys = get_keys(Table, Props),
-	Values = proplists:get_value(?PROP_VALUES, Props),
+	Keys = keys(Props, Table),
+	Values = values(Props),
 	AnnElement = element:new(Table),
-	{ok, Element} = element:put(Keys, Values, AnnElement, Tables, TxId),
-	element:insert(Element, TxId),
-	Pk = element:primary_key(Element),
+	{ok, Element} = element:put(Keys, Values, AnnElement),
+	Element1 = element:build_fks(Element, TxId),
+	element:insert(Element1, TxId),
+	Pk = element:primary_key(Element1),
 	index:put(Pk, TxId),
 	% update foreign key references
-	touch_cascade(Element, TxId),
-	Fks = element:foreign_keys(foreign_keys:from_table(Table), Element),
-	lists:foreach(fun (Fk) -> touch(Fk, Tables, TxId) end, Fks).
+	%touch_cascade(Element1, Tables, TxId),
+	Fks = element:foreign_keys(foreign_keys:from_table(Table), Element1),
+	FksKV = read_fks(Fks, Tables, TxId, true),
+	lists:foreach(fun ({Fk, Data}) -> touch(Fk, Data, Tables, TxId) end, FksKV).
+
+table({TName, _Keys, _Values}) -> TName.
+
+keys({_TName, Keys, _Values}, Table) ->
+	case Keys of
+		?PARSER_WILDCARD ->
+			column:s_names(Table);
+		_Else ->
+			Keys
+	end.
+
+values({_TName, _Keys, Values}) -> Values.
 
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
 
-touch({_Col, {PTabName, _PTabAttr}, Value}, Tables, TxId) ->
+read_fks(Fks, _Tables, TxId, false) ->
+	lists:map(fun({_Col, {PTabName, _PTabAttr}, Value} = Fk) ->
+		TKey = element:create_key(Value, PTabName),
+		{ok, [Data]} = antidote:read_objects(TKey, TxId),
+		{Fk, Data}
+	end, Fks);
+read_fks(Fks, Tables, TxId, true) ->
+	lists:map(fun({_Col, {PTabName, _PTabAttr}, Value} = Fk) ->
+		TKey = element:create_key(Value, PTabName),
+		Table = table:lookup(PTabName, Tables),
+		{ok, [Data]} = antidote:read_objects(TKey, TxId),
+		case element:is_visible(Data, Table, TxId) of
+			false ->
+				throw(lists:concat(["Cannot find row ", Value, " in table ", PTabName]));
+			_Else ->
+				{Fk, Data}
+		end
+	end, Fks).
+
+touch({_Col, {PTabName, _PTabAttr}, Value}, Data, Tables, TxId) ->
 	TKey = element:create_key(Value, PTabName),
-	% TODO check if exists
 	antidote:update_objects(crdt:ipa_update(TKey, ipa:touch()), TxId),
-	{ok, [Element]} = antidote:read_objects(TKey, TxId),
 	Table = table:lookup(PTabName, Tables),
 	% touch cascade
-	touch_cascade(Element, Table, PTabName, TxId),
+	touch_cascade(Data, Table, Tables, TxId),
 	% touch parents
-	Fks = element:foreign_keys(foreign_keys:from_table(Table), Element, PTabName),
-	lists:foreach(fun (K) -> touch(K, Tables, TxId) end, Fks).
+	Fks = element:foreign_keys(foreign_keys:from_table(Table), Data, PTabName),
+	FksKV = read_fks(Fks, Tables, TxId, false),
+	lists:foreach(fun ({Fk, Data}) -> touch(Fk, Data, Tables, TxId) end, FksKV).
 
-touch_cascade(Element, TxId) when is_tuple(Element) ->
-	Data = element:data(Element),
-	Cols = element:attributes(Element),
-	TName = element:table(Element),
-	touch_cascade(Data, Cols, TName, TxId).
-
-touch_cascade(Data, Table, TName, TxId) when is_list(Table) ->
-	Cols = column:s_from_table(Table),
-	touch_cascade(Data, Cols, TName, TxId);
-touch_cascade(Data, Cols, TName, TxId) ->
-	Fks = foreign_keys:from_columns(Cols),
-	ShadowCols = foreign_keys:shadow_cols(Data),
-	FkOps = lists:map(fun({{FkName, AQL}, _Parent}) ->
-		Value = element:get(FkName, types:to_crdt(AQL), Data, TName),
-		index:tag(TName, FkName, Value, ipa:touch_cascade())
-	end, Fks),
-	ShadowOps = lists:map(fun({{K, _Type}, V}) ->
-		index:tag(TName, K, V, ipa:touch_cascade())
-	end, ShadowCols),
-	Ops = lists:append(FkOps, ShadowOps),
-	case Ops of
-		[] -> ok;
-		_Else ->
-			antidote:update_objects(Ops, TxId)
-	end.
-
-get_keys(Table, Props) ->
-	Clause = proplists:get_value(?PROP_COLUMNS, Props),
-	case Clause of
-		?PARSER_WILDCARD ->
-			Keys = column:s_names(Table),
-			lists:map(fun (V) -> ?PARSER_ATOM(V) end, Keys);
-		_Else ->
-			Clause
-	end.
+touch_cascade(Data, Table, Tables, TxId) ->
+	TName = table:name(Table),
+	Refs = table:dependants(TName, Tables),
+	lists:foreach(fun({RefTName, RefCols}) ->
+		lists:foreach(fun(?T_FK(FkName, FkType, _TName, CName)) ->
+			Value = element:get(CName, types:to_crdt(FkType), Data, Table),
+			index:tag(RefTName, FkName, Value, ipa:touch_cascade(), TxId)
+	 	end, RefCols)
+	end, Refs).

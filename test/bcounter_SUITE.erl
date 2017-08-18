@@ -20,11 +20,11 @@
 %% ====================================================================
 
 init_per_suite(Config) ->
-  Query = ["CREATE TABLE BCGreater (ID INT PRIMARY KEY, ",
+  Query = ["CREATE @AW TABLE BCGreater (ID INT PRIMARY KEY, ",
   "bcA COUNTER_INT CHECK GREATER 0, ",
   "bcB COUNTER_INT CHECK GREATER 10",
   ");",
-  "CREATE TABLE BCSmaller (ID INT PRIMARY KEY, ",
+  "CREATE @AW TABLE BCSmaller (ID INT PRIMARY KEY, ",
   "bcA COUNTER_INT CHECK SMALLER 5, ",
   "bcB COUNTER_INT CHECK SMALLER 15",
   ");"],

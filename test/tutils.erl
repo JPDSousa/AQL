@@ -28,7 +28,7 @@ create_fk_table(Name, Pointer) ->
 
 create_fk_table(Name, TPointer, CPointer) ->
   Query = ["CREATE @AW TABLE ", Name,
-    " (ID INT PRIMARY KEY, ", TPointer, " INT FOREIGN KEY REFERENCES ",
+    " (ID INT PRIMARY KEY, ", TPointer, " INT FOREIGN KEY @FR REFERENCES ",
     TPointer, "(", CPointer, "))"],
   aql(lists:concat(Query)).
 

@@ -52,5 +52,4 @@ select_all(_Config) ->
     "INSERT INTO ", TName, " VALUES (2, 'a');",
     "INSERT INTO ", TName, " VALUES (3, 'a');"
   ])),
-  FullRes = tutils:select_all("SelectAll"),
-  io:fwrite("FullRes: ~p~n", [FullRes]).
+  {ok, [[_El1, _El2, _El3]]} = tutils:select_all("SelectAll").

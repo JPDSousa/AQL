@@ -23,10 +23,14 @@ exec({Table, _Tables}, Select, TxId) ->
 	% TODO validate projection fields
 	Condition = where(Select),
 	Keys = where:scan(TName, Condition, TxId),
-	{ok, Results} = antidote:read_objects(Keys, TxId),
-	ProjectionResult = project(Projection, Results, [], Cols),
-	ActualRes = apply_offset(ProjectionResult, Cols, []),
-	{ok, ActualRes}.
+	case Keys of
+		[] -> ok;
+		_Else ->
+			{ok, Results} = antidote:read_objects(Keys, TxId),
+			ProjectionResult = project(Projection, Results, [], Cols),
+			ActualRes = apply_offset(ProjectionResult, Cols, []),
+			{ok, ActualRes}
+	end.
 
 table({TName, _Projection, _Where}) -> TName.
 

@@ -10,7 +10,8 @@
           create_fk_table/2, create_fk_table/3,
           delete_by_key/2,
           read_keys/3,
-          print_state/2]).
+          print_state/2,
+          select_all/1]).
 
 -export([assertState/3,
           assertExists/1,
@@ -59,6 +60,9 @@ print_state(TName, Key) ->
   end, table:shadow_columns(Table)),
   io:fwrite("Final: ~p~n", [element:is_visible(Data, Table, TxId)]),
 antidote:commit_transaction(TxId).
+
+select_all(TName) ->
+  aql(lists:concat(["SELECT * FROM ", TName])).
 
 assert_table_policy(Expected, TName) ->
   TNameAtom = utils:to_atom(TName),

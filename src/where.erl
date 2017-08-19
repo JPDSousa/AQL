@@ -6,7 +6,7 @@
 
 -export([scan/3]).
 
-scan(TName, undefined, TxId) ->
+scan(TName, ?PARSER_WILDCARD, TxId) ->
   %TODO scan all
   index:keys(TName, TxId);
 scan(TName, Conditions, _TxId) ->
@@ -16,10 +16,10 @@ scan(TName, Conditions, _TxId) ->
 %% Internal functions
 %% ====================================================================
 
-evaluate(TName, [{?PARSER_ATOM(_ClValue), Arop, {_AQLType, Str}} | T], Acc) ->
+evaluate(TName, [{_ClValue, Arop, Value} | T], Acc) ->
 	case Arop of
 		?PARSER_EQUALITY ->
-			NewAcc = lists:flatten(Acc, [element:create_key(Str, TName)]),
+			NewAcc = lists:flatten(Acc, [element:create_key(Value, TName)]),
 			evaluate(TName, T, NewAcc);
 		_Else ->
 			throw("Not supported yet! :)")

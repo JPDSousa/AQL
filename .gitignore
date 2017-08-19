@@ -16,3 +16,6 @@ TODO\.txt
 _build/
 
 antidote/
+
+.idea/
+aql.iml

@@ -12,8 +12,10 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([to_atom/1,
-        to_list/1]).
+-export([to_atom/1, to_list/1,
+        assert_same_size/3,
+        seek_and_destroy/2,
+        proplists_values/1]).
 
 to_atom(Term) when is_list(Term) ->
   list_to_atom(Term);
@@ -30,12 +32,37 @@ to_list(Term) when is_integer(Term) ->
 to_list(Term) when is_atom(Term) ->
   atom_to_list(Term).
 
+assert_same_size(List1, List2, ErrMsg) ->
+  if length(List1) =:= length(List2) -> ok;
+    true -> throw(ErrMsg)
+  end.
+
+seek_and_destroy(Name, PropList) ->
+  seek_and_destroy(Name, [], PropList).
+
+seek_and_destroy(Name, Seen, [{Key, Value} | PropList]) ->
+  case Name of
+    Key ->
+      {Value, lists:append(Seen, PropList)};
+    _Else ->
+      seek_and_destroy(Name, lists:append(Seen, [{Key, Value}]))
+  end;
+seek_and_destroy(_Name, Seen, []) ->
+  {undefined, Seen}.
+
+proplists_values(List) ->
+  lists:map(fun({_K, V}) -> V end, List).
+
 %%====================================================================
 %% Eunit tests
 %%====================================================================
 
 -ifdef(TEST).
 
-
+assert_same_size_test() ->
+  ErrMsg = "Failing",
+  ?assertEqual(ok, assert_same_size([1, 2], [3, 4], ErrMsg)),
+  ?assertEqual(ok, assert_same_size([], [], ErrMsg)),
+  ?assertThrow(_, assert_same_size([1, 2, 3], [], ErrMsg)).
 
 -endif.

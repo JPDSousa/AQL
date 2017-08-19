@@ -15,9 +15,11 @@
 
 -export([keys/2,
         name/1,
-        put/1, put/2,
-        name_tag/2,
-        tag/4, tag/5]).
+        put/1, put/2]).
+-export([tag_name/2,
+        tag_key/2, tag_subkey/1,
+        tag/5,
+        tag_read/4]).
 
 keys(TName, TxId) ->
   BoundObject = crdt:create_bound_object(name(TName), ?INDEX_CRDT, ?METADATA_BUCKET),
@@ -36,20 +38,29 @@ put({Key, _Map, TName}) ->
 put(Key, TxId) ->
   antidote:update_objects(put(Key), TxId).
 
-name_tag(TName, Column) ->
-  TNameStr = utils:to_list(TName),
-  ColumnStr = utils:to_list(Column),
-  NameStr = lists:concat([?TAG_TOKEN, TNameStr, "_", ColumnStr]),
-  list_to_atom(NameStr).
+tag_name(TName, Column) ->
+  {TName, Column}.
+
+tag_key(TName, Column) ->
+  Key = tag_name(TName, Column),
+  crdt:create_bound_object(Key, ?ITAG_CRDT, ?METADATA_BUCKET).
+
+tag_subkey(CName) ->
+  ?MAP_KEY(CName, ?ITAG_KEY_CRDT).
 
 tag(TName, Column, Value, ITag) ->
-  Name = name_tag(TName, Column),
-  BoundObject = crdt:create_bound_object(Name, ?ITAG_CRDT, ?METADATA_BUCKET),
+  BoundObject = tag_key(TName, Column),
   MapOp = crdt:assign_lww(ITag),
   crdt:single_map_update(BoundObject, Value, ?ITAG_KEY_CRDT, MapOp).
 
 tag(TName, Column, Value, ITag, TxId) ->
   antidote:update_objects(tag(TName, Column, Value, ITag), TxId).
+
+tag_read(TName, CName, Value, TxId) ->
+  Key = tag_key(TName, CName),
+  {ok, [Map]} = antidote:read_objects(Key, TxId),
+  SubKey = tag_subkey(Value),
+  proplists:get_value(SubKey, Map).
 
 %%====================================================================
 %% Eunit tests
@@ -67,17 +78,13 @@ put_test() ->
   Expected = crdt:add_all({'#_test', ?INDEX_CRDT, ?METADATA_BUCKET}, key),
   ?assertEqual(Expected, put(BoundObject)).
 
-name_tag_test() ->
-  Expected = '#__test_id',
-  ?assertEqual(Expected, name_tag("test", "id")),
-  ?assertEqual(Expected, name_tag(test, "id")),
-  ?assertEqual(Expected, name_tag("test", id)),
-  ?assertEqual(Expected, name_tag(test, id)).
+tag_name_test() ->
+  ?assertEqual({test,id}, tag_name(test, id)).
 
 tag_test() ->
-  BoundObject = crdt:create_bound_object('#__test_id', ?ITAG_CRDT, ?METADATA_BUCKET),
+  BoundObject = crdt:create_bound_object({test,id}, ?ITAG_CRDT, ?METADATA_BUCKET),
   ExpectedOp = crdt:assign_lww(ipa:touch_cascade()),
   Expected = crdt:single_map_update(BoundObject, "Sam", ?ITAG_KEY_CRDT, ExpectedOp),
-  ?assertEqual(Expected, tag("test", "id", "Sam", ipa:touch_cascade())).
+  ?assertEqual(Expected, tag(test, id, "Sam", ipa:touch_cascade())).
 
 -endif.

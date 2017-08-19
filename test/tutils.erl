@@ -78,7 +78,7 @@ assertExists(Key) ->
 read_keys(Table, ID, Keys) ->
   Join = join_keys(Keys, []),
   Query = ["SELECT ", Join, " FROM ", Table, " WHERE ID = ", ID],
-  {ok, [Res]} = aql(lists:concat(Query)),
+  {ok, [[Res]]} = aql(lists:concat(Query)),
   lists:map(fun({_k, V}) -> V end, Res).
 
 join_keys([Key | Keys], []) ->

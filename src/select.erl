@@ -42,6 +42,11 @@ where({_TName, _Projection, Where}) -> Where.
 %% Private functions
 %% ====================================================================
 
+apply_offset([Result | Results], Cols, Acc) when is_list(Result) ->
+	Result1 = apply_offset(Result, Cols, []),
+	apply_offset(Results, Cols, Acc ++ [Result1]);
+apply_offset([{{'#st', _T}, _} | Values], Cols, Acc) ->
+	apply_offset(Values, Cols, Acc);
 apply_offset([{{Key, Type}, V} | Values], Cols, Acc) ->
   Col = maps:get(Key, Cols),
   Cons = column:constraint(Col),
@@ -59,7 +64,7 @@ apply_offset([], _Cols, Acc) -> Acc.
 
 project(Projection, [Result | Results], Acc, Cols) ->
 	ProjRes = project_row(Projection, Result, [], Cols),
-	project(Projection, Results, Acc ++ ProjRes, Cols);
+	project(Projection, Results, Acc ++ [ProjRes], Cols);
 project(_Projection, [], Acc, _Cols) ->
 	Acc.
 

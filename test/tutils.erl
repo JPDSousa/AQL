@@ -2,6 +2,8 @@
 
 -module(tutils).
 
+-define(TEST_SERVER, 'antidote@127.0.0.1').
+
 -include_lib("eunit/include/eunit.hrl").
 -include("types.hrl").
 
@@ -9,7 +11,7 @@
           create_single_table/1,
           create_fk_table/2, create_fk_table/3,
           delete_by_key/2,
-          read_keys/3,
+          read_keys/3, read_keys/1,
           print_state/2,
           select_all/1]).
 
@@ -18,7 +20,7 @@
           assert_table_policy/2]).
 
 aql(Aql) ->
-  aqlparser:parse({str, Aql}).
+  aqlparser:parse({str, Aql}, ?TEST_SERVER).
 
 create_single_table(Name) ->
   Query = ["CREATE @AW TABLE ", Name, " (ID INT PRIMARY KEY)"],
@@ -39,7 +41,7 @@ delete_by_key(TName, Key) ->
 
 assertState(State, TName, Key) ->
   AQLKey = element:create_key(Key, TName),
-  {ok, TxId} = antidote:start_transaction(),
+  {ok, TxId} = antidote:start_transaction(?TEST_SERVER),
   Table = table:lookup(TName, TxId),
   {ok, [Res]} = antidote:read_objects(AQLKey, TxId),
   Actual = element:is_visible(Res, Table, TxId),
@@ -49,7 +51,7 @@ assertState(State, TName, Key) ->
 print_state(TName, Key) ->
   TNameAtom = utils:to_atom(TName),
   AQLKey = element:create_key(Key, TNameAtom),
-  {ok, TxId} = antidote:start_transaction(),
+  {ok, TxId} = antidote:start_transaction(?TEST_SERVER),
   Table = table:lookup(TNameAtom, TxId),
   {ok, [Data]} = antidote:read_objects(AQLKey, TxId),
   io:fwrite("Tags for ~p(~p)~nData: ~p~n", [TNameAtom, Key, Data]),
@@ -66,13 +68,15 @@ select_all(TName) ->
 
 assert_table_policy(Expected, TName) ->
   TNameAtom = utils:to_atom(TName),
-  {ok, TxId} = antidote:start_transaction(),
+  {ok, TxId} = antidote:start_transaction(?TEST_SERVER),
   Table = table:lookup(TNameAtom, TxId),
   antidote:commit_transaction(TxId),
   ?assertEqual(Expected, table:policy(Table)).
 
 assertExists(Key) ->
-  {ok, [Res], _CT} = antidote:read_objects(Key),
+  {ok, Ref} = antidote:start_transaction(?TEST_SERVER),
+  {ok, [Res]} = antidote:read_objects(Key, Ref),
+  antidote:commit_transaction(Ref),
   ?assertNotEqual([], Res).
 
 read_keys(Table, ID, Keys) ->
@@ -80,6 +84,12 @@ read_keys(Table, ID, Keys) ->
   Query = ["SELECT ", Join, " FROM ", Table, " WHERE ID = ", ID],
   {ok, [[Res]]} = aql(lists:concat(Query)),
   lists:map(fun({_k, V}) -> V end, Res).
+
+read_keys(Keys) ->
+  {ok, Ref} = antidote:start_transaction(?TEST_SERVER),
+  {ok, Res} = antidote:read_objects(Keys, Ref),
+  antidote:commit_transaction(Ref),
+  Res.
 
 join_keys([Key | Keys], []) ->
   join_keys(Keys, Key);

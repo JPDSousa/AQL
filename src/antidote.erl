@@ -23,67 +23,50 @@
 -type bound_objects() :: [bound_object()] | bound_object().
 -type vectorclock() :: term(). % check antidote project
 -type snapshot_time() :: vectorclock() | ignore.
+-type ref() :: {node_ref(), txid()}.
 -type txid() :: term(). % check antidote project
+-type node_ref() :: term().
 -type reason() :: term().
 -type properties() :: term() | [].
 
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([start_transaction/0, start_transaction/2,
-				read_objects/1, read_objects/2, read_objects/3,
+-export([start_transaction/1, start_transaction/3,
+				read_objects/2,
 				commit_transaction/1,
-		 		update_objects/1, update_objects/2, update_objects/3]).
+		 		update_objects/2]).
 
 -export([handleBadRpc/1]).
 
--spec start_transaction() -> {ok, txid()} | {error, reason()}.
-start_transaction() ->
-	start_transaction(ignore, []).
+-spec start_transaction(node_ref()) -> {ok, ref()} | {error, reason()}.
+start_transaction(Node) ->
+	start_transaction(Node, ignore, []).
 
--spec start_transaction(snapshot_time(), properties()) -> {ok, txid()} | {error, reason()}.
-start_transaction(Snapshot, Props) ->
-	call(start_transaction, [Snapshot, Props]).
+-spec start_transaction(node_ref(), snapshot_time(), properties()) -> {ok, ref()} | {error, reason()}.
+start_transaction(Node, Snapshot, Props) ->
+	case call(Node, start_transaction, [Snapshot, Props]) of
+		{ok, TxId} ->
+			{ok, {Node, TxId}};
+		Else ->
+			Else
+	end.
 
--spec commit_transaction(txid()) -> {ok, vectorclock()} | {error, reason()}.
-commit_transaction(TxId) ->
-	call(commit_transaction, [TxId]).
+-spec commit_transaction(ref()) -> {ok, vectorclock()} | {error, reason()}.
+commit_transaction({Node, TxId}) ->
+	call(Node, commit_transaction, [TxId]).
 
--spec read_objects(bound_objects()) -> {ok, [term()]}.
-read_objects(Objects) when is_list(Objects) ->
-	read_objects(ignore, [], Objects);
-read_objects(Object) ->
-	read_objects([Object]).
+-spec read_objects(bound_objects(), ref()) -> {ok, [term()]}.
+read_objects(Objects, {Node, TxId}) when is_list(Objects) ->
+	call(Node, read_objects, [Objects, TxId]);
+read_objects(Object, Ref) ->
+	read_objects([Object], Ref).
 
--spec read_objects(bound_objects(), txid()) -> {ok, [term()]}.
-read_objects(Objects, TxId) when is_list(Objects) ->
-	call(read_objects, [Objects, TxId]);
-read_objects(Object, TxId) ->
-	read_objects([Object], TxId).
-
--spec read_objects(snapshot_time(), properties, bound_objects) -> {ok, term()}.
-read_objects(Snapshot, Props, Objects) when is_list(Objects) ->
-	call(read_objects, [Snapshot, Props, Objects]);
-read_objects(Snapshot, Props, Object) ->
-	read_objects(Snapshot, Props, [Object]).
-
--spec update_objects(bound_objects()) -> ok | {error, reason()}.
-update_objects(Objects) when is_list(Objects) ->
-	update_objects(ignore, [], Objects);
-update_objects(Object) ->
-	update_objects([Object]).
-
--spec update_objects(bound_objects(), txid()) -> ok | {error, reason()}.
-update_objects(Objects, TxId) when is_list(Objects) ->
-	call(update_objects, [Objects, TxId]);
-update_objects(Object, TxId) ->
-	update_objects([Object], TxId).
-
--spec update_objects(snapshot_time(), properties(), bound_objects()) -> ok | {error, reason()}.
-update_objects(Snapshot, Props, Objects) when is_list(Objects) ->
-	call(update_objects, [Snapshot, Props, Objects]);
-update_objects(Snapshot, Props, Object) ->
-	update_objects(Snapshot, Props, [Object]).
+-spec update_objects(bound_objects(), ref()) -> ok | {error, reason()}.
+update_objects(Objects, {Node, TxId}) when is_list(Objects) ->
+	call(Node, update_objects, [Objects, TxId]);
+update_objects(Object, Ref) ->
+	update_objects([Object], Ref).
 
 handleBadRpc({'EXIT', {{{badmatch, {error, no_permissions}}, _}}}) ->
 	{"Constraint Breach", "A numeric invariant has been breached."};
@@ -95,16 +78,5 @@ handleBadRpc(_Msg) ->
 %% Internal functions
 %% ====================================================================
 
-connect() ->
-	antidote_node(nodes()).
-
-antidote_node([]) ->
-	net_adm:ping('antidote@127.0.0.1'),
-	antidote_node(nodes());
-antidote_node(Nodes) ->
-	[Node] = Nodes,
-	Node.
-
-call(Function, Args) ->
-	Node = connect(),
+call(Node, Function, Args) ->
 	rpc:call(Node, antidote, Function, Args).

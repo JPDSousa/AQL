@@ -220,8 +220,13 @@ append(Key, Value, AQL, Element) ->
   OffValue = apply_offset(Key, Value, Element),
   OpKey = ?MAP_KEY(Key, types:to_crdt(AQL)),
   OpVal = types:to_insert_op(AQL, OffValue),
-  Element1 = set_data(Element, lists:append(Data, [{OpKey, Value}])),
-  set_ops(Element1, lists:append(Ops, [{OpKey, OpVal}])).
+  case OpVal of
+    ?IGNORE_OP ->
+      Element;
+    _Else ->
+      Element1 = set_data(Element, lists:append(Data, [{OpKey, Value}])),
+      set_ops(Element1, lists:append(Ops, [{OpKey, OpVal}]))
+  end.
 
 
 apply_offset(Key, Value, Element) when is_atom(Key) ->

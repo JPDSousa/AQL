@@ -1,8 +1,12 @@
 
 -module(bcounter_SUITE).
 
+-include_lib("aql.hrl").
+-include_lib("parser.hrl").
+
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("ct_aql.hrl").
 
 -export([init_per_suite/1,
           end_per_suite/1,
@@ -11,7 +15,7 @@
           all/0]).
 
 -export([greater_insert_basic/1, greater_insert_fail/1,
-        greater_udpate_basic/1, greater_update_fail/1,
+        greater_update_basic/1, greater_update_fail/1,
         smaller_insert_basic/1, smaller_insert_fail/1,
         smaller_update_basic/1, smaller_update_fail/1]).
 
@@ -20,16 +24,33 @@
 %% ====================================================================
 
 init_per_suite(Config) ->
-  Query = ["CREATE @AW TABLE BCGreater (ID INT PRIMARY KEY, ",
-  "bcA COUNTER_INT CHECK GREATER 0, ",
-  "bcB COUNTER_INT CHECK GREATER 10",
+  TNameGreater = "BCGreater",
+  TNameSmaller = "BCSmaller",
+  BoundGreaterA = 0,
+  BoundGreaterB = 10,
+  BoundSmallerA = 5,
+  BoundSmallerB = 15,
+  Query = ["CREATE @AW TABLE ", TNameGreater, " (ID INT PRIMARY KEY, ",
+  "bcA COUNTER_INT CHECK GREATER ", BoundGreaterA, ", ",
+  "bcB COUNTER_INT CHECK GREATER ", BoundGreaterB,
   ");",
-  "CREATE @AW TABLE BCSmaller (ID INT PRIMARY KEY, ",
-  "bcA COUNTER_INT CHECK SMALLER 5, ",
-  "bcB COUNTER_INT CHECK SMALLER 15",
+  "CREATE @AW TABLE ", TNameSmaller, " (ID INT PRIMARY KEY, ",
+  "bcA COUNTER_INT CHECK SMALLER ", BoundSmallerA, ", ",
+  "bcB COUNTER_INT CHECK SMALLER ", BoundSmallerB,
   ");"],
   {ok, []} = tutils:aql(lists:concat(Query)),
-  Config.
+  lists:append(Config, [
+    {tname_greater, TNameGreater},
+    {tname_smaller, TNameSmaller},
+    {bound_greater_a, BoundGreaterA},
+    {bound_greater_b, BoundGreaterB},
+    {bound_smaller_a, BoundSmallerA},
+    {bound_smaller_b, BoundSmallerB},
+    {insert_greater, lists:concat(["INSERT INTO ", TNameGreater, " VALUES (~p, ~p, ~p)"])},
+    {insert_smaller, lists:concat(["INSERT INTO ", TNameSmaller, " VALUES (~p, ~p, ~p)"])},
+    {update_greater, lists:concat(["UPDATE ", TNameGreater, " SET bcA ~s AND bcB ~s WHERE ID = ~p"])},
+    {update_smaller, lists:concat(["UPDATE ", TNameSmaller, " SET bcA ~s AND bcB ~s WHERE ID = ~p"])}
+  ]).
 
 end_per_suite(Config) ->
   Config.
@@ -42,7 +63,7 @@ end_per_testcase(_, _) ->
 
 all() ->
   [greater_insert_basic,  greater_insert_fail,
-  greater_udpate_basic, greater_update_fail,
+  greater_update_basic, greater_update_fail,
   smaller_insert_basic, smaller_insert_fail,
   smaller_update_basic, smaller_update_fail].
 
@@ -50,86 +71,159 @@ all() ->
 %% Test functions
 %% ====================================================================
 
-greater_insert_basic(_Config) ->
-  {ok, []} = tutils:aql("INSERT INTO BCGreater VALUES (1, 2, 11)"),
-  [V1, V2] = tutils:read_keys("BCGreater", "1", ["bcA, bcB"]),
-  ?assertEqual(2, V1),
-  ?assertEqual(11, V2).
+greater_insert_basic(Config) ->
+  Key = 1,
+  BoundA = ?value(bound_greater_a, Config),
+  BoundB = ?value(bound_greater_b, Config),
+  BcA = BoundA+2,
+  BcB = BoundB+1,
+  {ok, []} = tutils:aql(?format(insert_greater, [Key, BcA, BcB], Config)),
+  [V1, V2] = tutils:read_keys(?value(tname_greater, Config), Key, ["bcA, bcB"]),
+  ?assertEqual(BcA, V1),
+  ?assertEqual(BcB, V2),
+  reset_counters(Key, ?GREATER_TOKEN, BcA, BcB, Config),
+  [V3, V4] = tutils:read_keys(?value(tname_greater, Config), Key, ["bcA, bcB"]),
+  ?assertEqual(BoundA, V3),
+  ?assertEqual(BoundB, V4).
 
-greater_insert_fail(_Config) ->
-  ?assertThrow(_, tutils:aql("INSERT INTO BCGreater VALUES (10, 0, 11)")),
-  ?assertThrow(_, tutils:aql("INSERT INTO BCGreater VALUES (11, 1, 10)")),
-  ?assertThrow(_, tutils:aql("INSERT INTO BCGreater VALUES (12, 1, 5)")).
+greater_insert_fail(Config) ->
+  BoundA = ?value(bound_greater_a, Config),
+  BoundB = ?value(bound_greater_b, Config),
+  ?assertThrow(_, tutils:aql(?format(insert_greater, [10, BoundA, BoundB+1], Config))),
+  ?assertThrow(_, tutils:aql(?format(insert_greater, [11, BoundA+1, BoundB], Config))),
+  ?assertThrow(_, tutils:aql(?format(insert_greater, [12, BoundA, BoundB-1], Config))).
 
-greater_udpate_basic(_Config) ->
+greater_update_basic(Config) ->
+  TName = ?value(tname_greater, Config),
+  BoundA = ?value(bound_greater_a, Config),
+  BoundB = ?value(bound_greater_b, Config),
+  Key = 20,
   % inserts
-  {ok, []} = tutils:aql("INSERT INTO BCGreater VALUES (20, 2, 12)"),
+  {ok, []} = tutils:aql(?format(insert_greater, [Key, BoundA+2, BoundB+2], Config)),
   % increment
-  {ok, []} = tutils:aql("UPDATE BCGreater SET bcA INCREMENT 1 WHERE ID = 20"),
-  {ok, []} = tutils:aql("UPDATE BCGreater SET bcB INCREMENT 3 WHERE ID = 20"),
-  [V1, V2] = tutils:read_keys("BCGreater", "20", ["bcA", "bcB"]),
-  ?assertEqual(3, V1),
-  ?assertEqual(15, V2),
+  {ok, []} = tutils:aql(?format(update_greater, ["INCREMENT 1", "INCREMENT 3", Key], Config)),
+  {ok, []} = tutils:aql(?format(update_greater, ["INCREMENT 0", "INCREMENT 0", Key], Config)),
+  [V1, V2] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
+  ?assertEqual(BoundA+3, V1),
+  ?assertEqual(BoundB+5, V2),
   % decrement
-  {ok, []} = tutils:aql("UPDATE BCGreater SET bcA DECREMENT 2 WHERE ID = 20"),
-  {ok, []} = tutils:aql("UPDATE BCGreater SET bcB DECREMENT 4 WHERE ID = 20"),
-  [V3, V4] = tutils:read_keys("BCGreater", "20", ["bcA", "bcB"]),
-  ?assertEqual(1, V3),
-  ?assertEqual(11, V4).
+  {ok, []} = tutils:aql(?format(update_greater, ["DECREMENT 2", "DECREMENT 4", Key], Config)),
+  {ok, []} = tutils:aql(?format(update_greater, ["DECREMENT 0", "DECREMENT 0", Key], Config)),
+  [V3, V4] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
+  ?assertEqual(BoundA+1, V3),
+  ?assertEqual(BoundB+1, V4),
+  reset_counters(Key, ?GREATER_TOKEN, BoundA+1, BoundB+1, Config).
 
-greater_update_fail(_Config) ->
+greater_update_fail(Config) ->
+  TName = ?value(tname_greater, Config),
+  BoundA = ?value(bound_greater_a, Config),
+  BoundB = ?value(bound_greater_b, Config),
+  Key = 30,
   % inserts
-  {ok, []} = tutils:aql("INSERT INTO BCGreater VALUES (30, 2, 12)"),
-  % decrement
-  ?assertThrow(_, tutils:aql("UPDATE BCGreater SET bcA DECREMENT 3 WHERE ID = 30")),
-  ?assertThrow(_, tutils:aql("UPDATE BCGreater SET bcB DECREMENT 3 WHERE ID = 30")),
-  [V1, V2] = tutils:read_keys("BCGreater", "30", ["bcA", "bcB"]),
-  ?assertEqual(2, V1), % assert value does not change on fail
-  ?assertEqual(12, V2),
-  ?assertThrow(_, tutils:aql("UPDATE BCGreater SET bcA DECREMENT 4 WHERE ID = 30")),
-  ?assertThrow(_, tutils:aql("UPDATE BCGreater SET bcB DECREMENT 4 WHERE ID = 30")),
-  [V1, V2] = tutils:read_keys("BCGreater", "30", ["bcA", "bcB"]),
-  ?assertEqual(2, V1), % assert value does not change on fail
-  ?assertEqual(12, V2).
+  {ok, []} = tutils:aql(?format(insert_greater, [Key, BoundA+2, BoundB+2], Config)),
+  % decrement 1
+  ?assertThrow(_, tutils:aql(?format(update_greater, ["DECREMENT 3", "DECREMENT 3", Key], Config))),
+  [V1, V2] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
+  ?assertEqual(BoundA+2, V1), % assert value does not change on fail
+  ?assertEqual(BoundB+2, V2),
+  % decrement 2
+  ?assertThrow(_, tutils:aql(?format(update_greater, ["DECREMENT 4", "DECREMENT 4", Key], Config))),
+  [V1, V2] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
+  ?assertEqual(BoundA+2, V1), % assert value does not change on fail
+  ?assertEqual(BoundB+2, V2),
+  reset_counters(Key, ?GREATER_TOKEN, BoundA+2, BoundB+2, Config).
 
-smaller_insert_basic(_Config) ->
-  {ok, []} = tutils:aql("INSERT INTO BCSmaller VALUES (1, 4, 14)"),
-  [V1, V2] = tutils:read_keys("BCSmaller", "1", ["bcA", "bcB"]),
-  ?assertEqual(4, V1),
-  ?assertEqual(14, V2).
+smaller_insert_basic(Config) ->
+  TName = ?value(tname_smaller, Config),
+  Key = 1,
+  BoundA = ?value(bound_smaller_a, Config),
+  BoundB = ?value(bound_smaller_b, Config),
+  {ok, []} = tutils:aql(?format(insert_smaller, [Key, BoundA-1, BoundB-1], Config)),
+  [V1, V2] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
+  ?assertEqual(BoundA-1, V1),
+  ?assertEqual(BoundB-1, V2),
+  reset_counters(Key, ?SMALLER_TOKEN, BoundA-1, BoundB-1, Config).
 
-smaller_insert_fail(_Config) ->
-  ?assertThrow(_, tutils:aql("INSERT INTO BCSmaller VALUES (10, 5, 14)")),
-  ?assertThrow(_, tutils:aql("INSERT INTO BCSmaller VALUES (11, 4, 15)")),
-  ?assertThrow(_, tutils:aql("INSERT INTO BCSmaller VALUES (12, 5, 15)")).
+smaller_insert_fail(Config) ->
+  BoundA = ?value(bound_smaller_a, Config),
+  BoundB = ?value(bound_smaller_b, Config),
+  ?assertThrow(_, tutils:aql(?format(insert_smaller, [10, BoundA, BoundB-1], Config))),
+  ?assertThrow(_, tutils:aql(?format(insert_smaller, [11, BoundA-1, BoundB], Config))),
+  ?assertThrow(_, tutils:aql(?format(insert_smaller, [12, BoundA, BoundB], Config))).
 
-smaller_update_basic(_Config) ->
+smaller_update_basic(Config) ->
+  TName = ?value(tname_smaller, Config),
+  BoundA = ?value(bound_smaller_a, Config),
+  BoundB = ?value(bound_smaller_b, Config),
+  Key = 20,
   % inserts
-  {ok, []} = tutils:aql("INSERT INTO BCSmaller VALUES (20, 2, 12)"),
+  {ok, []} = tutils:aql(?format(insert_smaller, [Key, BoundA-3, BoundB-3], Config)),
   % increment
-  {ok, []} = tutils:aql("UPDATE BCSmaller SET bcA INCREMENT 2 WHERE ID = 20"),
-  {ok, []} = tutils:aql("UPDATE BCSmaller SET bcB INCREMENT 2 WHERE ID = 20"),
-  [V1, V2] = tutils:read_keys("BCSmaller", "20", ["bcA", "bcB"]),
-  ?assertEqual(4, V1),
-  ?assertEqual(14, V2),
+  {ok, []} = tutils:aql(?format(update_smaller, ["INCREMENT 2", "INCREMENT 2", Key], Config)),
+  [V1, V2] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
+  ?assertEqual(BoundA-1, V1),
+  ?assertEqual(BoundB-1, V2),
   % decrement
-  {ok, []} = tutils:aql("UPDATE BCSmaller SET bcA DECREMENT 2 WHERE ID = 20"),
-  {ok, []} = tutils:aql("UPDATE BCSmaller SET bcB DECREMENT 4 WHERE ID = 20"),
-  [V3, V4] = tutils:read_keys("BCSmaller", "20", ["bcA", "bcB"]),
-  ?assertEqual(2, V3),
-  ?assertEqual(10, V4).
+  {ok, []} = tutils:aql(?format(update_smaller, ["DECREMENT 2", "DECREMENT 4", Key], Config)),
+  [V3, V4] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
+  ?assertEqual(BoundA-3, V3),
+  ?assertEqual(BoundB-5, V4),
+  reset_counters(Key, ?SMALLER_TOKEN, BoundA-3, BoundB-5, Config).
 
-smaller_update_fail(_Config) ->
+smaller_update_fail(Config) ->
+  TName = ?value(tname_smaller, Config),
+  BoundA = ?value(bound_smaller_a, Config),
+  BoundB = ?value(bound_smaller_b, Config),
+  Key = 30,
   % inserts
-  {ok, []} = tutils:aql("INSERT INTO BCSmaller VALUES (30, 3, 13)"),
+  {ok, []} = tutils:aql(?format(insert_smaller, [Key, BoundA-2, BoundB-2], Config)),
   % decrement
-  ?assertThrow(_, tutils:aql("UPDATE BCSmaller SET bcA INCREMENT 3 WHERE ID = 30")),
-  ?assertThrow(_, tutils:aql("UPDATE BCSmaller SET bcB INCREMENT 3 WHERE ID = 30")),
-  [V1, V2] = tutils:read_keys("BCSmaller", "30", ["bcA", "bcB"]),
-  ?assertEqual(3, V1), % assert value does not change on fail
-  ?assertEqual(13, V2),
-  ?assertThrow(_, tutils:aql("UPDATE BCSmaller SET bcA INCREMENT 3 WHERE ID = 30")),
-  ?assertThrow(_, tutils:aql("UPDATE BCSmaller SET bcB INCREMENT 3 WHERE ID = 30")),
-  [V3, V4] = tutils:read_keys("BCSmaller", "30", ["bcA", "bcB"]),
-  ?assertEqual(3, V3), % assert value does not change on fail
-  ?assertEqual(13, V4).
+  ?assertThrow(_, tutils:aql(?format(update_smaller, ["INCREMENT 3", "INCREMENT 3", Key], Config))),
+  [V1, V2] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
+  ?assertEqual(BoundA-2, V1), % assert value does not change on fail
+  ?assertEqual(BoundB-2, V2),
+  ?assertThrow(_, tutils:aql(?format(update_smaller, ["INCREMENT 3", "INCREMENT 3", Key], Config))),
+  [V3, V4] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
+  ?assertEqual(BoundA-2, V3), % assert value does not change on fail
+  ?assertEqual(BoundB-2, V4),
+  reset_counters(Key, ?SMALLER_TOKEN, BoundA-2, BoundB-2, Config).
+
+%% ====================================================================
+%% Utils functions
+%% ====================================================================
+
+reset_counters(Key, Comp, BcA, BcB, Config) ->
+  {InvBcA, InvBcB} = invert(Comp, BcA, BcB, Config),
+  Updates = gen_reset_updates(Key, Comp, InvBcA, InvBcB),
+  Query = ?format(update_key(Comp), Updates, Config),
+  ct:log(info, lists:concat(["Reseting countets: ", Query])),
+  {ok, []} = tutils:aql(Query).
+
+update_key(?GREATER_TOKEN) -> update_greater;
+update_key(?SMALLER_TOKEN) -> update_smaller.
+
+gen_reset_updates(Key, ?GREATER_TOKEN, BcA, BcB) ->
+  gen_reset_updates(Key, "DECREMENT", BcA, BcB);
+gen_reset_updates(Key, ?SMALLER_TOKEN, BcA, BcB) ->
+  gen_reset_updates(Key, "INCREMENT", BcA, BcB);
+gen_reset_updates(Key, Op, BcA, BcB) ->
+  [
+    lists:concat([Op, " ", BcA]),
+    lists:concat([Op, " ", BcB]),
+    Key
+  ].
+
+invert(Comp, BcA, BcB, Config) ->
+  {OffA, OffB} = offset(Comp, Config),
+  InvBcA = bcounter:to_bcounter(none, BcA, OffA, Comp),
+  InvBcB = bcounter:to_bcounter(none, BcB, OffB, Comp),
+  {InvBcA, InvBcB}.
+
+offset(?GREATER_TOKEN, Config) ->
+  OffA = ?value(bound_greater_a, Config),
+  OffB = ?value(bound_greater_b, Config),
+  {OffA, OffB};
+offset(?SMALLER_TOKEN, Config) ->
+  OffA = ?value(bound_smaller_a, Config),
+  OffB = ?value(bound_smaller_b, Config),
+  {OffA, OffB}.

@@ -20,6 +20,7 @@
           assert_table_policy/2]).
 
 aql(Aql) ->
+  ct:log(info, lists:concat(["Query: ", Aql])),
   aqlparser:parse({str, Aql}, ?TEST_SERVER).
 
 create_single_table(Name) ->

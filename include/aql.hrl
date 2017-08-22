@@ -2,6 +2,8 @@
 -define(MAP_KEY(Key, Type), {Key, Type}).
 -define(BOUND_OBJECT(Key, Crdt, Bucket), {Key, Crdt, Bucket}).
 
+-define(IGNORE_OP, ignore).
+
 -define(ADD_WINS, add).
 -define(REMOVE_WINS, remove).
 

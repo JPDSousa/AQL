@@ -61,7 +61,8 @@ apply_offset([{{Key, Type}, V} | Values], Cols, Acc) ->
   end;
 apply_offset([], _Cols, Acc) -> Acc.
 
-
+project(Projection, [[] | Results], Acc, Cols) ->
+	project(Projection, Results, Acc, Cols);
 project(Projection, [Result | Results], Acc, Cols) ->
 	ProjRes = project_row(Projection, Result, [], Cols),
 	project(Projection, Results, Acc ++ [ProjRes], Cols);

@@ -15,7 +15,7 @@
 -export([to_atom/1, to_list/1,
         assert_same_size/3,
         seek_and_destroy/2,
-        proplists_values/1]).
+        proplists_values/1, proplists_upsert/3]).
 
 to_atom(Term) when is_list(Term) ->
   list_to_atom(Term);
@@ -52,6 +52,17 @@ seek_and_destroy(_Name, Seen, []) ->
 
 proplists_values(List) ->
   lists:map(fun({_K, V}) -> V end, List).
+
+proplists_upsert(Key, Value, []) -> [{Key, Value}];
+proplists_upsert(Key, Value, List) ->
+  proplists_upsert(Key, Value, List, []).
+
+proplists_upsert(Key, Value, [{Key, _} | List], Acc) ->
+  lists:append(Acc, [{Key, Value} | List]);
+proplists_upsert(Key, Value, [{K, V} | List], Acc) ->
+  proplists_upsert(Key, Value, List, lists:append(Acc, [{K, V}]));
+proplists_upsert(Key, Value, [], Acc) ->
+  lists:append(Acc, [{Key, Value}]).
 
 %%====================================================================
 %% Eunit tests

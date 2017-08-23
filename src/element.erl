@@ -225,7 +225,7 @@ append(Key, Value, AQL, Element) ->
       Element;
     _Else ->
       Element1 = set_data(Element, lists:append(Data, [{OpKey, Value}])),
-      set_ops(Element1, lists:append(Ops, [{OpKey, OpVal}]))
+      set_ops(Element1, utils:proplists_upsert(OpKey, OpVal, Ops))
   end.
 
 

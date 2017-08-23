@@ -34,8 +34,9 @@ where({_TName, Where}) -> Where.
 delete_cascade(Key, Table, Tables, TxId) ->
 	TName = table:name(Table),
 	{ok, [Data]} = antidote:read_objects(Key, TxId),
-	case Data of
-		[] -> ok;
+	case length(Data) of
+		0 -> ok;
+		1 -> ok;
 		_Else ->
 			Refs = table:dependants(TName, Tables),
 			lists:foreach(fun({RefTName, RefCols}) ->

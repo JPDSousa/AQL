@@ -24,7 +24,7 @@ exec({Table, _Tables}, Select, TxId) ->
 	Condition = where(Select),
 	Keys = where:scan(TName, Condition, TxId),
 	case Keys of
-		[] -> ok;
+		[] -> {ok, []};
 		_Else ->
 			{ok, Results} = antidote:read_objects(Keys, TxId),
 			ProjectionResult = project(Projection, Results, [], Cols),

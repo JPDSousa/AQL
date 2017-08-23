@@ -10,8 +10,9 @@
 -export([aql/1,
           create_single_table/1,
           create_fk_table/2, create_fk_table/3,
+          insert_single/2,
           delete_by_key/2,
-          read_keys/3, read_keys/1,
+          read_keys/4, read_keys/3, read_keys/1,
           print_state/2,
           select_all/1]).
 
@@ -35,6 +36,10 @@ create_fk_table(Name, TPointer, CPointer) ->
     " (ID INT PRIMARY KEY, ", TPointer, " INT FOREIGN KEY @FR REFERENCES ",
     TPointer, "(", CPointer, "))"],
   aql(lists:concat(Query)).
+
+insert_single(TName, ID) ->
+  Query = lists:concat(["INSERT INTO ", TName, " VALUES (", ID, ");"]),
+  aql(Query).
 
 delete_by_key(TName, Key) ->
   Query = ["DELETE FROM ", TName, " WHERE ID = ", Key],
@@ -80,11 +85,14 @@ assertExists(Key) ->
   antidote:commit_transaction(Ref),
   ?assertNotEqual([], Res).
 
-read_keys(Table, ID, Keys) ->
+read_keys(Table, IdName, ID, Keys) ->
   Join = join_keys(Keys, []),
-  Query = ["SELECT ", Join, " FROM ", Table, " WHERE ID = ", ID],
+  Query = ["SELECT ", Join, " FROM ", Table, " WHERE ", IdName, " = ", ID],
   {ok, [[Res]]} = aql(lists:concat(Query)),
   lists:map(fun({_k, V}) -> V end, Res).
+
+read_keys(Table, ID, Keys) ->
+  read_keys(Table, "ID", ID, Keys).
 
 read_keys(Keys) ->
   {ok, Ref} = antidote:start_transaction(?TEST_SERVER),

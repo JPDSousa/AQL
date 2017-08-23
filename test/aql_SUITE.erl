@@ -15,6 +15,7 @@
 
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("ct_aql.hrl").
 
 -export([init_per_suite/1,
   end_per_suite/1,
@@ -22,12 +23,46 @@
   end_per_testcase/2,
   all/0]).
 
-
 %% API
--export([select_all/1]).
+-export([select_all/1,
+        insert_artist/1,
+        insert_with_default_artist/1]).
 
 init_per_suite(Config) ->
-  Config.
+  TNameArtist = "ArtistTest",
+  TNameAlbum = "AlbumTest",
+  TNameTrack = "TrackTest",
+  DefaultArtist = 0,
+  DefaultAlbum = false,
+  {ok, []} = tutils:aql(lists:concat(["CREATE @AW TABLE ", TNameArtist,
+    " (Name VARCHAR PRIMARY KEY, City VARCHAR,",
+    " Awards INTEGER DEFAULT ", DefaultArtist, ");"])),
+  {ok, []} = tutils:aql(lists:concat(["CREATE @AW TABLE ", TNameAlbum,
+    " (Name VARCHAR PRIMARY KEY,",
+    " IsSingle BOOLEAN DEFAULT ", DefaultAlbum, ");"])),
+  {ok, []} = tutils:aql(lists:concat(["CREATE @AW TABLE ", TNameTrack,
+    " (Name VARCHAR PRIMARY KEY, Plays COUNTER_INT CHECK GREATER 0);"
+  ])),
+  lists:append(Config, [
+    {tname_artist, TNameArtist},
+    {tname_album, TNameAlbum},
+    {tname_track, TNameTrack},
+    {default_artist, DefaultArtist},
+    {default_album, DefaultAlbum},
+    {insert_artist, lists:concat(["INSERT INTO ", TNameArtist, " VALUES ('~s', '~s', ~p);"])},
+    {insert_artist_def, lists:concat(["INSERT INTO ", TNameArtist, " VALUES ('~s', '~s');"])},
+    {insert_album, lists:concat(["INSERT INTO ", TNameAlbum, " VALUES ('~s', ~p, '~s');"])},
+    {insert_track, lists:concat(["INSERT INTO ", TNameTrack, " VALUES ('~s', ~p, '~s');"])},
+    {update_artist, lists:concat(["UPDATE ", TNameArtist, " SET ~s WHERE Name = '~s';"])},
+    {update_album, lists:concat(["UPDATE ", TNameAlbum, " SET ~s WHERE Name = '~s';"])},
+    {update_track, lists:concat(["UPDATE ", TNameTrack, " SET ~s WHERE Name = '~s';"])},
+    {delete_artist, lists:concat(["DELETE FROM ", TNameArtist, " WHERE Name = '~s';"])},
+    {delete_album, lists:concat(["DELETE FROM ", TNameAlbum, " WHERE Name = '~s';"])},
+    {delete_track, lists:concat(["DELETE FROM ", TNameTrack, " WHERE Name = '~s';"])},
+    {select_artist, lists:concat(["SELECT * FROM ", TNameArtist, " WHERE Name = '~s';"])},
+    {select_album, lists:concat(["SELECT * FROM ", TNameAlbum, " WHERE Name = '~s';"])},
+    {select_track, lists:concat(["SELECT * FROM ", TNameTrack, " WHERE Name = '~s';"])}
+  ]).
 
 end_per_suite(Config) ->
   Config.
@@ -40,16 +75,37 @@ end_per_testcase(_, _) ->
 
 all() ->
   [
-    select_all
+    select_all,
+    insert_artist,
+    insert_with_default_artist
   ].
 
 select_all(_Config) ->
-  TName = "SelectAll",
-  {ok, []} = tutils:aql(lists:concat(["CREATE @AW TABLE ", TName, " (ID INTEGER PRIMARY KEY, Test VARCHAR)"])),
-  {ok, []} = tutils:select_all("SelectAll"),
-  {ok, []} = tutils:aql(lists:concat([
-    "INSERT INTO ", TName, " VALUES (1, 'a');",
-    "INSERT INTO ", TName, " VALUES (2, 'a');",
-    "INSERT INTO ", TName, " VALUES (3, 'a');"
-  ])),
-  {ok, [[_El1, _El2, _El3]]} = tutils:select_all("SelectAll").
+  TNameEmpty = "EmptyTableTest",
+  TNameFull = "FullTableTest",
+  {ok, []} = tutils:create_single_table(TNameEmpty),
+  {ok, []} = tutils:create_single_table(TNameFull),
+  {ok, [[]]} = tutils:select_all(TNameEmpty),
+  {ok, []} = tutils:insert_single(TNameFull, 1),
+  {ok, []} = tutils:insert_single(TNameFull, 2),
+  {ok, []} = tutils:insert_single(TNameFull, 3),
+  {ok, [Res]} = tutils:select_all(TNameFull),
+  ?assertEqual(3, length(Res)).
+
+insert_artist(Config) ->
+  TName = ?value(tname_artist, Config),
+  Artist = "Sam",
+  City = "NY",
+  Awards = 1,
+  {ok, []} = tutils:aql(?format(insert_artist, [Artist, City, Awards], Config)),
+  SearchKey = lists:concat(["'", Artist, "'"]),
+  [Artist, City, Awards] = tutils:read_keys(TName, "Name", SearchKey, ["Name", "City", "Awards"]).
+
+insert_with_default_artist(Config) ->
+  TName = ?value(tname_artist, Config),
+  Artist = "Mike",
+  City = "LS",
+  Awards = ?value(default_artist, Config),
+  {ok, []} = tutils:aql(?format(insert_artist_def, [Artist, City], Config)),
+  SearchKey = lists:concat(["'", Artist, "'"]),
+  [Artist, City, Awards] = tutils:read_keys(TName, "Name", SearchKey, ["Name", "City", "Awards"]).

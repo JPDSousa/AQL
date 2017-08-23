@@ -23,13 +23,11 @@ exec({Table, Tables}, Props, TxId) ->
 	Keys = keys(Props, Table),
 	Values = values(Props),
 	Keys1 = handle_defaults(Keys, Values, Table),
-	io:fwrite("Keys1: ~p~n", [Keys1]),
 	AnnElement = element:new(Table),
 	{ok, Element} = element:put(Keys1, Values, AnnElement),
 	Element1 = element:build_fks(Element, TxId),
 	AAA = element:insert(Element1, TxId),
 	Pk = element:primary_key(Element1),
-	io:fwrite("Insert pk: ~p~nResult: ~p~n", [Pk, AAA]),
 	index:put(Pk, TxId),
 	% update foreign key references
 	%touch_cascade(Element1, Tables, TxId),

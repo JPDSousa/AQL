@@ -81,6 +81,10 @@ Rules.
 (int|INT|integer|INTEGER) : {token, ?ATTR_KEY(?AQL_INTEGER)}.
 (counter_int|COUNTER_INT) : {token, ?ATTR_KEY(?AQL_COUNTER_INT)}.
 
+% boolean atoms
+(false|FALSE) : {token, ?PARSER_BOOLEAN(false)}.
+(true|TRUE) : {token, ?PARSER_BOOLEAN(true)}.
+
 
 {CharValues}+ : A = list_to_atom(TokenChars),
 				{token, ?PARSER_ATOM(A)}.

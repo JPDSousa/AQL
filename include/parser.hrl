@@ -94,10 +94,12 @@
 -define(DELETE_CLAUSE(TokenChars), {?DELETE_TOKEN, TokenChars}).
 
 %terms
+-define(PARSER_BOOLEAN_TOKEN, boolean).
 -define(PARSER_ATOM_TOKEN, atom_value).
 -define(PARSER_STRING_TOKEN, string).
 -define(PARSER_NUMBER_TOKEN, number).
 -define(PARSER_TYPE(Type, Value), {Type, Value}).
+-define(PARSER_BOOLEAN(Boolean), ?PARSER_TYPE(?PARSER_BOOLEAN_TOKEN, Boolean)).
 -define(PARSER_ATOM(Atom), ?PARSER_TYPE(?PARSER_ATOM_TOKEN, Atom)).
 -define(PARSER_STRING(String), ?PARSER_TYPE(?PARSER_STRING_TOKEN, String)).
 -define(PARSER_NUMBER(Number), ?PARSER_TYPE(?PARSER_NUMBER_TOKEN, Number)).

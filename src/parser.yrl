@@ -46,7 +46,7 @@ attribute_type dep_policy
 %update
 update set
 %types
-atom_value string number
+atom_value string number boolean
 %expression
 assign increment decrement equality comparator conjunctive
 %list
@@ -293,6 +293,10 @@ value ->
 	string :
 	unwrap_type('$1').
 
+value ->
+    boolean :
+    unwrap_type('$1').
+
 %%====================================================================
 %% Erlang Code
 %%====================================================================
@@ -328,10 +332,14 @@ create_table_simple_test() ->
 	test_parser("CREATE @AW TABLE TestA (a VARCHAR);CREATE @AW TABLE TestB (b INTEGER)").
 
 create_table_pk_test() ->
-	test_parser("CREATE @AW TABLE Test (a VARCHAR PRIMARY KEY, b INTEGER)").
+	test_parser("CREATE @AW TABLE Test (a VARCHAR PRIMARY KEY, b INTEGER)"),
+	test_parser("CREATE @AW TABLE Test (a INTEGER PRIMARY KEY, b INTEGER)"),
+	test_parser("CREATE @AW TABLE Test (a BOOLEAN PRIMARY KEY, b INTEGER)"),.
 
 create_table_def_test() ->
-	test_parser("CREATE @AW TABLE Test (a VARCHAR, b INTEGER DEFAULT 5)").
+	test_parser("CREATE @AW TABLE Test (a VARCHAR, b INTEGER DEFAULT 5)"),
+	test_parser("CREATE @AW TABLE Test (a VARCHAR, b BOOLEAN DEFAULT false)"),
+	test_parser("CREATE @AW TABLE Test (a VARCHAR, b VARCHAR DEFAULT 'example')").
 
 create_table_check_test() ->
 	test_parser("CREATE @AW TABLE Test(a INTEGER, b COUNTER_INT CHECK GREATER 0)").

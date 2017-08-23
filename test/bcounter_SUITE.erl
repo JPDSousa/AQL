@@ -56,7 +56,7 @@ end_per_suite(Config) ->
   Config.
 
 init_per_testcase(_Case, Config) ->
-    Config.
+  Config.
 
 end_per_testcase(_, _) ->
   ok.

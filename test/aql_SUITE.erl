@@ -26,7 +26,10 @@
 %% API
 -export([select_all/1,
         insert_artist/1,
-        insert_with_default_artist/1]).
+        insert_with_default_artist/1,
+        insert_duplicate/1,
+        delete_album/1,
+        delete_non_existent_album/1]).
 
 init_per_suite(Config) ->
   TNameArtist = "ArtistTest",
@@ -51,8 +54,8 @@ init_per_suite(Config) ->
     {default_album, DefaultAlbum},
     {insert_artist, lists:concat(["INSERT INTO ", TNameArtist, " VALUES ('~s', '~s', ~p);"])},
     {insert_artist_def, lists:concat(["INSERT INTO ", TNameArtist, " VALUES ('~s', '~s');"])},
-    {insert_album, lists:concat(["INSERT INTO ", TNameAlbum, " VALUES ('~s', ~p, '~s');"])},
-    {insert_track, lists:concat(["INSERT INTO ", TNameTrack, " VALUES ('~s', ~p, '~s');"])},
+    {insert_album, lists:concat(["INSERT INTO ", TNameAlbum, " VALUES ('~s', ~p);"])},
+    {insert_track, lists:concat(["INSERT INTO ", TNameTrack, " VALUES ('~s', ~p);"])},
     {update_artist, lists:concat(["UPDATE ", TNameArtist, " SET ~s WHERE Name = '~s';"])},
     {update_album, lists:concat(["UPDATE ", TNameAlbum, " SET ~s WHERE Name = '~s';"])},
     {update_track, lists:concat(["UPDATE ", TNameTrack, " SET ~s WHERE Name = '~s';"])},
@@ -77,7 +80,10 @@ all() ->
   [
     select_all,
     insert_artist,
-    insert_with_default_artist
+    insert_with_default_artist,
+    insert_duplicate,
+    delete_album,
+    delete_non_existent_album
   ].
 
 select_all(_Config) ->
@@ -109,3 +115,26 @@ insert_with_default_artist(Config) ->
   {ok, []} = tutils:aql(?format(insert_artist_def, [Artist, City], Config)),
   SearchKey = lists:concat(["'", Artist, "'"]),
   [Artist, City, Awards] = tutils:read_keys(TName, "Name", SearchKey, ["Name", "City", "Awards"]).
+
+insert_duplicate(Config) ->
+  TName = ?value(tname_artist, Config),
+  Artist = "Sam",
+  City = "NY",
+  Awards = 1,
+  Query = ?format(insert_artist, [Artist, City, Awards], Config),
+  {ok, []} = tutils:aql(lists:concat([Query, Query])),
+  SearchKey = lists:concat(["'", Artist, "'"]),
+  [Artist, City, Awards] = tutils:read_keys(TName, "Name", SearchKey, ["Name", "City", "Awards"]).
+
+delete_album(Config) ->
+  TName = ?value(tname_album, Config),
+  Album = "Hello",
+  {ok, []} = tutils:aql(?format(insert_album, [Album, true], Config)),
+  {ok, []} = tutils:aql(?format(delete_album, [Album], Config)),
+  tutils:assertState(false, list_to_atom(TName), Album).
+
+delete_non_existent_album(Config) ->
+  TName = ?value(tname_album, Config),
+  Album = "IDontExist",
+  {ok, []} = tutils:aql(?format(delete_album, [Album], Config)),
+  tutils:assertState(false, list_to_atom(TName), Album).

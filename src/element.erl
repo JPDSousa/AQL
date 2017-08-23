@@ -80,13 +80,18 @@ is_visible(Data, Table, TxId) ->
   Policy = table:policy(Table),
   Rule = crp:get_rule(Policy),
   ExplicitState = explicit_state(Data, Rule),
-	Fks = table:shadow_columns(Table),
-  ImplicitState = lists:map(fun(?T_FK(FkName, FkType, _, _)) ->
-    FkValue = element:get(foreign_keys:to_cname(FkName), types:to_crdt(FkType), Data, Table),
-    FkState = index:tag_read(TName, FkName, FkValue, TxId),
-    ipa:status(Rule, FkState)
-  end, Fks),
-  ipa:is_visible(ExplicitState, ImplicitState).
+  case length(Data) of
+    1 ->
+      ipa:is_visible(ExplicitState);
+    _Else ->
+      Fks = table:shadow_columns(Table),
+      ImplicitState = lists:map(fun(?T_FK(FkName, FkType, _, _)) ->
+        FkValue = element:get(foreign_keys:to_cname(FkName), types:to_crdt(FkType), Data, Table),
+        FkState = index:tag_read(TName, FkName, FkValue, TxId),
+        ipa:status(Rule, FkState)
+      end, Fks),
+      ipa:is_visible(ExplicitState, ImplicitState)
+  end.
 
 throwInvalidType(Type, ColumnName, TableName) ->
 	throw(lists:concat(["Invalid type ", Type, " for collumn: ",

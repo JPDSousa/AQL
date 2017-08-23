@@ -42,6 +42,8 @@ where({_TName, _Projection, Where}) -> Where.
 %% Private functions
 %% ====================================================================
 
+apply_offset([[{{'#st', _T}, _V}] | Results], Cols, Acc) ->
+	apply_offset(Results, Cols, Acc);
 apply_offset([Result | Results], Cols, Acc) when is_list(Result) ->
 	Result1 = apply_offset(Result, Cols, []),
 	apply_offset(Results, Cols, Acc ++ [Result1]);

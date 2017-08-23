@@ -17,7 +17,8 @@
           select_all/1]).
 
 -export([assertState/3,
-          assertExists/1,
+          assertExists/1, assertExists/2,
+          assertNotExists/1, assertNotExists/2,
           assert_table_policy/2]).
 
 aql(Aql) ->
@@ -79,11 +80,24 @@ assert_table_policy(Expected, TName) ->
   antidote:commit_transaction(TxId),
   ?assertEqual(Expected, table:policy(Table)).
 
+assertExists(TName, Key) ->
+  assertExists(element:create_key(Key, TName)).
+
 assertExists(Key) ->
   {ok, Ref} = antidote:start_transaction(?TEST_SERVER),
   {ok, [Res]} = antidote:read_objects(Key, Ref),
   antidote:commit_transaction(Ref),
   ?assertNotEqual([], Res).
+
+assertNotExists(TName, Key) ->
+  assertNotExists(element:create_key(Key, TName)).
+
+assertNotExists(Key) ->
+  {ok, Ref} = antidote:start_transaction(?TEST_SERVER),
+  {ok, [Res]} = antidote:read_objects(Key, Ref),
+  antidote:commit_transaction(Ref),
+  ?assertEqual([], Res).
+
 
 read_keys(Table, IdName, ID, Keys) ->
   Join = join_keys(Keys, []),

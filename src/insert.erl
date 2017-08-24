@@ -26,6 +26,7 @@ exec({Table, Tables}, Props, TxId) ->
 	AnnElement = element:new(Table),
 	{ok, Element} = element:put(Keys1, Values, AnnElement),
 	Element1 = element:build_fks(Element, TxId),
+	element:insert(Element1, TxId),
 	Pk = element:primary_key(Element1),
 	index:put(Pk, TxId),
 	% update foreign key references

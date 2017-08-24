@@ -334,7 +334,7 @@ create_table_simple_test() ->
 create_table_pk_test() ->
 	test_parser("CREATE @AW TABLE Test (a VARCHAR PRIMARY KEY, b INTEGER)"),
 	test_parser("CREATE @AW TABLE Test (a INTEGER PRIMARY KEY, b INTEGER)"),
-	test_parser("CREATE @AW TABLE Test (a BOOLEAN PRIMARY KEY, b INTEGER)"),.
+	test_parser("CREATE @AW TABLE Test (a BOOLEAN PRIMARY KEY, b INTEGER)").
 
 create_table_def_test() ->
 	test_parser("CREATE @AW TABLE Test (a VARCHAR, b INTEGER DEFAULT 5)"),

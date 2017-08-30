@@ -7,7 +7,6 @@
 -export([scan/3]).
 
 scan(TName, ?PARSER_WILDCARD, TxId) ->
-  %TODO scan all
   index:keys(TName, TxId);
 scan(TName, Conditions, _TxId) ->
   evaluate(TName, Conditions, []).

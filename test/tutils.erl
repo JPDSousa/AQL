@@ -2,22 +2,28 @@
 
 -module(tutils).
 
+-define(TEST_SERVER, 'antidote@127.0.0.1').
+
 -include_lib("eunit/include/eunit.hrl").
 -include("types.hrl").
 
 -export([aql/1,
           create_single_table/1,
           create_fk_table/2, create_fk_table/3,
+          insert_single/2,
           delete_by_key/2,
-          read_keys/3,
-          print_state/2]).
+          read_keys/4, read_keys/3, read_keys/1,
+          print_state/2,
+          select_all/1]).
 
 -export([assertState/3,
-          assertExists/1,
+          assertExists/1, assertExists/2,
+          assertNotExists/1, assertNotExists/2,
           assert_table_policy/2]).
 
 aql(Aql) ->
-  aqlparser:parse({str, Aql}).
+  ct:log(info, lists:concat(["Query: ", Aql])),
+  aqlparser:parse({str, Aql}, ?TEST_SERVER).
 
 create_single_table(Name) ->
   Query = ["CREATE @AW TABLE ", Name, " (ID INT PRIMARY KEY)"],
@@ -32,13 +38,17 @@ create_fk_table(Name, TPointer, CPointer) ->
     TPointer, "(", CPointer, "))"],
   aql(lists:concat(Query)).
 
+insert_single(TName, ID) ->
+  Query = lists:concat(["INSERT INTO ", TName, " VALUES (", ID, ");"]),
+  aql(Query).
+
 delete_by_key(TName, Key) ->
   Query = ["DELETE FROM ", TName, " WHERE ID = ", Key],
   aql(lists:concat(Query)).
 
 assertState(State, TName, Key) ->
   AQLKey = element:create_key(Key, TName),
-  {ok, TxId} = antidote:start_transaction(),
+  {ok, TxId} = antidote:start_transaction(?TEST_SERVER),
   Table = table:lookup(TName, TxId),
   {ok, [Res]} = antidote:read_objects(AQLKey, TxId),
   Actual = element:is_visible(Res, Table, TxId),
@@ -48,7 +58,7 @@ assertState(State, TName, Key) ->
 print_state(TName, Key) ->
   TNameAtom = utils:to_atom(TName),
   AQLKey = element:create_key(Key, TNameAtom),
-  {ok, TxId} = antidote:start_transaction(),
+  {ok, TxId} = antidote:start_transaction(?TEST_SERVER),
   Table = table:lookup(TNameAtom, TxId),
   {ok, [Data]} = antidote:read_objects(AQLKey, TxId),
   io:fwrite("Tags for ~p(~p)~nData: ~p~n", [TNameAtom, Key, Data]),
@@ -60,22 +70,49 @@ print_state(TName, Key) ->
   io:fwrite("Final: ~p~n", [element:is_visible(Data, Table, TxId)]),
 antidote:commit_transaction(TxId).
 
+select_all(TName) ->
+  aql(lists:concat(["SELECT * FROM ", TName])).
+
 assert_table_policy(Expected, TName) ->
   TNameAtom = utils:to_atom(TName),
-  {ok, TxId} = antidote:start_transaction(),
+  {ok, TxId} = antidote:start_transaction(?TEST_SERVER),
   Table = table:lookup(TNameAtom, TxId),
   antidote:commit_transaction(TxId),
   ?assertEqual(Expected, table:policy(Table)).
 
+assertExists(TName, Key) ->
+  assertExists(element:create_key(Key, TName)).
+
 assertExists(Key) ->
-  {ok, [Res], _CT} = antidote:read_objects(Key),
+  {ok, Ref} = antidote:start_transaction(?TEST_SERVER),
+  {ok, [Res]} = antidote:read_objects(Key, Ref),
+  antidote:commit_transaction(Ref),
   ?assertNotEqual([], Res).
 
-read_keys(Table, ID, Keys) ->
+assertNotExists(TName, Key) ->
+  assertNotExists(element:create_key(Key, TName)).
+
+assertNotExists(Key) ->
+  {ok, Ref} = antidote:start_transaction(?TEST_SERVER),
+  {ok, [Res]} = antidote:read_objects(Key, Ref),
+  antidote:commit_transaction(Ref),
+  ?assertEqual([], Res).
+
+
+read_keys(Table, IdName, ID, Keys) ->
   Join = join_keys(Keys, []),
-  Query = ["SELECT ", Join, " FROM ", Table, " WHERE ID = ", ID],
-  {ok, [Res]} = aql(lists:concat(Query)),
+  Query = ["SELECT ", Join, " FROM ", Table, " WHERE ", IdName, " = ", ID],
+  {ok, [[Res]]} = aql(lists:concat(Query)),
   lists:map(fun({_k, V}) -> V end, Res).
+
+read_keys(Table, ID, Keys) ->
+  read_keys(Table, "ID", ID, Keys).
+
+read_keys(Keys) ->
+  {ok, Ref} = antidote:start_transaction(?TEST_SERVER),
+  {ok, Res} = antidote:read_objects(Keys, Ref),
+  antidote:commit_transaction(Ref),
+  Res.
 
 join_keys([Key | Keys], []) ->
   join_keys(Keys, Key);

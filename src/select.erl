@@ -23,10 +23,14 @@ exec({Table, _Tables}, Select, TxId) ->
 	% TODO validate projection fields
 	Condition = where(Select),
 	Keys = where:scan(TName, Condition, TxId),
-	{ok, Results} = antidote:read_objects(Keys, TxId),
-	ProjectionResult = project(Projection, Results, [], Cols),
-	ActualRes = apply_offset(ProjectionResult, Cols, []),
-	{ok, ActualRes}.
+	case Keys of
+		[] -> {ok, []};
+		_Else ->
+			{ok, Results} = antidote:read_objects(Keys, TxId),
+			ProjectionResult = project(Projection, Results, [], Cols),
+			ActualRes = apply_offset(ProjectionResult, Cols, []),
+			{ok, ActualRes}
+	end.
 
 table({TName, _Projection, _Where}) -> TName.
 
@@ -38,6 +42,13 @@ where({_TName, _Projection, Where}) -> Where.
 %% Private functions
 %% ====================================================================
 
+% groups of elements
+apply_offset([Result | Results], Cols, Acc) when is_list(Result) ->
+	Result1 = apply_offset(Result, Cols, []),
+	apply_offset(Results, Cols, Acc ++ [Result1]);
+% groups of columns
+apply_offset([{{'#st', _T}, _} | Values], Cols, Acc) ->
+	apply_offset(Values, Cols, Acc);
 apply_offset([{{Key, Type}, V} | Values], Cols, Acc) ->
   Col = maps:get(Key, Cols),
   Cons = column:constraint(Col),
@@ -53,14 +64,25 @@ apply_offset([{{Key, Type}, V} | Values], Cols, Acc) ->
 apply_offset([], _Cols, Acc) -> Acc.
 
 
+project(Projection, [[{{'#st', _T}, _V}] | Results], Acc, Cols) ->
+	project(Projection, Results, Acc, Cols);
+project(Projection, [[] | Results], Acc, Cols) ->
+	project(Projection, Results, Acc, Cols);
 project(Projection, [Result | Results], Acc, Cols) ->
 	ProjRes = project_row(Projection, Result, [], Cols),
-	project(Projection, Results, Acc ++ ProjRes, Cols);
+	project(Projection, Results, Acc ++ [ProjRes], Cols);
 project(_Projection, [], Acc, _Cols) ->
 	Acc.
 
-project_row(?PARSER_WILDCARD, Result, _Acc, _Cols) ->
-	Result;
+% if key is list (i.e. shadow col), ignore
+project_row(Projection, [{{Key, _T}, _V} | Data], Acc, Cols) when is_list(Key) ->
+	project_row(Projection, Data, Acc, Cols);
+% if wildcard, accumulate
+project_row(?PARSER_WILDCARD, [ColData | Data], Acc, Cols) ->
+	project_row(?PARSER_WILDCARD, Data, Acc ++ [ColData], Cols);
+% if wildcard and no more data to project, return data accumulated
+project_row(?PARSER_WILDCARD, [], Acc, _Cols) ->
+	Acc;
 project_row([ColName | Tail], Result, Acc, Cols) ->
 	{{Key, _Type}, Value} = get_value(ColName, Result),
 	Col = column:s_get(Cols, Key),

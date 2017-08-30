@@ -22,8 +22,9 @@
 exec({Table, Tables}, Props, TxId) ->
 	Keys = keys(Props, Table),
 	Values = values(Props),
+	Keys1 = handle_defaults(Keys, Values, Table),
 	AnnElement = element:new(Table),
-	{ok, Element} = element:put(Keys, Values, AnnElement),
+	{ok, Element} = element:put(Keys1, Values, AnnElement),
 	Element1 = element:build_fks(Element, TxId),
 	element:insert(Element1, TxId),
 	Pk = element:primary_key(Element1),
@@ -49,6 +50,17 @@ values({_TName, _Keys, Values}) -> Values.
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
+
+handle_defaults(Keys, Values, Table) ->
+	if
+		length(Keys) =:= length(Values) ->
+			Keys;
+		true ->
+			Defaults = column:s_filter_defaults(Table),
+			lists:filter(fun(Key) ->
+				not maps:is_key(Key, Defaults)
+		 	end, Keys)
+	end.
 
 read_fks(Fks, _Tables, TxId, false) ->
 	lists:map(fun({_Col, {PTabName, _PTabAttr}, Value} = Fk) ->

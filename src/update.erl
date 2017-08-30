@@ -26,7 +26,12 @@ exec({Table, _Tables}, Props, TxId) ->
   FieldUpdates = create_update(Table, [], SetClause),
   Keys = where:scan(TName, WhereClause, TxId),
   MapUpdates = crdt:map_update(Keys, FieldUpdates),
-  antidote:update_objects(MapUpdates, TxId).
+  case MapUpdates of
+    [] -> ok;
+    ?IGNORE_OP -> ok;
+    _Else ->
+      antidote:update_objects(MapUpdates, TxId)
+  end.
 
 table({TName, _Set, _Where}) -> TName.
 
@@ -41,7 +46,12 @@ where({_TName, _Set, Where}) -> Where.
 create_update(Table, Acc, [{ColumnName, Op, OpParam} | Tail]) ->
   Column = column:s_get(Table, ColumnName),
   {ok, Update} = resolve_op(Column, Op, OpParam),
-  create_update(Table, lists:flatten(Acc, [Update]), Tail);
+  case Update of
+    ?IGNORE_OP ->
+      create_update(Table, Acc, Tail);
+    _Else ->
+      create_update(Table, [Update | Acc], Tail)
+  end;
 create_update(_Table, Acc, []) ->
   Acc.
 

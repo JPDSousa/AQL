@@ -80,13 +80,18 @@ is_visible(Data, Table, TxId) ->
   Policy = table:policy(Table),
   Rule = crp:get_rule(Policy),
   ExplicitState = explicit_state(Data, Rule),
-	Fks = table:shadow_columns(Table),
-  ImplicitState = lists:map(fun(?T_FK(FkName, FkType, _, _)) ->
-    FkValue = element:get(foreign_keys:to_cname(FkName), types:to_crdt(FkType), Data, Table),
-    FkState = index:tag_read(TName, FkName, FkValue, TxId),
-    ipa:status(Rule, FkState)
-  end, Fks),
-  ipa:is_visible(ExplicitState, ImplicitState).
+  case length(Data) of
+    1 ->
+      ipa:is_visible(ExplicitState);
+    _Else ->
+      Fks = table:shadow_columns(Table),
+      ImplicitState = lists:map(fun(?T_FK(FkName, FkType, _, _)) ->
+        FkValue = element:get(foreign_keys:to_cname(FkName), types:to_crdt(FkType), Data, Table),
+        FkState = index:tag_read(TName, FkName, FkValue, TxId),
+        ipa:status(Rule, FkState)
+      end, Fks),
+      ipa:is_visible(ExplicitState, ImplicitState)
+  end.
 
 throwInvalidType(Type, ColumnName, TableName) ->
 	throw(lists:concat(["Invalid type ", Type, " for collumn: ",
@@ -220,8 +225,13 @@ append(Key, Value, AQL, Element) ->
   OffValue = apply_offset(Key, Value, Element),
   OpKey = ?MAP_KEY(Key, types:to_crdt(AQL)),
   OpVal = types:to_insert_op(AQL, OffValue),
-  Element1 = set_data(Element, lists:append(Data, [{OpKey, Value}])),
-  set_ops(Element1, lists:append(Ops, [{OpKey, OpVal}])).
+  case OpVal of
+    ?IGNORE_OP ->
+      Element;
+    _Else ->
+      Element1 = set_data(Element, lists:append(Data, [{OpKey, Value}])),
+      set_ops(Element1, utils:proplists_upsert(OpKey, OpVal, Ops))
+  end.
 
 
 apply_offset(Key, Value, Element) when is_atom(Key) ->

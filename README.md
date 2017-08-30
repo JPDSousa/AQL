@@ -38,7 +38,7 @@ Then, to start the shell in development mode run the following command:
     $ make dev
 ```
 
-You can also start the shell in deployment mode:
+You can also start the shell in shell mode with:
 ```
     $ make shell
 ```
@@ -50,7 +50,7 @@ AQL is an SQL-variant, designed to work with AntidoteDB API.
 ### API
 
 The AQL API is pretty straightforward. There is a main module called
-`aqlparser` with a method `parse`, which takes a tuple. The two options
+`aqlparser` with a method `parse`, which takes a tuple as well as the AntidoteDB node long name. The two options
 available are:
 ```Erlang
 {str, AQLCommand}
@@ -71,6 +71,8 @@ AQL supports multiple SQL-like operations such as:
   * SELECT
   * INSERT
   * UPDATE
+* Admin
+  * SHOW TABLES/INDEX
 
 AQL supports a limited set of types:
 * VARCHAR - common text data type (similar to SQL's VARCHAR)
@@ -86,12 +88,12 @@ Creates a new table. If the table already exists the new table will overwrite it
  (any concurrent conflicts will be resolved with a *Last Writer Wins* CRP).
 
 ```SQL
-CREATE TABLE Student (
+CREATE @AW TABLE Student (
 	id INT PRIMARY KEY,
 	Name VARCHAR,
 	Age INT DEFAULT 18,
 	YearsLeft COUNTER_INT CHECK GREATER 0,
-	Passport_id INTEGER FOREIGN KEY REFERENCES Passport(id)
+	Passport_id INTEGER FOREIGN KEY @FR REFERENCES Passport(id)
 );
 ```
 

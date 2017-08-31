@@ -7,6 +7,7 @@ MAIN = "aqlparser:start_shell()"
 EBIN = ./_build/default/lib/*/ebin
 TEST_LOGS = _build/test/logs
 ANTIDOTE = antidote/_build/default/rel/antidote
+SCRIPTS = ./scripts
 
 .PHONY: all test clean antidote
 
@@ -14,7 +15,8 @@ shell: compile
 	erl -pa $(AQL)/ebin -name $(NODE_NAME) -setcookie $(COOKIE) -noshell -eval $(MAIN)
 
 dev:
-	$(REBAR) shell --name=$(NODE_DEV_NAME) --setcookie $(COOKIE)
+	chmod +x $(SCRIPTS)/start_dev.sh
+	$(SCRIPTS)/start_dev.sh
 
 compile:
 	$(REBAR) compile

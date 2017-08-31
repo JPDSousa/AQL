@@ -5,47 +5,61 @@ An SQL-like interface for [AntidoteDB](https://github.com/SyncFree/antidote).
 
 ## Installation
 
-AQL used through Docker (recommended), or directly through rebar3.
+AQL can be used through Docker (recommended), or directly through rebar3.
 
 ### Docker
 
 To use AQL through Docker simply pull the image from Docker Hub
-[here](https://hub.docker.com/r/jpdsousa/aql_antidote/). This starts an antidote
-server (uses [this](https://hub.docker.com/r/mweber/antidotedb/) image) on
+[here](https://hub.docker.com/r/jpdsousa/aql_antidote/). If docker can't 
+pull the lastest version of the image, do it manually by:
+
+```
+    docker pull jpdsousa/aql_antidote:<latest-version-available>
+```
+
+This image starts an antidoteDB server 
+(uses [this](https://hub.docker.com/r/mweber/antidotedb/) image) on
 background and runs an AQL instance of top.
 
-The image starts the shell in
-[development mode](https://www.rebar3.org/v3/docs/commands#section-shell),
-as this is still a demo image.
-
-This is the recommended way of running AQL.
+This is the recommended way of running AQL, at least for single-client use.
 
 ### Rebar3
 This project can also be installed "manually" through rebar3. In order to do so,
-clone this repository and open a terminal in the project folder.
+clone this repository:
 
-First of all, you must have one (or more) running instances of AntidoteDB.
+```
+    $ git clone https://github.com/JPDSousa/AQL
+```
 
-Run `$ make compile` to download all the required dependencies.
+Open a terminal in the project folder (`cd AQL`) and then compile the project:
 
 ```
     $ make compile
 ```
 
-Then, to start the shell in development mode run the following command:
+Now, to run the client, you must have one (or more) running instances of AntidoteDB.
+To start in shell mode run the following command:
 
-```
-    $ make dev
-```
-
-You can also start the shell in shell mode with:
 ```
     $ make shell
+```
+
+You can also start in development mode with:
+```
+    $ make dev
 ```
 
 ## Getting started
 
 AQL is an SQL-variant, designed to work with AntidoteDB API.
+
+### Shell
+AQL provides a shell mode, which is the easiest way to use the
+client. In shell mode, you'll see a prompt like this:
+```
+    AQL>
+```
+Use the prompt to input AQL statements.
 
 ### API
 
@@ -62,6 +76,11 @@ Which parses the `AQLCommand` and outputs the result.
 Which takes a path to a file (no specific format) and parses its content as an
 AQL command.
 
+For instance, to show all existing tables in the database through the API, use:
+```Erlang
+aqlparser:parse({str, "SHOW TABLES"}, 'antidote@127.0.0.1').
+```
+
 ## AQL Docs
 
 AQL supports multiple SQL-like operations such as:
@@ -71,6 +90,7 @@ AQL supports multiple SQL-like operations such as:
   * SELECT
   * INSERT
   * UPDATE
+  * DELETE
 * Admin
   * SHOW TABLES/INDEX
 
@@ -167,8 +187,24 @@ sets column `FirstName` to value `'First2'`. The operation keyword (e.g.
   * `ASSIGN` - sets the column(s) of type `VARCHAR` to the value specified.
 * *INTEGER*
   * `ASSIGN` - sets the column(s) of type `INTEGER` or `INT` to the value specified.
+  * `INCREMENT` - increments the column(s) of type `INTEGER` by the value specified.
+  * `DECREMENT` - decrements the column(s) of type `INTEGER` by the value specified.
 * *COUNTER_INT*
   * `INCREMENT` - increments the column(s) of type `COUNTER_INT` by the value specified.
   * `DECREMENT` - decrements the column(s) of type `COUNTER_INT` by the value specified.
+* *BOOLEAN*
+  * `ENABLE`- sets the boolean value to `true`
+  * `DISABLE`- sets the boolean value to `false`
+  
+Just like in a SELECT operation, the where clause can only filter primary keys.
+  
+### DELETE
+
+Deletes a set of records from the specified table.
+
+```SQL
+DELETE FROM Persons Where PersonID = 2004525
+```
 
 Just like in a SELECT operation, the where clause can only filter primary keys.
+If the `WHERE`clause is absent, all the records in the table are deleted.

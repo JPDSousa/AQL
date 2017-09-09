@@ -90,7 +90,7 @@ touch({_Col, {PTabName, _PTabAttr}, Value}, Data, Tables, TxId) ->
 	% touch parents
 	Fks = element:foreign_keys(foreign_keys:from_table(Table), Data, PTabName),
 	FksKV = read_fks(Fks, Tables, TxId, false),
-	lists:foreach(fun ({Fk, Data}) -> touch(Fk, Data, Tables, TxId) end, FksKV).
+	lists:foreach(fun ({Fk, Data2}) -> touch(Fk, Data2, Tables, TxId) end, FksKV).
 
 touch_cascade(Data, Table, Tables, TxId) ->
 	TName = table:name(Table),

@@ -27,7 +27,8 @@ exec({Table, _Tables}, Select, TxId) ->
 		[] -> {ok, []};
 		_Else ->
 			{ok, Results} = antidote:read_objects(Keys, TxId),
-			ProjectionResult = project(Projection, Results, [], Cols),
+			VisibleResults = filter_visible(Results, Table, TxId),
+			ProjectionResult = project(Projection, VisibleResults, [], Cols),
 			ActualRes = apply_offset(ProjectionResult, Cols, []),
 			{ok, ActualRes}
 	end.
@@ -41,6 +42,17 @@ where({_TName, _Projection, Where}) -> Where.
 %% ====================================================================
 %% Private functions
 %% ====================================================================
+
+filter_visible(Results, Table, TxId) ->
+	filter_visible(Results, Table, TxId, []).
+
+filter_visible([Result | Results], Table, TxId, Acc) ->
+	case element:is_visible(Result, Table, TxId) of
+		  true -> filter_visible(Results, Table, TxId, lists:append(Acc, [Result]));
+			_Else -> filter_visible(Results, Table, TxId, Acc)
+	end;
+filter_visible([], _Table, _TxId, Acc) ->
+	Acc.
 
 % groups of elements
 apply_offset([Result | Results], Cols, Acc) when is_list(Result) ->

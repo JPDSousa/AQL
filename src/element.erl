@@ -93,10 +93,6 @@ is_visible(Data, Table, TxId) ->
       ipa:is_visible(ExplicitState, ImplicitState)
   end.
 
-throwInvalidType(Type, ColumnName, TableName) ->
-	throw(lists:concat(["Invalid type ", Type, " for collumn: ",
-  ColumnName, " in table ", TableName])).
-
 throwNoSuchColumn(ColName, TableName) ->
   throw(lists:concat(["Column ", ColName,
     " does not exist in table ", TableName])).

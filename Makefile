@@ -15,6 +15,14 @@ shell: compile
 	chmod u+x $(SCRIPTS)/start_shell.sh
 	$(SCRIPTS)/start_shell.sh
 
+dev_public:
+	chmod u+x $(SCRIPTS)/start_dev_public.sh
+	$(SCRIPTS)/start_dev_public.sh
+
+shell_public:
+	chmod u+x $(SCRIPTS)/start_shell_public.sh
+	$(SCRIPTS)/start_shell_public.sh
+
 dev:
 	chmod +x $(SCRIPTS)/start_dev.sh
 	$(SCRIPTS)/start_dev.sh

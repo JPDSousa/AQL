@@ -26,7 +26,7 @@ parse({str, Query}, Node) ->
 					try exec(ParseTree, [], Node) of
 						Ok -> Ok
 					catch
-						{error, Reason} -> {error, Reason}
+						Reason -> {error, Reason}
 					end;
 				_Else ->
 					ParseRes

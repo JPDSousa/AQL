@@ -12,7 +12,8 @@ SCRIPTS = ./scripts
 .PHONY: all test clean antidote
 
 shell: compile
-	erl -pa $(AQL)/ebin -name $(NODE_NAME) -setcookie $(COOKIE) -noshell -eval $(MAIN)
+	chmod u+x $(SCRIPTS)/start_shell.sh
+	$(SCRIPTS)/start_shell.sh
 
 dev:
 	chmod +x $(SCRIPTS)/start_dev.sh

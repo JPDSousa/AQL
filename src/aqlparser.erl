@@ -23,7 +23,11 @@ parse({str, Query}, Node) ->
 			ParseRes = parser:parse(Tokens),
 			case ParseRes of
 				{ok, ParseTree} ->
-					exec(ParseTree, [], Node);
+					try exec(ParseTree, [], Node) of
+						Ok -> Ok
+					catch
+						Reason -> {error, Reason}
+					end;
 				_Else ->
 					ParseRes
 			end;
@@ -41,8 +45,7 @@ start_shell() ->
 
 read_and_exec() ->
 	Line = io:get_line("AQL>"),
-	Res = parse({str, Line}, 'antidote@127.0.0.1'),
-	io:fwrite(">> ~p~n", [Res]),
+	parse({str, Line}, 'antidote@127.0.0.1'),
 	read_and_exec().
 
 %%====================================================================
@@ -109,10 +112,10 @@ eval_status(Query, Status) ->
 		{ok, Msg} ->
 			io:fwrite("[Ok] ~p: ~p~n", [AQuery, Msg]),
 			Msg;
-		err ->
+		error ->
 			io:fwrite("[Err] ~p~n", [AQuery]),
 			throw(Query);
-		{err, Msg} ->
+		{error, Msg} ->
 			io:fwrite("[Err] ~p: ~p~n", [AQuery, Msg]),
 			throw(Msg);
 		{badrpc, Msg} ->

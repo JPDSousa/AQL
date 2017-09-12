@@ -89,9 +89,9 @@ greater_insert_basic(Config) ->
 greater_insert_fail(Config) ->
   BoundA = ?value(bound_greater_a, Config),
   BoundB = ?value(bound_greater_b, Config),
-  ?assertThrow(_, tutils:aql(?format(insert_greater, [10, BoundA, BoundB+1], Config))),
-  ?assertThrow(_, tutils:aql(?format(insert_greater, [11, BoundA+1, BoundB], Config))),
-  ?assertThrow(_, tutils:aql(?format(insert_greater, [12, BoundA, BoundB-1], Config))).
+  ?assertEqual({error, "Invalid value 0 for column bcA"}, tutils:aql(?format(insert_greater, [10, BoundA, BoundB+1], Config))),
+  ?assertEqual({error, "Invalid value 0 for column bcB"}, tutils:aql(?format(insert_greater, [11, BoundA+1, BoundB], Config))),
+  ?assertEqual({error, "Invalid value 0 for column bcA"}, tutils:aql(?format(insert_greater, [12, BoundA, BoundB-1], Config))).
 
 greater_update_basic(Config) ->
   TName = ?value(tname_greater, Config),
@@ -122,12 +122,12 @@ greater_update_fail(Config) ->
   % inserts
   {ok, []} = tutils:aql(?format(insert_greater, [Key, BoundA+2, BoundB+2], Config)),
   % decrement 1
-  ?assertThrow(_, tutils:aql(?format(update_greater, ["DECREMENT 3", "DECREMENT 3", Key], Config))),
+  ?assertEqual({error, "Unexpected error"}, tutils:aql(?format(update_greater, ["DECREMENT 3", "DECREMENT 3", Key], Config))),
   [V1, V2] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
   ?assertEqual(BoundA+2, V1), % assert value does not change on fail
   ?assertEqual(BoundB+2, V2),
   % decrement 2
-  ?assertThrow(_, tutils:aql(?format(update_greater, ["DECREMENT 4", "DECREMENT 4", Key], Config))),
+  ?assertEqual({error, "Unexpected error"}, tutils:aql(?format(update_greater, ["DECREMENT 4", "DECREMENT 4", Key], Config))),
   [V1, V2] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
   ?assertEqual(BoundA+2, V1), % assert value does not change on fail
   ?assertEqual(BoundB+2, V2),
@@ -147,9 +147,9 @@ smaller_insert_basic(Config) ->
 smaller_insert_fail(Config) ->
   BoundA = ?value(bound_smaller_a, Config),
   BoundB = ?value(bound_smaller_b, Config),
-  ?assertThrow(_, tutils:aql(?format(insert_smaller, [10, BoundA, BoundB-1], Config))),
-  ?assertThrow(_, tutils:aql(?format(insert_smaller, [11, BoundA-1, BoundB], Config))),
-  ?assertThrow(_, tutils:aql(?format(insert_smaller, [12, BoundA, BoundB], Config))).
+  ?assertEqual({error, "Invalid value 0 for column bcA"}, tutils:aql(?format(insert_smaller, [10, BoundA, BoundB-1], Config))),
+  ?assertEqual({error, "Invalid value 0 for column bcB"}, tutils:aql(?format(insert_smaller, [11, BoundA-1, BoundB], Config))),
+  ?assertEqual({error, "Invalid value 0 for column bcA"}, tutils:aql(?format(insert_smaller, [12, BoundA, BoundB], Config))).
 
 smaller_update_basic(Config) ->
   TName = ?value(tname_smaller, Config),
@@ -178,11 +178,11 @@ smaller_update_fail(Config) ->
   % inserts
   {ok, []} = tutils:aql(?format(insert_smaller, [Key, BoundA-2, BoundB-2], Config)),
   % decrement
-  ?assertThrow(_, tutils:aql(?format(update_smaller, ["INCREMENT 3", "INCREMENT 3", Key], Config))),
+  ?assertEqual({error, "Unexpected error"}, tutils:aql(?format(update_smaller, ["INCREMENT 3", "INCREMENT 3", Key], Config))),
   [V1, V2] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
   ?assertEqual(BoundA-2, V1), % assert value does not change on fail
   ?assertEqual(BoundB-2, V2),
-  ?assertThrow(_, tutils:aql(?format(update_smaller, ["INCREMENT 3", "INCREMENT 3", Key], Config))),
+  ?assertEqual({error, "Unexpected error"}, tutils:aql(?format(update_smaller, ["INCREMENT 3", "INCREMENT 3", Key], Config))),
   [V3, V4] = tutils:read_keys(TName, Key, ["bcA", "bcB"]),
   ?assertEqual(BoundA-2, V3), % assert value does not change on fail
   ?assertEqual(BoundB-2, V4),

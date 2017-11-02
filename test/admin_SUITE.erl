@@ -39,6 +39,7 @@ all() ->
 show_tables(_Config) ->
   tutils:create_single_table("ShowTablesTest"),
   {ok, [Res]} = tutils:aql("SHOW TABLES"),
+  io:fwrite("~p~n", [Res]),
   ?assertEqual(true, is_list(Res)).
 
 show_index(_Config) ->

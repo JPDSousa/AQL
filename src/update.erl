@@ -75,9 +75,10 @@ resolve_op(Column, ?DECREMENT_OP(_Tchars), Value) ->
 resolve_op(Column, AQL, Op, Value) ->
   CName = column:name(Column),
   CType = column:type(Column),
+  Constraint = column:constraint(Column),
   case CType of
     AQL ->
-      Update = crdt:field_map_op(CName, types:to_crdt(AQL), Op(Value)),
+      Update = crdt:field_map_op(CName, types:to_crdt(AQL, Constraint), Op(Value)),
       {ok, Update};
     _Else ->
       resolve_fail(CName, CType)

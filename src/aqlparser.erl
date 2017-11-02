@@ -26,7 +26,9 @@ parse({str, Query}, Node) ->
 					try exec(ParseTree, [], Node) of
 						Ok -> Ok
 					catch
-						Reason -> {error, Reason}
+						Reason ->
+							io:fwrite("Syntax Error: ~p~n", [Reason]),
+							{error, Reason}
 					end;
 				_Else ->
 					ParseRes
@@ -57,51 +59,66 @@ exec([Query | Tail], Acc, Node) ->
 	case Res of
 		ok ->
 			exec(Tail, Acc, Node);
-		Else ->
-			exec(Tail, lists:append(Acc, [Else]), Node)
+		{ok, NewNode} ->
+			exec(Tail, Acc, NewNode);
+		_Else ->
+			exec(Tail, lists:append(Acc, [Res]), Node)
 	end;
 exec([], Acc, _Node) ->
 	{ok, Acc}.
 
-exec(?SHOW_CLAUSE(?TABLES_TOKEN), Node) ->
-	{ok, TxId} = antidote:start_transaction(Node),
-	Tables = table:read_tables(TxId),
+commit_transaction(Res, Tx) ->
+	CommitRes = antidote:commit_transaction(Tx),
+	case CommitRes of
+		{ok, _CT} ->
+			Res;
+		_Else ->
+			{error, CommitRes}
+	end.
+
+exec(Query, Node) when is_atom(Node) ->
+	{ok, Tx} = antidote:start_transaction(Node),
+	Res = exec(Query, Tx),
+	case Res of
+		{error, _} ->
+			Res;
+		_Else ->
+			commit_transaction(Res, Tx)
+	end;
+exec(?SHOW_CLAUSE(?TABLES_TOKEN), Tx) ->
+	Tables = table:read_tables(Tx),
 	TNames = lists:map(fun({{Name, _Type}, _Value}) -> Name end, Tables),
-	antidote:commit_transaction(TxId),
 	io:fwrite("Tables: ~p~n", [TNames]),
 	TNames;
-exec(?SHOW_CLAUSE({?INDEX_TOKEN, TName}), Node) ->
-	{ok, TxId} = antidote:start_transaction(Node),
-	Keys = index:keys(TName, TxId),
+exec(?SHOW_CLAUSE({?INDEX_TOKEN, TName}), Tx) ->
+	Keys = index:keys(TName, Tx),
 	lists:foreach(fun({Key, _Type, _TName}) ->
 		io:fwrite("{key: ~p, table: ~p}~n", [Key, TName])
 	end, Keys),
-	antidote:commit_transaction(TxId),
 	Keys;
-exec(?CREATE_CLAUSE(Table), Node) ->
-	eval("Create Table", Table, table, Node);
-exec(?INSERT_CLAUSE(Insert), Node) ->
-	eval("Insert", Insert, insert, Node);
-exec(?DELETE_CLAUSE(Delete), Node) ->
-	eval("Delete", Delete, delete, Node);
-exec({?UPDATE_TOKEN, Update}, Node) ->
-	eval("Update", Update, update, Node);
-exec({?SELECT_TOKEN, Select}, Node) ->
-	eval("Select", Select, select, Node);
+exec(?CREATE_CLAUSE(Table), Tx) ->
+	eval("Create Table", Table, table, Tx);
+exec(?INSERT_CLAUSE(Insert), Tx) ->
+	eval("Insert", Insert, insert, Tx);
+exec(?DELETE_CLAUSE(Delete), Tx) ->
+	eval("Delete", Delete, delete, Tx);
+exec({?UPDATE_TOKEN, Update}, Tx) ->
+	eval("Update", Update, update, Tx);
+exec({?SELECT_TOKEN, Select}, Tx) ->
+	eval("Select", Select, select, Tx);
 exec(_Invalid, _Node) ->
 	throw("Invalid query").
 
-eval(QName, Props, M, Node) ->
-	{ok, TxId} = antidote:start_transaction(Node),
+eval(QName, Props, M, Tx) ->
 	case M of
 		table ->
-			Status = M:exec(Props, TxId);
+			Status = M:exec(Props, Tx);
 		_Else ->
-			Tables = get_table_from_query(M, Props, TxId),
-			Status = M:exec(Tables, Props, TxId)
+			Tables = get_table_from_query(M, Props, Tx),
+			Status = M:exec(Tables, Props, Tx)
 	end,
-	antidote:commit_transaction(TxId),
 	eval_status(QName, Status).
+
 
 eval_status(Query, Status) ->
 	AQuery = list_to_atom(Query),
@@ -114,14 +131,14 @@ eval_status(Query, Status) ->
 			Msg;
 		error ->
 			io:fwrite("[Err] ~p~n", [AQuery]),
-			throw(Query);
+			{error, Query};
 		{error, Msg} ->
 			io:fwrite("[Err] ~p: ~p~n", [AQuery, Msg]),
-			throw(Msg);
+			{error, Msg};
 		{badrpc, Msg} ->
 			{Error, Desc} = antidote:handleBadRpc(Msg),
 			io:fwrite("[Err] ~p: ~p~n", [Error, Desc]),
-			throw(Desc);
+			{error, Desc};
 		Msg ->
 			io:fwrite("[????] ~p: ~p~n", [AQuery, Msg]),
 			Msg

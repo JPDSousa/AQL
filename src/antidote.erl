@@ -54,7 +54,8 @@ start_transaction(Node, Snapshot, Props) ->
 
 -spec commit_transaction(ref()) -> {ok, vectorclock()} | {error, reason()}.
 commit_transaction({Node, TxId}) ->
-	call(Node, commit_transaction, [TxId]).
+	Res = call(Node, commit_transaction, [TxId]),
+	Res.
 
 -spec read_objects(bound_objects(), ref()) -> {ok, [term()]}.
 read_objects(Objects, {Node, TxId}) when is_list(Objects) ->

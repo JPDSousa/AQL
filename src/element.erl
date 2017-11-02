@@ -86,7 +86,7 @@ is_visible(Data, Table, TxId) ->
     _Else ->
       Fks = table:shadow_columns(Table),
       ImplicitState = lists:map(fun(?T_FK(FkName, FkType, _, _)) ->
-        FkValue = element:get(foreign_keys:to_cname(FkName), types:to_crdt(FkType), Data, Table),
+        FkValue = element:get(foreign_keys:to_cname(FkName), types:to_crdt(FkType, ?IGNORE_OP), Data, Table),
         FkState = index:tag_read(TName, FkName, FkValue, TxId),
         ipa:status(Rule, FkState)
       end, Fks),
@@ -117,7 +117,8 @@ load_defaults(Element) ->
   Defaults = column:s_filter_defaults(Columns),
   maps:fold(fun (CName, Column, Acc) ->
     {?DEFAULT_TOKEN, Value} = column:constraint(Column),
-    append(CName, Value, column:type(Column), Acc)
+    Constraint = {?DEFAULT_TOKEN, Value},
+    append(CName, Value, column:type(Column), Constraint, Acc)
   end, Element, Defaults).
 
 put([Key | OKeys], [Value | OValues], Element) ->
@@ -135,8 +136,9 @@ put(ColName, Value, Element) ->
       throwNoSuchColumn(ColName, TName);
     Col ->
       ColType = column:type(Col),
+      Constraint = column:constraint(Col),
       Element1 = set_if_primary(Col, Value, Element),
-      append(ColName, Value, ColType, Element1)
+      append(ColName, Value, ColType, Constraint, Element1)
   end.
 
 set_if_primary(Col, Value, Element) ->
@@ -160,7 +162,7 @@ build_fks(Element, TxId) ->
         [{_, ParentId} | ParentCol] = FkName,
         Parent = dict:fetch(ParentId, Parents),
         Value = get_by_name(foreign_keys:to_cname(ParentCol), Parent),
-        append(FkName, Value, FkType, AccElement)
+        append(FkName, Value, FkType, ?IGNORE_OP, AccElement)
     end
   end, Element, Fks).
 
@@ -169,7 +171,7 @@ parents(Data, Fks, Table, TxId) ->
     case Name of
       [ShCol] ->
         {_FkTable, FkName} = ShCol,
-        Value = get(FkName, types:to_crdt(Type), Data, Table),
+        Value = get(FkName, types:to_crdt(Type, ?IGNORE_OP), Data, Table),
         Key = create_key(Value, TTName),
         {ok, [Parent]} = antidote:read_objects(Key, TxId),
         dict:store(FkName, Parent, Dict);
@@ -188,7 +190,8 @@ get(ColName, Element) ->
   Columns = attributes(Element),
   Col = maps:get(ColName, Columns),
   AQL = column:type(Col),
-  get(ColName, types:to_crdt(AQL), Element).
+  Constraint = column:constraint(Col),
+  get(ColName, types:to_crdt(AQL, Constraint), Element).
 
 get(ColName, Crdt, Element) when ?is_element(Element) ->
   get(ColName, Crdt, data(Element), table(Element)).
@@ -205,7 +208,8 @@ get(ColName, Crdt, Data, Table) when is_atom(Crdt) ->
 get(ColName, Cols, Data, TName) ->
   Col = maps:get(ColName, Cols),
   AQL = column:type(Col),
-  get(ColName, types:to_crdt(AQL), Data, TName).
+  Constraint = column:constraint(Col),
+  get(ColName, types:to_crdt(AQL, Constraint), Data, TName).
 
 insert(Element) ->
   Ops = ops(Element),
@@ -215,11 +219,11 @@ insert(Element, TxId) ->
   Op = insert(Element),
   antidote:update_objects(Op, TxId).
 
-append(Key, Value, AQL, Element) ->
+append(Key, Value, AQL, Constraint, Element) ->
   Data = data(Element),
   Ops = ops(Element),
-  OffValue = apply_offset(Key, Value, Element),
-  OpKey = ?MAP_KEY(Key, types:to_crdt(AQL)),
+  OffValue = apply_offset(Key, AQL, Constraint, Value),
+  OpKey = ?MAP_KEY(Key, types:to_crdt(AQL, Constraint)),
   OpVal = types:to_insert_op(AQL, OffValue),
   case OpVal of
     ?IGNORE_OP ->
@@ -229,17 +233,13 @@ append(Key, Value, AQL, Element) ->
       set_ops(Element1, utils:proplists_upsert(OpKey, OpVal, Ops))
   end.
 
-
-apply_offset(Key, Value, Element) when is_atom(Key) ->
-  Col = maps:get(Key, attributes(Element)),
-  Type = column:type(Col),
-  Cons = column:constraint(Col),
-  case {Type, Cons} of
+apply_offset(Key, AQL, Constraint, Value) when is_atom(Key) ->
+  case {AQL, Constraint} of
     {?AQL_COUNTER_INT, ?CHECK_KEY({?COMPARATOR_KEY(Comp), Offset})} ->
       bcounter:to_bcounter(Key, Value, Offset, Comp);
     _Else -> Value
   end;
-apply_offset(_Key, Value, _Element) -> Value.
+apply_offset(_Key,_AQL, _Constraint, Value) -> Value.
 
 foreign_keys(Fks, Element) when is_tuple(Element) ->
   Data = data(Element),
@@ -248,7 +248,7 @@ foreign_keys(Fks, Element) when is_tuple(Element) ->
 
 foreign_keys(Fks, Data, TName) ->
   lists:map(fun({{CName, CType}, {FkTable, FkAttr}}) ->
-    Value = get(CName, types:to_crdt(CType), Data, TName),
+    Value = get(CName, types:to_crdt(CType, ?IGNORE_OP), Data, TName),
     {{CName, CType}, {FkTable, FkAttr}, Value}
   end, Fks).
 
@@ -295,7 +295,7 @@ append_raw_test() ->
   Value = 9,
   Element = new(key, Table),
   % assert not fail
-  append('NationalRank', Value, ?AQL_INTEGER, Element).
+  append('NationalRank', Value, ?AQL_INTEGER, ?IGNORE_OP, Element).
 
 get_default_test() ->
   Table = eutils:create_table_aux(),

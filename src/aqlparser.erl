@@ -47,7 +47,8 @@ start_shell() ->
 
 read_and_exec() ->
 	Line = io:get_line("AQL>"),
-	parse({str, Line}, 'antidote@127.0.0.1'),
+	{ok, Res} = parse({str, Line}, 'antidote@127.0.0.1'),
+	io:fwrite("~p~n", [Res]),
 	read_and_exec().
 
 %%====================================================================

@@ -121,7 +121,7 @@ eval(QName, Props, M, Tx) ->
 
 
 eval_status(Query, Status) ->
-	AQuery = list_to_atom(Query),
+	%AQuery = list_to_atom(Query),
 	case Status of
 		ok ->
 			%io:fwrite("[Ok] ~p~n", [AQuery]),

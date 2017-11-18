@@ -124,23 +124,23 @@ eval_status(Query, Status) ->
 	AQuery = list_to_atom(Query),
 	case Status of
 		ok ->
-			io:fwrite("[Ok] ~p~n", [AQuery]),
+			%io:fwrite("[Ok] ~p~n", [AQuery]),
 			Status;
 		{ok, Msg} ->
-			io:fwrite("[Ok] ~p: ~p~n", [AQuery, Msg]),
+			%io:fwrite("[Ok] ~p: ~p~n", [AQuery, Msg]),
 			Msg;
 		error ->
-			io:fwrite("[Err] ~p~n", [AQuery]),
+			%io:fwrite("[Err] ~p~n", [AQuery]),
 			{error, Query};
 		{error, Msg} ->
-			io:fwrite("[Err] ~p: ~p~n", [AQuery, Msg]),
+			%io:fwrite("[Err] ~p: ~p~n", [AQuery, Msg]),
 			{error, Msg};
 		{badrpc, Msg} ->
 			{Error, Desc} = antidote:handleBadRpc(Msg),
-			io:fwrite("[Err] ~p: ~p~n", [Error, Desc]),
+			%io:fwrite("[Err] ~p: ~p~n", [Error, Desc]),
 			{error, Desc};
 		Msg ->
-			io:fwrite("[????] ~p: ~p~n", [AQuery, Msg]),
+			%io:fwrite("[????] ~p: ~p~n", [AQuery, Msg]),
 			Msg
 	end.
 

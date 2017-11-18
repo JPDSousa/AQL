@@ -27,7 +27,7 @@ parse({str, Query}, Node) ->
 						Ok -> Ok
 					catch
 						Reason ->
-							io:fwrite("Syntax Error: ~p~n", [Reason]),
+							%io:fwrite("Syntax Error: ~p~n", [Reason]),
 							{error, Reason}
 					end;
 				_Else ->

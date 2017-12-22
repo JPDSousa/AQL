@@ -132,7 +132,7 @@ resolve_op_counter_increment_test() ->
   CType = ?AQL_COUNTER_INT,
   Column = create_column_aux(CName, CType),
   Value = 2,
-  Expected = {ok, crdt:field_map_op(CName, ?CRDT_BCOUNTER_INT, crdt:increment_counter(Value))},
+  Expected = {ok, crdt:field_map_op(CName, ?CRDT_COUNTER_INT, crdt:increment_counter(Value))},
   Actual = resolve_op(Column, ?INCREMENT_OP(3), Value),
   ?assertEqual(Expected, Actual).
 
@@ -141,7 +141,7 @@ resolve_op_counter_decrement_test() ->
   CType = ?AQL_COUNTER_INT,
   Column = create_column_aux(CName, CType),
   Value = 2,
-  Expected = {ok, crdt:field_map_op(CName, ?CRDT_BCOUNTER_INT, crdt:decrement_counter(Value))},
+  Expected = {ok, crdt:field_map_op(CName, ?CRDT_COUNTER_INT, crdt:decrement_counter(Value))},
   Actual = resolve_op(Column, ?DECREMENT_OP(3), Value),
   ?assertEqual(Expected, Actual).
 

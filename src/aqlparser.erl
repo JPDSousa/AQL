@@ -9,7 +9,7 @@
 -include("parser.hrl").
 
 %% Application callbacks
--export([parse/2, start_shell/0]).
+-export([parse/2, start_shell/0, start/0]).
 
 %%====================================================================
 %% API
@@ -41,7 +41,12 @@ parse({file, Filename}, Node) ->
 	Content = unicode:characters_to_list(File),
 	parse({str, Content}, Node).
 
+start() ->
+        application:ensure_all_started(aql),
+        lager:error("ashgasjdhgajshgd", []).
+
 start_shell() ->
+        start(),
 	io:fwrite("Welcome to the AQL Shell.~n"),
 	read_and_exec().
 

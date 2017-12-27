@@ -15,7 +15,7 @@
 %% API
 %%====================================================================
 
--spec parse(input(), node()) -> queryResult() | {err, term()}.
+-spec parse(input(), node()) -> queryResult() | {error, term()}.
 parse({str, Query}, Node) ->
 	TokensRes = scanner:string(Query),
 	case TokensRes of
@@ -41,10 +41,12 @@ parse({file, Filename}, Node) ->
 	Content = unicode:characters_to_list(File),
 	parse({str, Content}, Node).
 
+-spec start() -> ok | {error, term()}.
 start() ->
         application:ensure_all_started(aql),
         lager:error("ashgasjdhgajshgd", []).
 
+-spec start_shell() -> ok | {error, term()}.
 start_shell() ->
         start(),
 	io:fwrite("Welcome to the AQL Shell.~n"),

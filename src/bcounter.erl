@@ -1,11 +1,16 @@
+%% @author JPDSousa
+%% @doc bounded counter converter
 
 -module(bcounter).
 
 -include_lib("parser.hrl").
+-include_lib("aql.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
+
+-type bcounter() :: antidote_crdt_bcounter:bcounter().
 
 -export([to_bcounter/4,
         from_bcounter/3,
@@ -15,7 +20,6 @@
 to_bcounter(Key, Value, Offset, Comp) ->
   OffValue = apply_offset_value(Comp, Offset, Value),
   check_bcounter_value(Key, OffValue).
-
 
 check_bcounter_value(_Key, Value) when Value > 0 -> Value;
 check_bcounter_value(Key, Value) -> throw(lists:concat(["Invalid value ", Value, " for column ", Key])).

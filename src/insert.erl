@@ -1,14 +1,14 @@
-%% @author Joao
-%% @doc @todo Add description to select.
+%% @author JPDSousa
+%% @doc logic for handling insert statements
 
 
 -module(insert).
 
 -define(NO_PK, none).
 
--include("aql.hrl").
--include("parser.hrl").
--include("types.hrl").
+-include_lib("parser.hrl").
+-include_lib("aql.hrl").
+-include_lib("types.hrl").
 
 %% ====================================================================
 %% API functions

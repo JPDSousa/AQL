@@ -9,8 +9,8 @@
 -module(policy_SUITE).
 -author("joao").
 
--include_lib("aql.hrl").
 -include_lib("parser.hrl").
+-include_lib("aql.hrl").
 -include_lib("types.hrl").
 
 -include_lib("common_test/include/ct.hrl").

@@ -1,3 +1,15 @@
+%% @author JPDSousa
+%% @doc macros and types for AQL
+
+%% ===========================
+%% Macros
+%% ===========================
+
+% errors
+-define(ERROR_CONSTRAINT, constraint_breach).
+-define(ERROR_INTERNAL, internal_error).
+
+% general
 -define(METADATA_BUCKET, aql_metadata).
 -define(MAP_KEY(Key, Type), {Key, Type}).
 -define(BOUND_OBJECT(Key, Crdt, Bucket), {Key, Crdt, Bucket}).
@@ -25,9 +37,36 @@
 -define(CRDT_BCOUNTER_INT, antidote_crdt_bcounter).
 -define(CRDT_COUNTER_INT, antidote_crdt_counter).
 
-% types
--export_type([]).%complete with private types
+%% ==================================
+%% Types
+%% ==================================
 
+% general
+-type reason() :: term().
+-type error() :: {error, reason()}.
+-type constraint_error() :: {?ERROR_CONSTRAINT, reason()}.
+-type internal_error() :: {?ERROR_INTERNAL, reason()}.
+
+% antidote
+-type key() :: atom().
+-type crdt_type() :: antidote_crdt_bcounter
+			| antidote_crdt_counter
+			| antidote_crdt_fat_counter
+			| antidote_crdt_gmap
+			| antidote_crdt_gset
+			| antidote_crdt_integer
+			| antidote_crdt_lwwreg
+			| antidote_crdt_map_aw
+			| antidote_crdt_map_rr
+			| antidote_crdt_mvreg
+			| antidote_crdt_orset
+			| antidote_crdt_rga
+			| antidote_crdt_set_rw.
+
+% numeric constraints
+-type comparator() :: ?GREATER_TOKEN | ?SMALLER_TOKEN.
+
+% queries
 -type input() :: input_str() | input_file().
 -type input_str() :: {str, list()}.
 -type input_file() :: {file, term()}.

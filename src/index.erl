@@ -1,12 +1,15 @@
+%% @author JPDSousa
+%% @doc module that handles index logic
 
 -module(index).
 
--include("aql.hrl").
+-include_lib("parser.hrl").
+-include_lib("aql.hrl").
 
 -define(INDEX_CRDT, antidote_crdt_gset).
 -define(ITAG_CRDT, antidote_crdt_gmap).
 -define(ITAG_KEY_CRDT, antidote_crdt_mvreg).
--define(INDEX_TOKEN, "#_").
+-define(INDEX_START, "#_").
 -define(TAG_TOKEN, "#__").
 
 -ifdef(TEST).
@@ -28,7 +31,7 @@ keys(TName, TxId) ->
 
 name(TName) ->
   TNameStr = utils:to_list(TName),
-  NameStr = lists:concat([?INDEX_TOKEN, TNameStr]),
+  NameStr = lists:concat([?INDEX_START, TNameStr]),
   list_to_atom(NameStr).
 
 put({Key, _Map, TName}) ->

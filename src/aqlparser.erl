@@ -5,8 +5,8 @@
 
 -module(aqlparser).
 
--include("aql.hrl").
 -include("parser.hrl").
+-include("aql.hrl").
 
 %% Application callbacks
 -export([parse/2, start_shell/0, start/0]).

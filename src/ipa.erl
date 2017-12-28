@@ -5,6 +5,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
+-include("parser.hrl").
 -include("aql.hrl").
 
 -export([new/0,

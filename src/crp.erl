@@ -1,7 +1,7 @@
 %%%-------------------------------------------------------------------
-%%% @author joao
+%%% @author JPDSousa
 %%% @copyright (C) 2017, <COMPANY>
-%%% @doc
+%%% @doc logic for conflict resolution policies
 %%%
 %%% @end
 %%% Created : 16. ago 2017 11:10
@@ -11,8 +11,9 @@
 
 -define(ERR_FR_IR, "A table with 'Force-Revive' foreign keys cannot be linked to a table with 'Ignore-Revive' foreign keys").
 
--include("aql.hrl").
--include("types.hrl").
+-include_lib("parser.hrl").
+-include_lib("aql.hrl").
+-include_lib("types.hrl").
 
 %% API
 -export([

@@ -1,9 +1,9 @@
 
 -module(element).
 
--include("aql.hrl").
--include("parser.hrl").
--include("types.hrl").
+-include_lib("parser.hrl").
+-include_lib("aql.hrl").
+-include_lib("types.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

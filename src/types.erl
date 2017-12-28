@@ -2,8 +2,8 @@
 
 -module(types).
 
--include("aql.hrl").
 -include_lib("parser.hrl").
+-include_lib("aql.hrl").
 
 -export([to_aql/1,
         to_crdt/2,

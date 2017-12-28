@@ -1,8 +1,8 @@
 
 -module(update).
 
+-include_lib("parser.hrl").
 -include("aql.hrl").
--include("parser.hrl").
 -include("types.hrl").
 
 -ifdef(TEST).

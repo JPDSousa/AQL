@@ -1,8 +1,8 @@
 
 -module(bcounter_SUITE).
 
--include_lib("aql.hrl").
 -include_lib("parser.hrl").
+-include_lib("aql.hrl").
 
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").

@@ -1,9 +1,11 @@
+%% @author JPDSousa
+%% @doc module used to build column metadata
 
 -module(columns_builder).
 
--include("aql.hrl").
--include("parser.hrl").
--include("types.hrl").
+-include_lib("parser.hrl").
+-include_lib("aql.hrl").
+-include_lib("types.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

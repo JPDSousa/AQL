@@ -5,9 +5,9 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--include("aql.hrl").
--include("parser.hrl").
--include("types.hrl").
+-include_lib("parser.hrl").
+-include_lib("aql.hrl").
+-include_lib("types.hrl").
 
 -export([from_table/1,
 			from_columns/1,

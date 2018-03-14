@@ -75,6 +75,6 @@ rule_dep_level(Crp, Rule) -> rule_dep_level(dep_level(Crp), Rule).
 
 rule_p_dep_level(undefined, Rule) -> Rule;
 rule_p_dep_level(?ADD_WINS, Rule) -> lists:append(Rule, [ipa:touch()]);
-rule_p_dep_level(?REMOVE_WINS, Rule) -> lists:append([ipa:touch(), Rule]);
+rule_p_dep_level(?REMOVE_WINS, Rule) -> lists:append([ipa:touch()], Rule);
 rule_p_dep_level(Crp, Rule) -> rule_p_dep_level(p_dep_level(Crp), Rule).
 
